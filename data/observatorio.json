@@ -1,0 +1,11 @@
+{
+  "status": "not_generated",
+  "generated_at": null,
+  "message": "Aún no hay resultados reales publicados. Ejecuta el flujo de GitHub Actions para descargar y validar SIPSA-P, consultar NASA POWER y estimar el SpVARX. No se muestran datos simulados.",
+  "metadata": {},
+  "price_series": [],
+  "markets": [],
+  "coefficients": [],
+  "irfs": [],
+  "diagnostics": {"adf": [], "moran": []}
+}
