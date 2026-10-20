@@ -19,13 +19,6 @@ Panel exploratorio basado en fuentes reales: precios mayoristas SIPSA-P del DANE
 - `refresh_static_data.py` descarga y valida los archivos SIPSA-P públicos, selecciona dos series con cobertura temporal compartida, geocodifica mercados si no hay coordenadas en caché, consulta NASA POWER y estima el modelo de panel SpVARX.
 - GitHub Actions ejecuta el proceso una vez al mes o cuando se inicia manualmente. Si termina correctamente, publica `data/observatorio.json` en este Space. Si falla, no sustituye los datos por datos sintéticos.
 
-## Publicar por primera vez
-
-1. Crea un repositorio público en GitHub y copia el contenido de esta carpeta a la raíz.
-2. Crea un Hugging Face Space con SDK **Static** y sube `README.md`, `index.html`, `data/observatorio.json` (el estado inicial), y el resto de los archivos del paquete.
-3. En el repositorio GitHub, agrega los secretos `HF_TOKEN` (token de Hugging Face con permiso de escritura) y `HF_SPACE_ID` (por ejemplo `usuario/agroclima-intelligence-colombia`).
-4. En GitHub, ve a **Actions → Actualizar datos oficiales y publicar en Hugging Face → Run workflow**.
-5. Revisa los logs. Cuando termine correctamente, la aplicación se actualizará con el JSON publicado.
 
 ## Fuentes
 
