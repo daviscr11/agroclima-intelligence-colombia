@@ -1,0 +1,71 @@
+
+name: Actualizar datos oficiales y publicar en Hugging Face
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 15 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Restaurar caché
+        uses: actions/cache@v4
+        with:
+          path: .runtime
+          key: agroclima-runtime-v1-${{ runner.os }}
+          restore-keys: |
+            agroclima-runtime-v1-${{ runner.os }}
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Descargar datos y estimar modelo
+        env:
+          AGROCLIMA_FORCE_REFRESH: "1"
+          AGROCLIMA_START_YEAR: "2019"
+          AGROCLIMA_END_YEAR: "2024"
+          AGROCLIMA_MIN_MARKETS: "6"
+          AGROCLIMA_MIN_MONTHS: "36"
+          AGROCLIMA_MAX_CANDIDATE_PRODUCTS: "24"
+          AGROCLIMA_MAX_MARKETS: "12"
+          AGROCLIMA_KNN_K: "4"
+          AGROCLIMA_IRF_HORIZON: "18"
+        run: python refresh_static_data.py
+
+      - name: Guardar resultados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/observatorio.json data/market_coordinates.csv
+          if git diff --cached --quiet; then
+            echo "No hay cambios para confirmar."
+          else
+            git commit -m "Actualizar resultados oficiales"
+            git push
+          fi
+
+      - name: Publicar resultados en Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
+        run: python publish_to_hf.py
