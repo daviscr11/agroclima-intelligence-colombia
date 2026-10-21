@@ -10,6 +10,7 @@ from __future__ import annotations
 import itertools
 import json
 import os
+import re
 import sys
 import shutil
 import traceback
@@ -52,13 +53,36 @@ KNOWN_MARKET_COORDINATES = {
         "latitud": 4.5283,
         "longitud": -75.7133,
         "nombre_geocodificado": "Mercar - Central Mayorista de Armenia, Quindío",
-        "fuente_coordenada": "OpenStreetMap vía Mapcarta (coordenada aproximada; revisar)",
+        "fuente_coordenada": "OpenStreetMap vía Mapcarta: https://mapcarta.com/es/W293128586",
+        "precision_geografica": "instalación mayorista aproximada; verificar",
     },
     "armenia central mayorista": {
         "latitud": 4.5283,
         "longitud": -75.7133,
         "nombre_geocodificado": "Mercar - Central Mayorista de Armenia, Quindío",
-        "fuente_coordenada": "OpenStreetMap vía Mapcarta (coordenada aproximada; revisar)",
+        "fuente_coordenada": "OpenStreetMap vía Mapcarta: https://mapcarta.com/es/W293128586",
+        "precision_geografica": "instalación mayorista aproximada; verificar",
+    },
+    "barranquilla granabastos": {
+        "latitud": 10.88766,
+        "longitud": -74.79877,
+        "nombre_geocodificado": "GranAbastos, Soledad, Atlántico",
+        "fuente_coordenada": "OpenStreetMap vía Mapcarta: https://mapcarta.com/W201507633; dirección contrastada con https://www.granabastos.com.co/landing/conocenos",
+        "precision_geografica": "complejo mayorista aproximado; verificar",
+    },
+    "granabastos barranquilla": {
+        "latitud": 10.88766,
+        "longitud": -74.79877,
+        "nombre_geocodificado": "GranAbastos, Soledad, Atlántico",
+        "fuente_coordenada": "OpenStreetMap vía Mapcarta: https://mapcarta.com/W201507633; dirección contrastada con https://www.granabastos.com.co/landing/conocenos",
+        "precision_geografica": "complejo mayorista aproximado; verificar",
+    },
+    "soledad granabastos": {
+        "latitud": 10.88766,
+        "longitud": -74.79877,
+        "nombre_geocodificado": "GranAbastos, Soledad, Atlántico",
+        "fuente_coordenada": "OpenStreetMap vía Mapcarta: https://mapcarta.com/W201507633; dirección contrastada con https://www.granabastos.com.co/landing/conocenos",
+        "precision_geografica": "complejo mayorista aproximado; verificar",
     },
 }
 
@@ -216,84 +240,185 @@ def choose_best_pair(raw: pd.DataFrame, start_date: pd.Timestamp, end_date: pd.T
 
 
 def ensure_market_coordinates(market_names: list[str]) -> pd.DataFrame:
-    """Conserva coordenadas cacheadas; geocodifica solo los mercados nuevos.
+    """Obtiene coordenadas de mercado con una jerarquía explícita y caché incremental.
 
-    Nominatim es una fuente auxiliar de geocodificación, no una fuente de precios/clima.
-    Se registran los resultados para poder revisarlos y evitar geocodificar cada mes.
+    1) Usa coordenadas conocidas para instalaciones documentadas.
+    2) Intenta el nombre/alias de la instalación en Nominatim.
+    3) Si no encuentra la instalación, usa una ubicación de ciudad/municipio SOLO como
+       aproximación explícitamente marcada. Así no se detiene el flujo por nombres SIPSA
+       que no coinciden literalmente con OSM. Esas coordenadas deben verificarse antes de
+       cualquier interpretación espacial sustantiva.
     """
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     if COORDS_FILE.exists():
         existing = pd.read_csv(COORDS_FILE)
     else:
-        existing = pd.DataFrame(columns=["mercado", "latitud", "longitud", "nombre_geocodificado", "fuente_coordenada"])
+        existing = pd.DataFrame(columns=[
+            "mercado", "latitud", "longitud", "nombre_geocodificado",
+            "fuente_coordenada", "precision_geografica"
+        ])
     required = {"mercado", "latitud", "longitud"}
     if not required.issubset(existing.columns):
         raise RuntimeError(f"{COORDS_FILE} debe tener columnas: mercado, latitud, longitud.")
+
     existing["mercado_key"] = existing["mercado"].map(norm_text)
     existing = existing.drop_duplicates("mercado_key", keep="last")
-    missing = []
-    by_key = {row["mercado_key"]: row for _, row in existing.iterrows()}
+    by_key = {row["mercado_key"]: row.to_dict() for _, row in existing.iterrows()}
+
+    def save_cache() -> None:
+        rows = []
+        for row in by_key.values():
+            if isinstance(row, pd.Series):
+                row = row.to_dict()
+            rows.append(dict(row))
+        output = pd.DataFrame(rows).drop(columns=["mercado_key"], errors="ignore")
+        # Stable schema, while retaining any useful columns previously saved.
+        base_cols = ["mercado", "latitud", "longitud", "nombre_geocodificado",
+                     "fuente_coordenada", "precision_geografica"]
+        for col in base_cols:
+            if col not in output.columns:
+                output[col] = "" if col not in {"latitud", "longitud"} else np.nan
+        output.to_csv(COORDS_FILE, index=False, encoding="utf-8-sig")
+
+    def known_for_key(key: str) -> dict[str, Any] | None:
+        if key in KNOWN_MARKET_COORDINATES:
+            return KNOWN_MARKET_COORDINATES[key]
+        # Robust aliases where the market name in SIPSA has city/facility order changes.
+        if "granabastos" in key or "gran abastos" in key:
+            return KNOWN_MARKET_COORDINATES["barranquilla granabastos"]
+        if "mercar" in key and "armenia" in key:
+            return KNOWN_MARKET_COORDINATES["armenia mercar"]
+        return None
+
+    def candidate_queries(name: str) -> tuple[list[str], list[str]]:
+        key = norm_text(name)
+        exact = [f"{name}, Colombia"]
+        if "granabastos" in key or "gran abastos" in key:
+            exact += [
+                "GranAbastos, Soledad, Atlántico, Colombia",
+                "Gran Central de Abastos del Caribe, Soledad, Atlántico, Colombia",
+            ]
+        if "mercar" in key and "armenia" in key:
+            exact += ["Mercar Central Mayorista Armenia, Quindío, Colombia"]
+        for token, alias in [
+            ("corabastos", "Corabastos, Bogotá, Colombia"),
+            ("centroabastos", "Centroabastos, Bucaramanga, Santander, Colombia"),
+            ("cenabastos", "Cenabastos, Cúcuta, Norte de Santander, Colombia"),
+            ("cavasa", "CAVASA, Candelaria, Valle del Cauca, Colombia"),
+            ("mercasa", "Mercasa, Pereira, Risaralda, Colombia"),
+            ("surabastos", "Surabastos, Neiva, Huila, Colombia"),
+            ("mayorista de antioquia", "Central Mayorista de Antioquia, Itagüí, Colombia"),
+            ("potrerillo", "Plaza de Mercado El Potrerillo, Pasto, Nariño, Colombia"),
+        ]:
+            if token in key:
+                exact.append(alias)
+        # City/municipality fallback is kept separate and explicitly labeled as approximate.
+        parts = [p.strip() for p in re.split(r"[,;|/–—-]+", str(name)) if p.strip()]
+        cities = parts[:1]
+        known_city_aliases = [
+            ("bogota", "Bogotá, Colombia"), ("medellin", "Medellín, Colombia"),
+            ("cali", "Cali, Valle del Cauca, Colombia"), ("barranquilla", "Barranquilla, Colombia"),
+            ("armenia", "Armenia, Quindío, Colombia"), ("cartagena", "Cartagena de Indias, Bolívar, Colombia"),
+            ("bucaramanga", "Bucaramanga, Santander, Colombia"), ("cucuta", "Cúcuta, Norte de Santander, Colombia"),
+            ("ibague", "Ibagué, Tolima, Colombia"), ("pasto", "Pasto, Nariño, Colombia"),
+            ("neiva", "Neiva, Huila, Colombia"), ("pereira", "Pereira, Risaralda, Colombia"),
+            ("villavicencio", "Villavicencio, Meta, Colombia"), ("monteria", "Montería, Córdoba, Colombia"),
+            ("sincelejo", "Sincelejo, Sucre, Colombia"), ("popayan", "Popayán, Cauca, Colombia"),
+            ("manizales", "Manizales, Caldas, Colombia"), ("tunja", "Tunja, Boyacá, Colombia"),
+            ("valledupar", "Valledupar, Cesar, Colombia"), ("santa marta", "Santa Marta, Magdalena, Colombia"),
+            ("riohacha", "Riohacha, La Guajira, Colombia"), ("florencia", "Florencia, Caquetá, Colombia"),
+            ("yopal", "Yopal, Casanare, Colombia"), ("quibdo", "Quibdó, Chocó, Colombia"),
+            ("soledad", "Soledad, Atlántico, Colombia"), ("barrancabermeja", "Barrancabermeja, Santander, Colombia"),
+        ]
+        normalized = key
+        city_queries = []
+        for token, query in known_city_aliases:
+            if token in normalized:
+                city_queries.append(query)
+        if cities:
+            city_queries.insert(0, f"{cities[0]}, Colombia")
+        # Dedupe while preserving order and remove exact queries from fallback list.
+        exact = list(dict.fromkeys(exact))
+        city_queries = [q for q in dict.fromkeys(city_queries) if q not in exact]
+        return exact, city_queries
+
+    # Load geocoder only if there are names that don't have cached/known coordinates.
+    missing: list[str] = []
     for name in market_names:
         key = norm_text(name)
+        known = known_for_key(key)
+        if known is not None:
+            by_key[key] = {"mercado": name, **known, "mercado_key": key}
+            save_cache()
+            continue
         row = by_key.get(key)
         if row is not None and pd.notna(row.get("latitud")) and pd.notna(row.get("longitud")):
             continue
+        missing.append(name)
 
-        # Antes de consultar Nominatim, aplicar ubicaciones de referencia
-        # verificadas para nombres frecuentes/ambiguos en SIPSA-P.
-        known = KNOWN_MARKET_COORDINATES.get(key)
-        if known is not None:
-            by_key[key] = {
-                "mercado": name, **known, "mercado_key": key,
-            }
-        else:
-            missing.append(name)
-
+    geocode = None
     if missing:
         try:
             from geopy.geocoders import Nominatim
             from geopy.extra.rate_limiter import RateLimiter
         except ImportError as exc:
             raise RuntimeError("Falta geopy, requerido para geocodificar mercados nuevos.") from exc
-        geolocator = Nominatim(user_agent="agroclima-static-colombia/1.0 (research dashboard)", timeout=30)
+        geolocator = Nominatim(user_agent="agroclima-static-colombia/1.1 (research dashboard; OSM geocoding)", timeout=30)
         geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1.1, max_retries=2,
                               error_wait_seconds=3, swallow_exceptions=True)
-        for name in missing:
-            # Consultar primero el nombre tal como aparece en SIPSA y luego
-            # un alias menos específico para instalaciones mayoristas conocidas.
-            queries = [f"{name}, Colombia"]
-            normalized = norm_text(name)
-            if "mercar" in normalized and "armenia" in normalized:
-                queries.append("Mercar Central Mayorista Armenia, Quindío, Colombia")
-            found = None
-            for query in queries:
+
+    for name in missing:
+        key = norm_text(name)
+        exact_queries, city_queries = candidate_queries(name)
+        found = None
+        used_query = None
+        for query in exact_queries:
+            found = geocode(query, country_codes="co", exactly_one=True)
+            if found is not None:
+                used_query = query
+                break
+        precision = "instalación/lugar devuelto por Nominatim; verificar"
+        source = "OpenStreetMap Nominatim"
+        if found is None:
+            for query in city_queries:
                 found = geocode(query, country_codes="co", exactly_one=True)
                 if found is not None:
+                    used_query = query
+                    precision = "aproximación a centro urbano/municipal; NO es ubicación exacta del mercado"
+                    source = "OpenStreetMap Nominatim; geocodificación fallback municipal, verificar"
                     break
-            if found is None:
-                raise RuntimeError(
-                    f"Nominatim no encontró coordenadas para el mercado {name!r}. "
-                    f"Revise las coordenadas manualmente en {COORDS_FILE}; no se usarán ubicaciones inventadas."
-                )
-            by_key[norm_text(name)] = {
-                "mercado": name, "latitud": float(found.latitude), "longitud": float(found.longitude),
-                "nombre_geocodificado": str(found.address), "fuente_coordenada": "OpenStreetMap Nominatim; revisar",
-                "mercado_key": norm_text(name),
-            }
-    output = pd.DataFrame(list(by_key.values()))
-    output = output.drop(columns=["mercado_key"], errors="ignore")
-    output.to_csv(COORDS_FILE, index=False, encoding="utf-8-sig")
-    result = output.copy()
-    result["mercado_key"] = result["mercado"].map(norm_text)
-    result = result[result["mercado_key"].isin({norm_text(x) for x in market_names})].copy()
+        if found is None:
+            # Preserve all coordinates already resolved so that a future attempt doesn't start over.
+            save_cache()
+            raise RuntimeError(
+                f"Nominatim no encontró ni el mercado ni su ciudad para {name!r}. "
+                f"Las coordenadas ya encontradas se guardaron en {COORDS_FILE}. "
+                "Añada manualmente una coordenada verificada para este mercado y vuelva a ejecutar."
+            )
+        by_key[key] = {
+            "mercado": name,
+            "latitud": float(found.latitude),
+            "longitud": float(found.longitude),
+            "nombre_geocodificado": str(found.address),
+            "fuente_coordenada": f"{source}; consulta={used_query}",
+            "precision_geografica": precision,
+            "mercado_key": key,
+        }
+        save_cache()  # Incremental: persist even if a later market fails.
+        if "NO es ubicación exacta" in precision:
+            print(f"ADVERTENCIA geográfica: {name!r} se ubicó usando {used_query!r}; revisar en market_coordinates.csv.")
+
+    output = pd.read_csv(COORDS_FILE) if COORDS_FILE.exists() else pd.DataFrame(list(by_key.values()))
+    output["mercado_key"] = output["mercado"].map(norm_text)
+    result = output[output["mercado_key"].isin({norm_text(x) for x in market_names})].copy()
     result["latitud"] = pd.to_numeric(result["latitud"], errors="coerce")
     result["longitud"] = pd.to_numeric(result["longitud"], errors="coerce")
+    result = result.drop_duplicates("mercado_key", keep="last")
     if len(result) != len(set(norm_text(x) for x in market_names)) or result[["latitud", "longitud"]].isna().any().any():
-        raise RuntimeError("La tabla de coordenadas no cubre todos los mercados o contiene coordenadas vacías.")
-    # Broad sanity bounds; this is not proof that a market was geocoded to the right facility.
+        raise RuntimeError(f"{COORDS_FILE} no cubre todos los mercados o contiene coordenadas vacías.")
     if not result["latitud"].between(-5.5, 14.5).all() or not result["longitud"].between(-83.5, -65.0).all():
         raise RuntimeError("Hay coordenadas fuera del rango territorial aproximado de Colombia. Revise market_coordinates.csv.")
-    return result.drop_duplicates("mercado_key").reset_index(drop=True)
+    return result.drop(columns=["mercado_key"], errors="ignore").reset_index(drop=True)
 
 
 def records(df: pd.DataFrame) -> list[dict[str, Any]]:
@@ -322,6 +447,16 @@ def main() -> None:
     raw, audit = load_sipsa_data(RAW_DIR)
     raw["fecha"] = pd.to_datetime(raw["fecha"], errors="coerce").dt.to_period("M").dt.to_timestamp()
     raw = raw[raw["fecha"].between(f"{START_YEAR}-01-01", f"{END_YEAR}-12-31")].copy()
+    # Auditoría explícita de qué archivos y años logró leer el parser SIPSA.
+    if not audit.empty:
+        print("[SIPSA audit] Archivos/hojas reconocidos (primeras 30 filas):")
+        audit_cols = [c for c in ["archivo_hoja", "filas_canonicas", "fecha_min", "fecha_max", "columnas_detectadas"] if c in audit.columns]
+        print(audit[audit_cols].head(30).to_string(index=False))
+    if not raw.empty:
+        by_year = raw["fecha"].dt.year.value_counts().sort_index().to_dict()
+        print(f"[SIPSA audit] Cobertura canónica total: {raw['fecha'].min():%Y-%m} a {raw['fecha'].max():%Y-%m}; observaciones/año={by_year}")
+        if raw["fecha"].max().year < END_YEAR:
+            print(f"ADVERTENCIA: se pidió hasta {END_YEAR}, pero las tablas reconocidas solo llegan a {raw['fecha'].max():%Y-%m}. Revisar el audit por archivo; no asumir que los años posteriores se han leído correctamente.")
     # Normaliza cadenas que el lector puede haber convertido desde celdas vacías a "nan".
     for col in ["mercado", "producto", "unidad", "variedad"]:
         if col in raw.columns:
@@ -380,6 +515,8 @@ def main() -> None:
         market_payload.append({
             "mercado": str(c["mercado"]), "latitud": float(c["latitud"]), "longitud": float(c["longitud"]),
             "nombre_geocodificado": str(c.get("nombre_geocodificado", "")),
+            "fuente_coordenada": str(c.get("fuente_coordenada", "")),
+            "precision_geografica": str(c.get("precision_geografica", "")),
             "cambios_log_precio": changes,
         })
 
@@ -407,7 +544,7 @@ def main() -> None:
         "data_note": "Precios nominales mensuales observados de SIPSA-P. NASA POWER aporta variables meteorológicas derivadas de datos/modelos de NASA; no son mediciones directas de estación en cada mercado.",
         "method_note": "Panel SpVARX(1) reducido estimado ecuación por ecuación con efectos de mercado y tiempo. Incluye W*y[t-1], no W*y[t]. La inferencia con efectos fijos y rezagos endógenos requiere contrastes adicionales.",
         "irf_note": "IRF puntuales de un choque exógeno +1 DE; no incluyen bandas de confianza ni identificación estructural. No interpretar causalmente.",
-        "coordinate_note": "Las coordenadas nuevas se sugieren con Nominatim y se guardan en data/market_coordinates.csv; deben revisarse por posible ambigüedad de nombres de mercado.",
+        "coordinate_note": "Las coordenadas se guardan en data/market_coordinates.csv. Las coordenadas de instalación documentadas y los fallback al centro urbano llevan fuente y precisión explícitas; el fallback municipal no equivale a la ubicación exacta del mercado y debe revisarse antes de interpretar relaciones espaciales.",
         "diagnostic_summary": {
             "adf_reject_share": float(adf["rechaza_raiz_unitaria_5pct"].mean()) if "rechaza_raiz_unitaria_5pct" in adf.columns and len(adf) else None,
             "moran_residuals": records(moran),

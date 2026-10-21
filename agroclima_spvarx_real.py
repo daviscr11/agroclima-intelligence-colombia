@@ -41,13 +41,10 @@ MONTHS_ES = {
 }
 
 COLUMN_CANDIDATES = {
-    # SIPSA-P microdata 2019-2024 uses Fuente as the wholesale market/source label,
-    # Producto as the food item, Fecha as collection date, and Precio_por_kilogramo
-    # as the average daily price expressed per kilogram.
-    "market": ["fuente", "nombre de la fuente", "source", "mercado", "nombre mercado", "mercado mayorista", "ciudad", "municipio", "nombre municipio", "nom mpio"],
-    "product": ["producto", "nombre articulo", "nombre del articulo", "nombre producto", "producto nombre", "nom producto", "alimento"],
-    "price": ["precio por kilogramo", "precio promedio diario", "precio promedio", "precio promedio mensual", "promedio precio", "precio medio", "precio", "valor precio"],
-    "date": ["fecha", "fecha programada para la recoleccion", "fecha programada recoleccion", "fecha mes", "periodo", "periodo referencia", "fecha referencia"],
+    "market": ["mercado", "nombre mercado", "mercado mayorista", "ciudad", "municipio", "nombre municipio", "nom mpio"],
+    "product": ["producto", "nombre producto", "producto nombre", "nom producto", "alimento"],
+    "price": ["precio promedio", "precio promedio mensual", "promedio precio", "precio medio", "precio", "valor precio"],
+    "date": ["fecha", "fecha mes", "periodo", "periodo referencia", "fecha referencia"],
     "year": ["ano", "anio", "year", "vigencia"],
     "month": ["mes", "month", "mes referencia"],
     "unit": ["unidad medida", "unidad de medida", "unidad", "presentacion", "presentación", "unidad comercial"],
@@ -108,20 +105,13 @@ def _parse_date_column(series: pd.Series) -> pd.Series:
     s = series.astype(str).str.strip().str.lower()
     for es, number in MONTHS_ES.items():
         s = s.str.replace(rf"\b{es}\b", f"{number:02d}", regex=True)
-    # Parse ISO/year-first dates separately. dayfirst=True alone would misread
-    # an ISO value such as 2019-01-02 as 1 February in some pandas versions.
-    out = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
-    iso_mask = s.str.match(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}(?:[ t].*)?$", na=False)
-    if iso_mask.any():
-        out.loc[iso_mask] = pd.to_datetime(s.loc[iso_mask], errors="coerce", yearfirst=True)
-    non_iso = ~iso_mask
-    if non_iso.any():
-        out.loc[non_iso] = pd.to_datetime(s.loc[non_iso], errors="coerce", dayfirst=True)
-    # Remaining formats: compact YYYYMM/YYYMMDD and month/year.
+    # Formatos frecuentes: YYYYMM, YYYY-MM, DD/MM/YYYY, MM/YYYY.
+    # Explicit mixed-format parsing avoids dateutil inference warnings for DANE sheets.
+    out = pd.to_datetime(s, errors="coerce", dayfirst=True, format="mixed")
     mask = out.isna()
     if mask.any():
         for fmt in ["%Y%m", "%Y%m%d", "%m/%Y", "%m-%Y", "%Y-%m"]:
-            parsed = pd.to_datetime(s.loc[mask], format=fmt, errors="coerce")
+            parsed = pd.to_datetime(s[mask], format=fmt, errors="coerce")
             out.loc[mask] = parsed
             mask = out.isna()
             if not mask.any():
@@ -161,20 +151,12 @@ def _canonicalize_table(table: pd.DataFrame, source: str, column_map: Optional[D
         dates = pd.to_datetime({"year": year, "month": month_num, "day": 1}, errors="coerce")
 
     price = _parse_number(table[mapped["price"]])
-    if mapped["unit"]:
-        unit_values = table[mapped["unit"]].astype(str).str.strip()
-    elif norm_text(mapped["price"]) in {"precio por kilogramo", "precio promedio por kilogramo"}:
-        # Explicit source field Precio_por_kilogramo documents the standardized unit.
-        # This is a unit mapping from DANE metadata, not an inferred or fabricated value.
-        unit_values = pd.Series("COP/kg", index=table.index)
-    else:
-        unit_values = pd.Series("", index=table.index)
     out = pd.DataFrame({
         "fecha": dates,
         "mercado": table[mapped["market"]].astype(str).str.strip(),
         "producto": table[mapped["product"]].astype(str).str.strip(),
         "precio": price,
-        "unidad": unit_values,
+        "unidad": table[mapped["unit"]].astype(str).str.strip() if mapped["unit"] else "",
         "variedad": table[mapped["variety"]].astype(str).str.strip() if mapped["variety"] else "",
         "fuente_archivo": str(source),
     })
