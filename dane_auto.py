@@ -10,7 +10,7 @@ import re
 import time
 import zipfile
 from pathlib import Path
-from urllib.parse import quote, urljoin, urlparse
+from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -47,6 +47,46 @@ def _normal_url(candidate: str, base_url: str) -> str | None:
     return candidate
 
 
+def _discover_catalog_file_id(html: str, target_filename: str) -> str | None:
+    """Find the NADA data-file ID (e.g. F3) associated with the exact SIPSA filename.
+
+    The catalogue's download button is rendered through UI controls, not always as a
+    direct ZIP hyperlink. Its data-dictionary URL, however, exposes the stable file ID.
+    We match the filename in the link/query or its small surrounding HTML block.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    stem = Path(target_filename).stem
+    if stem.lower().startswith("basedatos-"):
+        stem = stem[len("BaseDatos-"):]
+    target = stem.lower()
+    target_compact = re.sub(r"[^a-z0-9]", "", target)
+
+    for anchor in soup.find_all("a", href=True):
+        href = unquote(str(anchor.get("href", "")))
+        match = re.search(
+            r"/catalog/\d+/(?:data-dictionary|data_dictionary|datafile|data-file)/([A-Za-z0-9_-]+)",
+            href,
+            flags=re.IGNORECASE,
+        )
+        if not match:
+            continue
+        query = parse_qs(urlparse(href).query)
+        values = [href, anchor.get_text(" ", strip=True)]
+        values.extend(query.get("file_name", []))
+        # Keep the contextual search local; a full page contains all years and could
+        # otherwise associate the wrong file ID with the requested year.
+        parent = anchor.parent
+        if parent is not None:
+            values.append(parent.get_text(" ", strip=True)[:1200])
+            if parent.parent is not None:
+                values.append(parent.parent.get_text(" ", strip=True)[:1800])
+        context = " ".join(values).lower()
+        context_compact = re.sub(r"[^a-z0-9]", "", context)
+        if target in context or target_compact in context_compact:
+            return match.group(1)
+    return None
+
+
 def _discover_candidate_urls(html: str, target_filename: str, base_url: str) -> list[str]:
     """Discover direct file URLs, including links embedded in a file's surrounding HTML block."""
     soup = BeautifulSoup(html, "html.parser")
@@ -57,6 +97,17 @@ def _discover_candidate_urls(html: str, target_filename: str, base_url: str) -> 
         url = _normal_url(raw_url or "", base_url)
         if url:
             scored[url] = max(score, scored.get(url, -1))
+
+    # The DANE catalogue is powered by NADA. Its data-dictionary link exposes a file ID
+    # (for example F3 for SIPSA_P-Mensual-2019); use the official study download route
+    # with that ID instead of guessing a ZIP URL from the displayed filename.
+    file_id = _discover_catalog_file_id(html, target_filename)
+    if file_id:
+        for raw in [
+            f"/index.php/catalog/776/download/{file_id}",
+            f"/index.php/catalog/776/download/FILE/{file_id}",
+        ]:
+            add(raw, 1000)
 
     # 1) Links with ZIP, download, or filename in the URL.
     for tag in soup.find_all(True):
@@ -212,7 +263,8 @@ def download_sipsa_archives(start_year: int, end_year: int, cache_dir: str | Pat
             raise RuntimeError(
                 f"No fue posible encontrar una descarga ZIP verificable para {filename}. "
                 f"El catálogo oficial está disponible en {DANE_CATALOG_URL}. "
-                "Es posible que el DANE haya cambiado el mecanismo de descarga; la aplicación no usará datos sintéticos."
+                "Se detectaron rutas candidatas del catálogo, pero ninguna devolvió un ZIP válido. "
+                "Revise el registro de descarga y el mecanismo actual de NADA; la aplicación no usará datos sintéticos."
             )
         results.append(target)
     return results
