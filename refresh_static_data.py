@@ -43,6 +43,25 @@ CLIMATE_CACHE = RUNTIME_DIR / "nasa_power_monthly.csv"
 COORDS_FILE = DATA_DIR / "market_coordinates.csv"
 OUTPUT_JSON = DATA_DIR / "observatorio.json"
 
+# Coordenadas verificadas para mercados cuyo nombre SIPSA no se resuelve bien
+# con geocodificación automática. Mercar corresponde a la Central Mayorista
+# de Armenia (Quindío); ubicación aproximada basada en OpenStreetMap/Mapcarta.
+# Fuente de referencia: https://mapcarta.com/es/W293128586
+KNOWN_MARKET_COORDINATES = {
+    "armenia mercar": {
+        "latitud": 4.5283,
+        "longitud": -75.7133,
+        "nombre_geocodificado": "Mercar - Central Mayorista de Armenia, Quindío",
+        "fuente_coordenada": "OpenStreetMap vía Mapcarta (coordenada aproximada; revisar)",
+    },
+    "armenia central mayorista": {
+        "latitud": 4.5283,
+        "longitud": -75.7133,
+        "nombre_geocodificado": "Mercar - Central Mayorista de Armenia, Quindío",
+        "fuente_coordenada": "OpenStreetMap vía Mapcarta (coordenada aproximada; revisar)",
+    },
+}
+
 START_YEAR = int(os.getenv("AGROCLIMA_START_YEAR", "2019"))
 END_YEAR = int(os.getenv("AGROCLIMA_END_YEAR", "2024"))
 MIN_MARKETS = int(os.getenv("AGROCLIMA_MIN_MARKETS", "6"))
@@ -217,8 +236,19 @@ def ensure_market_coordinates(market_names: list[str]) -> pd.DataFrame:
     for name in market_names:
         key = norm_text(name)
         row = by_key.get(key)
-        if row is None or pd.isna(row.get("latitud")) or pd.isna(row.get("longitud")):
+        if row is not None and pd.notna(row.get("latitud")) and pd.notna(row.get("longitud")):
+            continue
+
+        # Antes de consultar Nominatim, aplicar ubicaciones de referencia
+        # verificadas para nombres frecuentes/ambiguos en SIPSA-P.
+        known = KNOWN_MARKET_COORDINATES.get(key)
+        if known is not None:
+            by_key[key] = {
+                "mercado": name, **known, "mercado_key": key,
+            }
+        else:
             missing.append(name)
+
     if missing:
         try:
             from geopy.geocoders import Nominatim
@@ -229,11 +259,21 @@ def ensure_market_coordinates(market_names: list[str]) -> pd.DataFrame:
         geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1.1, max_retries=2,
                               error_wait_seconds=3, swallow_exceptions=True)
         for name in missing:
-            found = geocode(f"{name}, Colombia", country_codes="co", exactly_one=True)
+            # Consultar primero el nombre tal como aparece en SIPSA y luego
+            # un alias menos específico para instalaciones mayoristas conocidas.
+            queries = [f"{name}, Colombia"]
+            normalized = norm_text(name)
+            if "mercar" in normalized and "armenia" in normalized:
+                queries.append("Mercar Central Mayorista Armenia, Quindío, Colombia")
+            found = None
+            for query in queries:
+                found = geocode(query, country_codes="co", exactly_one=True)
+                if found is not None:
+                    break
             if found is None:
                 raise RuntimeError(
                     f"Nominatim no encontró coordenadas para el mercado {name!r}. "
-                    f"Complete manualmente {COORDS_FILE} con latitud/longitud y vuelva a ejecutar."
+                    f"Revise las coordenadas manualmente en {COORDS_FILE}; no se usarán ubicaciones inventadas."
                 )
             by_key[norm_text(name)] = {
                 "mercado": name, "latitud": float(found.latitude), "longitud": float(found.longitude),

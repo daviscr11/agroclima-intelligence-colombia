@@ -1,5 +1,8 @@
+# Dependencias usadas por GitHub Actions al preparar los datos.
+# Hugging Face Static no instala ni ejecuta estas dependencias en tiempo de uso.
 numpy>=1.26,<2.3
 pandas>=2.1,<3
+openpyxl>=3.1,<4
 requests>=2.31,<3
 beautifulsoup4>=4.12,<5
 linearmodels>=6.1,<7
