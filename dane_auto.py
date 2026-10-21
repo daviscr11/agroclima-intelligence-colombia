@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Descarga automática y validada de microdatos SIPSA-P desde el catálogo oficial DANE.
+"""Descarga automática de archivos SIPSA-P del catálogo oficial del DANE.
 
-No genera datos sintéticos. Descubre enlaces desde la ficha pública y valida ZIP mediante
-firma y lectura de la tabla central. Si el portal cambia de estructura, falla de forma explícita.
+La función intenta primero las solicitudes de formularios HTML asociadas al archivo
+solicitado y después las rutas de descarga conocidas de NADA. Cada respuesta solo se
+acepta si contiene un ZIP íntegro. Nunca se generan datos sintéticos.
 """
 from __future__ import annotations
 
 import re
 import time
 import zipfile
+from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
 
@@ -17,7 +19,16 @@ from bs4 import BeautifulSoup
 
 DANE_CATALOG_URL = "https://microdatos.dane.gov.co/index.php/catalog/776/get-microdata"
 DANE_FILE_PREFIX = "BaseDatos-SIPSA_P-Mensual-"
-USER_AGENT = "AgroClima-SIPSA research app/1.0 (automated public data retrieval)"
+USER_AGENT = "AgroClima-SIPSA research app/1.1 (automated public data retrieval)"
+MAX_ARCHIVE_BYTES = 1_500_000_000
+
+
+@dataclass
+class DownloadCandidate:
+    method: str
+    url: str
+    data: dict[str, str] = field(default_factory=dict)
+    label: str = ""
 
 
 def archive_name_for_year(year: int) -> str:
@@ -26,10 +37,13 @@ def archive_name_for_year(year: int) -> str:
         return f"{DANE_FILE_PREFIX}2013_2017.zip"
     if 2018 <= year <= 2024:
         return f"{DANE_FILE_PREFIX}{year}.zip"
-    raise ValueError(f"El catálogo SIPSA-P consultado contiene los años 2013–2024; año fuera de rango: {year}.")
+    raise ValueError(
+        "La ficha SIPSA-P consultada presenta archivos 2013–2024; "
+        f"año fuera de rango: {year}."
+    )
 
 
-def _normal_url(candidate: str, base_url: str) -> str | None:
+def _normal_url(candidate: str | None, base_url: str) -> str | None:
     candidate = (candidate or "").strip().strip("\"' ")
     if not candidate or candidate.startswith(("#", "javascript:", "mailto:")):
         return None
@@ -41,26 +55,30 @@ def _normal_url(candidate: str, base_url: str) -> str | None:
     parsed = urlparse(candidate)
     if parsed.scheme not in {"http", "https"}:
         return None
-    if parsed.netloc and not (parsed.netloc.endswith("dane.gov.co") or parsed.netloc.endswith("microdatos.dane.gov.co")):
-        # Avoid following arbitrary third-party links from a catalog page.
+    if parsed.netloc and not (
+        parsed.netloc.endswith("dane.gov.co")
+        or parsed.netloc.endswith("microdatos.dane.gov.co")
+    ):
         return None
     return candidate
 
 
-def _discover_catalog_file_id(html: str, target_filename: str) -> str | None:
-    """Find the NADA data-file ID (e.g. F3) associated with the exact SIPSA filename.
-
-    The catalogue's download button is rendered through UI controls, not always as a
-    direct ZIP hyperlink. Its data-dictionary URL, however, exposes the stable file ID.
-    We match the filename in the link/query or its small surrounding HTML block.
-    """
-    soup = BeautifulSoup(html, "html.parser")
+def _file_tokens(target_filename: str) -> set[str]:
     stem = Path(target_filename).stem
-    if stem.lower().startswith("basedatos-"):
-        stem = stem[len("BaseDatos-"):]
-    target = stem.lower()
-    target_compact = re.sub(r"[^a-z0-9]", "", target)
+    without_prefix = stem[len("BaseDatos-"):] if stem.lower().startswith("basedatos-") else stem
+    raw = {target_filename, stem, without_prefix}
+    tokens = set()
+    for item in raw:
+        item = unquote(item).lower()
+        tokens.add(item)
+        tokens.add(re.sub(r"[^a-z0-9]", "", item))
+    return {x for x in tokens if x}
 
+
+def _file_id_from_catalog(html: str, target_filename: str) -> str | None:
+    """Discover a NADA data-file identifier (e.g. F3) from its data-dictionary link."""
+    soup = BeautifulSoup(html, "html.parser")
+    tokens = _file_tokens(target_filename)
     for anchor in soup.find_all("a", href=True):
         href = unquote(str(anchor.get("href", "")))
         match = re.search(
@@ -70,201 +88,295 @@ def _discover_catalog_file_id(html: str, target_filename: str) -> str | None:
         )
         if not match:
             continue
-        query = parse_qs(urlparse(href).query)
         values = [href, anchor.get_text(" ", strip=True)]
-        values.extend(query.get("file_name", []))
-        # Keep the contextual search local; a full page contains all years and could
-        # otherwise associate the wrong file ID with the requested year.
-        parent = anchor.parent
-        if parent is not None:
-            values.append(parent.get_text(" ", strip=True)[:1200])
-            if parent.parent is not None:
-                values.append(parent.parent.get_text(" ", strip=True)[:1800])
+        query = parse_qs(urlparse(href).query)
+        for vals in query.values():
+            values.extend(vals)
+        for parent in (anchor.parent, getattr(anchor.parent, "parent", None)):
+            if parent is not None:
+                values.append(parent.get_text(" ", strip=True)[:2000])
         context = " ".join(values).lower()
-        context_compact = re.sub(r"[^a-z0-9]", "", context)
-        if target in context or target_compact in context_compact:
+        compact = re.sub(r"[^a-z0-9]", "", context)
+        if any(token in context or token in compact for token in tokens):
             return match.group(1)
     return None
 
 
-def _discover_candidate_urls(html: str, target_filename: str, base_url: str) -> list[str]:
-    """Discover direct file URLs, including links embedded in a file's surrounding HTML block."""
+def _discover_form_candidates(html: str, target_filename: str, base_url: str) -> list[DownloadCandidate]:
+    """Inspect HTML forms that mention the requested file; preserve hidden/CSRF fields."""
+    soup = BeautifulSoup(html, "html.parser")
+    tokens = _file_tokens(target_filename)
+    candidates: list[DownloadCandidate] = []
+    seen = set()
+
+    def has_target(context: str) -> bool:
+        lower = unquote(context).lower()
+        compact = re.sub(r"[^a-z0-9]", "", lower)
+        return any(token in lower or token in compact for token in tokens)
+
+    for form in soup.find_all("form"):
+        values: dict[str, str] = {}
+        context_parts = [form.get_text(" ", strip=True)]
+        for attr in ("action", "id", "name", "class", "data-url", "data-action"):
+            context_parts.append(str(form.attrs.get(attr, "")))
+        # Preserve all fields, including CSRF fields required by some catalogue versions.
+        for control in form.find_all(["input", "button", "select", "textarea"]):
+            name = control.get("name")
+            value = control.get("value")
+            ctype = str(control.get("type", "")).lower()
+            context_parts.extend([
+                str(name or ""), str(value or ""), str(control.get("id", "")),
+                str(control.get("onclick", "")),
+            ])
+            if name and ctype not in {"file", "image"}:
+                if ctype in {"checkbox", "radio"} and not control.has_attr("checked"):
+                    continue
+                if value is not None:
+                    values[str(name)] = str(value)
+                elif control.name == "textarea":
+                    values[str(name)] = control.get_text()
+                elif control.name == "select":
+                    selected = control.find("option", selected=True) or control.find("option")
+                    if selected is not None:
+                        values[str(name)] = str(selected.get("value", selected.get_text(strip=True)))
+        context = " ".join(context_parts)
+        if not has_target(context):
+            continue
+
+        # Do not submit a broad form if it visibly contains multiple yearly archives
+        # and does not identify the requested file in its submitted values.
+        archives = set(re.findall(
+            r"(?:BaseDatos-)?SIPSA[_ -]?P-Mensual-(?:2013[_-]2017|20\d{2})(?:\.zip)?",
+            context,
+            flags=re.IGNORECASE,
+        ))
+        submitted_context = " ".join(f"{k}={v}" for k, v in values.items())
+        if len(archives) > 1 and not has_target(submitted_context):
+            continue
+
+        action = _normal_url(
+            str(form.get("action") or base_url), base_url
+        )
+        if not action:
+            continue
+        method = str(form.get("method", "GET")).upper()
+        if method not in {"GET", "POST"}:
+            continue
+        key = (method, action, tuple(sorted(values.items())))
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(DownloadCandidate(
+            method=method,
+            url=action,
+            data=values,
+            label=f"formulario HTML ({method}) {action}",
+        ))
+    return candidates
+
+
+def _discover_get_candidates(html: str, target_filename: str, base_url: str) -> list[DownloadCandidate]:
     soup = BeautifulSoup(html, "html.parser")
     scored: dict[str, int] = {}
-    target_norm = target_filename.lower()
 
     def add(raw_url: str | None, score: int) -> None:
-        url = _normal_url(raw_url or "", base_url)
+        url = _normal_url(raw_url, base_url)
         if url:
             scored[url] = max(score, scored.get(url, -1))
 
-    # The DANE catalogue is powered by NADA. Its data-dictionary link exposes a file ID
-    # (for example F3 for SIPSA_P-Mensual-2019); use the official study download route
-    # with that ID instead of guessing a ZIP URL from the displayed filename.
-    file_id = _discover_catalog_file_id(html, target_filename)
+    file_id = _file_id_from_catalog(html, target_filename)
     if file_id:
-        for raw in [
-            f"/index.php/catalog/776/download/{file_id}",
-            f"/index.php/catalog/776/download/FILE/{file_id}",
-        ]:
-            add(raw, 1000)
+        # Known NADA route variants. They are only accepted if the payload validates as ZIP.
+        add(f"/index.php/catalog/776/download/{file_id}", 1000)
+        add(f"/index.php/catalog/776/download/FILE/{file_id}", 1000)
+        add(f"/index.php/catalog/776/download/FILE?file_id={quote(file_id)}", 950)
+        add(f"/index.php/catalog/776/download?file_id={quote(file_id)}", 900)
 
-    # 1) Links with ZIP, download, or filename in the URL.
+    lower_target = target_filename.lower()
     for tag in soup.find_all(True):
-        attrs = " ".join(str(tag.attrs.get(k, "")) for k in ["href", "src", "onclick", "data-href", "data-url", "data-download-url"])
-        txt = tag.get_text(" ", strip=True) if hasattr(tag, "get_text") else ""
-        context = f"{attrs} {txt}".lower()
-        for attr in ["href", "src", "data-href", "data-url", "data-download-url"]:
-            val = tag.attrs.get(attr)
-            if isinstance(val, str):
-                val_low = val.lower()
-                score = 0
-                if target_norm in val_low:
-                    score += 100
-                # Do not queue unrelated ZIPs from another year in the same catalog.
-                # Links without the filename are discovered only inside the exact file block below.
-                if score:
-                    add(val, score)
+        for attr in (
+            "href", "src", "action", "formaction", "data-href", "data-url",
+            "data-download-url", "onclick", "value",
+        ):
+            value = tag.attrs.get(attr)
+            if not isinstance(value, str):
+                continue
+            if lower_target in value.lower() or (
+                "download" in value.lower() and has_target_in_context(tag, target_filename)
+            ):
+                extracted = re.findall(
+                    r"(?:https?://[^\s\"'<>]+|(?:/|\.\.?/)[^\s\"'<>]+)", value
+                )
+                for raw in (extracted if extracted else [value]):
+                    add(raw, 500 if lower_target in raw.lower() else 100)
 
-    # 2) Find the filename on the page and inspect nearest containers for related links/buttons.
-    for node in soup.find_all(string=re.compile(re.escape(target_filename), re.I)):
-        parent = node.parent
-        for depth in range(8):
-            if parent is None:
-                break
-            container_text = parent.get_text(" ", strip=True).lower()
-            if target_norm in container_text:
-                found_download_in_container = False
-                for elem in parent.find_all(True):
-                    element_text = elem.get_text(" ", strip=True).lower() if hasattr(elem, "get_text") else ""
-                    for attr in ["href", "src", "data-href", "data-url", "data-download-url", "onclick"]:
-                        val = elem.attrs.get(attr)
-                        if not isinstance(val, str):
-                            continue
-                        # onclick may include a quoted relative URL; extract URL-like substrings.
-                        extracted = re.findall(r"(?:https?://[^\s\"'<>]+|(?:/|\.\.?/)[^\s\"'<>]+)", val)
-                        candidates = extracted if attr == "onclick" and extracted else [val]
-                        for raw in candidates:
-                            lower = raw.lower()
-                            is_download_like = ("download" in lower or "descargar" in lower or ".zip" in lower
-                                                or target_norm in lower or "descargar" in element_text or "download" in element_text)
-                            if not is_download_like:
-                                continue
-                            score = 120 if target_norm in lower else 45
-                            add(raw, score)
-                            found_download_in_container = True
-                # Stop at the nearest file card/row once it exposes a download-like URL.
-                if found_download_in_container or parent.name in {"tr", "article", "section", "li"}:
-                    break
-            parent = parent.parent
-
-    # 3) Do not scan a broad page fragment for arbitrary URLs: that can associate another
-    # year's ZIP with the requested filename. Context-free fallback URLs are tried below
-    # and accepted only if they return a valid ZIP.
-
-    # 4) Version-tolerant guesses for common catalog download handlers. Each candidate is
-    # validated as an actual ZIP before being accepted; a HTML page is never treated as data.
     escaped = quote(target_filename)
-    guesses = [
+    escaped_stem = quote(Path(target_filename).stem)
+    for raw in [
         f"/index.php/catalog/776/download/FILE?file_name={escaped}",
         f"/index.php/catalog/776/download?file_name={escaped}",
         f"/index.php/catalog/776/download/FILE/{escaped}",
         f"/index.php/catalog/776/download/{escaped}",
+        f"/index.php/catalog/776/download/FILE?file_name={escaped_stem}",
         f"/index.php/catalog/776/get-microdata?file_name={escaped}",
-    ]
-    for raw in guesses:
+    ]:
         add(raw, 1)
+    return [
+        DownloadCandidate(method="GET", url=url, label=f"GET {url}")
+        for url, _ in sorted(scored.items(), key=lambda x: x[1], reverse=True)
+    ]
 
-    return [url for url, _ in sorted(scored.items(), key=lambda x: x[1], reverse=True)]
+
+def has_target_in_context(tag, target_filename: str) -> bool:
+    """Check the nearby HTML container to avoid accepting unrelated download links."""
+    tokens = _file_tokens(target_filename)
+    node = tag
+    for _ in range(4):
+        if node is None:
+            break
+        text = node.get_text(" ", strip=True) if hasattr(node, "get_text") else ""
+        attrs = " ".join(str(v) for v in getattr(node, "attrs", {}).values())
+        context = unquote(f"{text} {attrs}").lower()
+        compact = re.sub(r"[^a-z0-9]", "", context)
+        if any(token in context or token in compact for token in tokens):
+            return True
+        node = getattr(node, "parent", None)
+    return False
 
 
-def _download_and_validate(session: requests.Session, url: str, destination: Path, timeout: int = 120) -> bool:
-    """Download to a temporary path and accept only a valid ZIP archive."""
+def _request_and_validate(
+    session: requests.Session,
+    candidate: DownloadCandidate,
+    destination: Path,
+    timeout: int = 120,
+) -> tuple[bool, str]:
+    """Attempt one candidate, logging useful but non-sensitive response diagnostics."""
     tmp = destination.with_suffix(destination.suffix + ".part")
+    tmp.unlink(missing_ok=True)
+    response = None
     try:
-        with session.get(url, stream=True, timeout=timeout, allow_redirects=True) as response:
-            response.raise_for_status()
-            first = b""
-            with tmp.open("wb") as f:
-                for chunk in response.iter_content(chunk_size=1024 * 512):
+        kwargs = {"timeout": timeout, "allow_redirects": True, "stream": True}
+        if candidate.method == "POST":
+            kwargs["data"] = candidate.data
+        elif candidate.data:
+            kwargs["params"] = candidate.data
+        response = session.request(candidate.method, candidate.url, **kwargs)
+        status = response.status_code
+        final_url = response.url
+        content_type = response.headers.get("content-type", "")
+        disposition = response.headers.get("content-disposition", "")
+        response.raise_for_status()
+        with response:
+            iterator = response.iter_content(chunk_size=1024 * 512)
+            first = next((chunk for chunk in iterator if chunk), b"")
+            if not first.startswith((b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")):
+                sample = first[:180].decode("utf-8", errors="replace").replace("\n", " ").replace("\r", " ")
+                return False, (
+                    f"{candidate.label} -> HTTP {status}; content-type={content_type!r}; "
+                    f"URL final={final_url}; content-disposition={disposition!r}; "
+                    f"primeros bytes={first[:12]!r}; muestra={sample!r}"
+                )
+            size = 0
+            with tmp.open("wb") as output:
+                output.write(first)
+                size += len(first)
+                for chunk in iterator:
                     if not chunk:
                         continue
-                    if not first:
-                        first = chunk[:8]
-                    f.write(chunk)
-                    if f.tell() > 1_500_000_000:
+                    size += len(chunk)
+                    if size > MAX_ARCHIVE_BYTES:
                         raise RuntimeError("El archivo supera el límite de seguridad de 1,5 GB.")
-            if not first.startswith(b"PK\x03\x04") and not first.startswith(b"PK\x05\x06") and not first.startswith(b"PK\x07\x08"):
-                tmp.unlink(missing_ok=True)
-                return False
-            with zipfile.ZipFile(tmp) as zf:
-                bad_member = zf.testzip()
-                if bad_member:
-                    raise zipfile.BadZipFile(f"Miembro ZIP corrupto: {bad_member}")
-                if not zf.namelist():
-                    raise zipfile.BadZipFile("ZIP vacío")
-            tmp.replace(destination)
-            return True
-    except Exception:
+                    output.write(chunk)
+        with zipfile.ZipFile(tmp) as archive:
+            corrupt = archive.testzip()
+            if corrupt:
+                raise zipfile.BadZipFile(f"Miembro ZIP corrupto: {corrupt}")
+            if not archive.namelist():
+                raise zipfile.BadZipFile("ZIP vacío")
+        tmp.replace(destination)
+        return True, f"Descarga ZIP válida: {candidate.label} ({size:,} bytes)."
+    except Exception as exc:
         tmp.unlink(missing_ok=True)
-        return False
+        status_text = f"HTTP {response.status_code}" if response is not None else "sin respuesta HTTP"
+        final_url = getattr(response, "url", candidate.url) if response is not None else candidate.url
+        return False, f"{candidate.label} -> {status_text}; URL final={final_url}; error={type(exc).__name__}: {exc}"
+    finally:
+        if response is not None:
+            response.close()
 
 
-def download_sipsa_archives(start_year: int, end_year: int, cache_dir: str | Path, force: bool = False, progress=None) -> list[Path]:
-    """Download SIPSA-P ZIP files corresponding to selected years from DANE's public catalog.
-
-    The 2013–2017 archive is shared across five years. Subsequent archives are annual through 2024.
-    Existing verified ZIPs are reused unless force=True. Never creates synthetic observations.
-    """
+def download_sipsa_archives(
+    start_year: int,
+    end_year: int,
+    cache_dir: str | Path,
+    force: bool = False,
+    progress=None,
+) -> list[Path]:
+    """Download the official SIPSA-P ZIP archives from DANE's public catalog."""
     start_year, end_year = int(start_year), int(end_year)
     if start_year > end_year:
-        raise ValueError("El año inicial no puede ser mayor que el año final.")
+        raise ValueError("El año inicial no puede ser mayor que el final.")
     if start_year < 2013 or end_year > 2024:
-        raise ValueError("La ficha SIPSA-P consultada presenta archivos 2013–2024. Seleccione un intervalo dentro de ese rango.")
+        raise ValueError("La ficha SIPSA-P consultada presenta archivos 2013–2024.")
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     names = list(dict.fromkeys(archive_name_for_year(y) for y in range(start_year, end_year + 1)))
+
     session = requests.Session()
-    session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/html,application/zip,application/octet-stream,*/*"})
+    session.headers.update({
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/zip,application/octet-stream,*/*",
+        "Referer": DANE_CATALOG_URL,
+    })
     try:
         response = session.get(DANE_CATALOG_URL, timeout=45)
         response.raise_for_status()
         if "text/html" not in response.headers.get("content-type", "").lower():
-            raise RuntimeError("El catálogo DANE no devolvió una página HTML legible.")
+            raise RuntimeError("El catálogo DANE no devolvió HTML.")
         html = response.text
     except Exception as exc:
-        raise RuntimeError(f"No fue posible acceder al catálogo oficial SIPSA-P del DANE ({DANE_CATALOG_URL}): {exc}") from exc
+        raise RuntimeError(f"No fue posible acceder al catálogo oficial del DANE: {exc}") from exc
 
-    results = []
-    for idx, filename in enumerate(names, 1):
+    all_diagnostics: list[str] = []
+    results: list[Path] = []
+    for index, filename in enumerate(names, start=1):
         target = cache_dir / filename
         if target.exists() and target.stat().st_size > 1000 and not force:
             try:
-                with zipfile.ZipFile(target) as zf:
-                    if zf.testzip() is None and zf.namelist():
+                with zipfile.ZipFile(target) as archive:
+                    if archive.testzip() is None and archive.namelist():
                         results.append(target)
                         if progress:
-                            progress(idx / len(names), desc=f"Usando caché verificada: {filename}")
+                            progress(index / len(names), desc=f"Usando caché verificada: {filename}")
                         continue
             except Exception:
                 pass
             target.unlink(missing_ok=True)
 
-        candidates = _discover_candidate_urls(html, filename, DANE_CATALOG_URL)
+        # Submit matching catalogue forms first; then try direct routes.
+        candidates = _discover_form_candidates(html, filename, DANE_CATALOG_URL)
+        candidates.extend(_discover_get_candidates(html, filename, DANE_CATALOG_URL))
         found = False
-        for j, url in enumerate(candidates, 1):
+        for position, candidate in enumerate(candidates, start=1):
             if progress:
-                progress((idx - 1 + j / max(len(candidates), 1)) / len(names), desc=f"Buscando descarga oficial: {filename}")
-            if _download_and_validate(session, url, target):
+                progress(
+                    (index - 1 + position / max(len(candidates), 1)) / len(names),
+                    desc=f"Buscando descarga oficial: {filename} ({position}/{len(candidates)})",
+                )
+            ok, diagnostic = _request_and_validate(session, candidate, target)
+            all_diagnostics.append(f"[{filename}] {diagnostic}")
+            print(f"[SIPSA downloader] {diagnostic}")
+            if ok:
                 found = True
                 break
-            time.sleep(0.15)
+            time.sleep(0.1)
         if not found:
+            recent = "\n".join(all_diagnostics[-min(len(candidates), 12):])
             raise RuntimeError(
-                f"No fue posible encontrar una descarga ZIP verificable para {filename}. "
-                f"El catálogo oficial está disponible en {DANE_CATALOG_URL}. "
-                "Se detectaron rutas candidatas del catálogo, pero ninguna devolvió un ZIP válido. "
-                "Revise el registro de descarga y el mecanismo actual de NADA; la aplicación no usará datos sintéticos."
+                f"No fue posible descargar un ZIP verificable para {filename} desde el catálogo oficial. "
+                f"URL de catálogo: {DANE_CATALOG_URL}. Se probaron {len(candidates)} candidatos. "
+                "Resumen técnico de las respuestas:\n" + (recent or "No se detectaron rutas candidatas.") +
+                "\nEl proceso se detiene y no utiliza datos sintéticos."
             )
         results.append(target)
     return results
