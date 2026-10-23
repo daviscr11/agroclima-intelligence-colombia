@@ -469,6 +469,22 @@ def main() -> None:
     if raw.empty:
         raise RuntimeError("Los ZIP oficiales se descargaron, pero no se reconocieron observaciones en el rango solicitado.")
 
+    # A previous parser could silently discard DANE rows whose dates were stored as
+    # Spanish labels like "ene-24". Do not publish a newer JSON with a truncated range.
+    year_counts = raw["fecha"].dt.year.value_counts().to_dict()
+    missing_years = [year for year in range(START_YEAR, END_YEAR + 1) if not year_counts.get(year, 0)]
+    latest_observed_month = raw["fecha"].max().to_period("M").to_timestamp()
+    required_latest_month = pd.Timestamp(f"{END_YEAR}-12-01")
+    if missing_years or latest_observed_month < required_latest_month:
+        count_summary = {year: int(year_counts.get(year, 0)) for year in range(START_YEAR, END_YEAR + 1)}
+        raise RuntimeError(
+            "Cobertura SIPSA-P incompleta después de leer los archivos oficiales. "
+            f"Conteo de filas por año: {count_summary}; último mes reconocido: "
+            f"{latest_observed_month:%Y-%m}; se esperaba al menos {required_latest_month:%Y-%m}. "
+            "Se cancela la actualización para no publicar un JSON truncado. "
+            "Revise las filas [SIPSA audit] y la interpretación de la columna Fecha."
+        )
+
     start = pd.Timestamp(f"{START_YEAR}-01-01")
     raw_end = raw["fecha"].max().to_period("M").to_timestamp()
     configured_end = pd.Timestamp(f"{END_YEAR}-12-01")

@@ -41,11 +41,9 @@ MONTHS_ES = {
 }
 
 COLUMN_CANDIDATES = {
-    # En archivos SIPSA-P antiguos, la variable "Fuente" identifica el mercado
-    # informado. Si también existe "Mercado", el match exacto de "Mercado" gana.
-    "market": ["mercado", "nombre mercado", "mercado mayorista", "ciudad", "municipio", "nombre municipio", "nom mpio", "fuente", "fuente mercado"],
+    "market": ["mercado", "nombre mercado", "mercado mayorista", "ciudad", "municipio", "nombre municipio", "nom mpio"],
     "product": ["producto", "nombre producto", "producto nombre", "nom producto", "alimento"],
-    "price": ["precio promedio por kilogramo", "precio por kilogramo", "precio promedio por kilo", "precio por kilo", "precio promedio mensual", "precio promedio", "promedio precio", "precio medio", "precio", "valor precio"],
+    "price": ["precio promedio", "precio promedio mensual", "promedio precio", "precio medio", "precio", "valor precio"],
     "date": ["fecha", "fecha mes", "periodo", "periodo referencia", "fecha referencia"],
     "year": ["ano", "anio", "year", "vigencia"],
     "month": ["mes", "month", "mes referencia"],
@@ -104,90 +102,79 @@ def _parse_number(series: pd.Series) -> pd.Series:
 
 
 def _parse_date_column(series: pd.Series) -> pd.Series:
-    """Parsea fechas mensuales heterogéneas del DANE sin asumir un único formato.
+    """Parse dates in historic SIPSA tables, including Spanish labels such as ``ene-24``.
 
-    Soporta fechas Excel/Pandas, YYYYMM, YYYYMMDD, YYYY-MM, YYYY-M01/2024M01,
-    MM/YYYY, DD/MM/YYYY y meses en español. Devuelve el primer día del mes.
+    DANE's recent annual files store the reference month as a Spanish abbreviation plus a
+    two-digit year (e.g. ``ene-24``). Generic pandas/dateutil parsing does not reliably
+    recognize that form, so parse month-year labels explicitly before using date fallbacks.
+    Cached unique strings keep this inexpensive for large microdata files.
     """
-    s = series.copy()
-    out = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
+    month_lookup = {norm_text(name): int(number) for name, number in MONTHS_ES.items()}
 
-    # Las columnas que pandas ya leyó como fechas se preservan sin convertirlas a texto.
-    try:
-        if pd.api.types.is_datetime64_any_dtype(s):
-            return pd.to_datetime(s, errors="coerce").dt.to_period("M").dt.to_timestamp()
-    except Exception:
-        pass
+    def parse_one(value: Any) -> pd.Timestamp | pd.NaT:
+        if value is None or pd.isna(value):
+            return pd.NaT
+        raw = str(value).strip()
+        if not raw or raw.lower() in {"nan", "nat", "none", "null", "na"}:
+            return pd.NaT
+        ascii_value = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
+        clean = re.sub(r"\s+", " ", ascii_value.strip().lower())
 
-    # Reconocer números almacenados como fecha Excel o como códigos YYYYMM/YYYMMDD.
-    numeric = pd.to_numeric(s, errors="coerce")
-    numeric_mask = numeric.notna()
-    if numeric_mask.any():
-        n_as_int = numeric[numeric_mask].astype("Int64").astype(str)
-        idx = n_as_int.index
-        compact = n_as_int.str.strip()
-        m6 = compact.str.fullmatch(r"(?:19|20)\d{4}")
-        if m6.any():
-            vals = compact[m6]
-            out.loc[vals.index] = pd.to_datetime(vals, format="%Y%m", errors="coerce")
-        m8 = compact.str.fullmatch(r"(?:19|20)\d{6}")
-        if m8.any():
-            vals = compact[m8]
-            out.loc[vals.index] = pd.to_datetime(vals, format="%Y%m%d", errors="coerce")
-        # Seriales Excel habituales. Excluir enteros identificados arriba.
-        serial_mask = numeric_mask & out.isna() & numeric.between(30000, 70000)
-        if serial_mask.any():
-            out.loc[serial_mask] = pd.to_datetime(numeric[serial_mask], unit="D", origin="1899-12-30", errors="coerce")
+        # Month first: ene-24, septiembre 2024, set.24, etc.
+        match = re.fullmatch(r"([a-z]+)[\s./_-]+(\d{2,4})", clean)
+        if match:
+            month_token, year_token = match.groups()
+            month_num = month_lookup.get(norm_text(month_token))
+            if month_num:
+                year_num = int(year_token)
+                if len(year_token) == 2:
+                    year_num += 2000  # SIPSA-P catalogue years in this pipeline are 2013–2024.
+                try:
+                    return pd.Timestamp(year=year_num, month=month_num, day=1)
+                except ValueError:
+                    return pd.NaT
 
-    text = s.astype("string").str.strip()
-    text = text.replace({"": pd.NA, "nan": pd.NA, "NaT": pd.NA, "None": pd.NA, "<NA>": pd.NA})
-    pending = out.isna() & text.notna()
+        # Numeric month-year forms: 01-24, 01/2024, 2024-01.
+        match = re.fullmatch(r"(\d{1,2})[\s./_-]+(\d{2,4})", clean)
+        if match:
+            month_num, year_token = match.groups()
+            month_num = int(month_num)
+            year_num = int(year_token) + (2000 if len(year_token) == 2 else 0)
+            if 1 <= month_num <= 12:
+                try:
+                    return pd.Timestamp(year=year_num, month=month_num, day=1)
+                except ValueError:
+                    return pd.NaT
+        match = re.fullmatch(r"(\d{4})[\s./_-]+(\d{1,2})", clean)
+        if match:
+            year_num, month_num = int(match.group(1)), int(match.group(2))
+            if 1 <= month_num <= 12:
+                try:
+                    return pd.Timestamp(year=year_num, month=month_num, day=1)
+                except ValueError:
+                    return pd.NaT
 
-    # Fechas anuales-mensuales como 2024M01, 2024-M01, 2024/01, 202401.
-    compact = text.str.upper().str.replace(r"[\s._/\-]", "", regex=True)
-    compact = compact.str.replace("M", "", regex=False)
-    month_code = compact.str.fullmatch(r"(?:19|20)\d{2}(?:0[1-9]|1[0-2])", na=False) & pending
-    if month_code.any():
-        out.loc[month_code] = pd.to_datetime(compact[month_code], format="%Y%m", errors="coerce")
+        # Explicit numeric formats first to avoid ambiguous inference.
+        for fmt in (
+            "%Y%m", "%Y%m%d", "%d%m%Y", "%m/%Y", "%m-%Y", "%m-%y",
+            "%Y-%m", "%Y/%m", "%d/%m/%Y", "%d-%m-%Y", "%d/%m/%y",
+            "%d-%m-%y", "%Y-%m-%d", "%Y/%m/%d",
+        ):
+            parsed = pd.to_datetime(raw, format=fmt, errors="coerce", dayfirst=True)
+            if pd.notna(parsed):
+                return pd.Timestamp(parsed)
 
-    # Fechas compactas YYYYMMDD.
-    compact8 = text.str.replace(r"[^0-9]", "", regex=True)
-    day_code = compact8.str.fullmatch(r"(?:19|20)\d{6}", na=False) & out.isna() & text.notna()
-    if day_code.any():
-        out.loc[day_code] = pd.to_datetime(compact8[day_code], format="%Y%m%d", errors="coerce")
-
-    # Formatos mensuales MM/YYYY y MM-YYYY.
-    mm_yyyy = text.str.fullmatch(r"(?:0?[1-9]|1[0-2])[/\-](?:19|20)\d{2}", na=False) & out.isna() & text.notna()
-    if mm_yyyy.any():
-        vals = text[mm_yyyy].str.replace("-", "/", regex=False)
-        out.loc[mm_yyyy] = pd.to_datetime(vals, format="%m/%Y", errors="coerce")
-
-    # Meses en español: "enero 2024", "ene-2024", "2024 enero".
-    lowered = text.str.lower()
-    for month_name, month_number in MONTHS_ES.items():
-        lowered = lowered.str.replace(rf"\b{month_name}\b", f"{month_number:02d}", regex=True)
-    lowered_compact = lowered.str.replace(r"[\s._/\-]", "", regex=True)
-    lowered_compact = lowered_compact.str.replace("M", "", regex=False).str.replace("m", "", regex=False)
-    m_y = lowered.str.fullmatch(r"(?:0?[1-9]|1[0-2])[\s/\-]+(?:19|20)\d{2}", na=False) & out.isna() & text.notna()
-    if m_y.any():
-        vals = lowered[m_y].str.replace(r"[\s/\-]+", " ", regex=True)
-        out.loc[m_y] = pd.to_datetime(vals, format="%m %Y", errors="coerce")
-    y_m = lowered.str.fullmatch(r"(?:19|20)\d{2}[\s/\-]+(?:0?[1-9]|1[0-2])", na=False) & out.isna() & text.notna()
-    if y_m.any():
-        vals = lowered[y_m].str.replace(r"[\s/\-]+", " ", regex=True)
-        out.loc[y_m] = pd.to_datetime(vals, format="%Y %m", errors="coerce")
-
-    # Para fechas con día explícito (p. ej. 31/01/2024 o ISO) usar parser mixto,
-    # únicamente para las que aún no se reconocieron como mes/año.
-    remaining = out.isna() & text.notna()
-    if remaining.any():
+        # Fallback for Excel-like timestamps and other explicit ISO strings.
         try:
-            parsed = pd.to_datetime(text[remaining], errors="coerce", dayfirst=True, format="mixed")
-        except TypeError:  # compatibilidad con pandas previos a format='mixed'
-            parsed = pd.to_datetime(text[remaining], errors="coerce", dayfirst=True)
-        out.loc[remaining] = parsed
+            parsed = pd.to_datetime(raw, errors="coerce", dayfirst=True)
+            return pd.Timestamp(parsed) if pd.notna(parsed) else pd.NaT
+        except (TypeError, ValueError, OverflowError):
+            return pd.NaT
 
-    return pd.to_datetime(out, errors="coerce").dt.to_period("M").dt.to_timestamp()
+    raw_strings = series.astype(str)
+    parsed_cache = {value: parse_one(value) for value in raw_strings.unique()}
+    out = pd.to_datetime(raw_strings.map(parsed_cache), errors="coerce")
+    return out.dt.to_period("M").dt.to_timestamp()
 
 
 def _canonicalize_table(table: pd.DataFrame, source: str, column_map: Optional[Dict[str, Optional[str]]] = None) -> Optional[pd.DataFrame]:
@@ -222,19 +209,21 @@ def _canonicalize_table(table: pd.DataFrame, source: str, column_map: Optional[D
         dates = pd.to_datetime({"year": year, "month": month_num, "day": 1}, errors="coerce")
 
     price = _parse_number(table[mapped["price"]])
-
-    # En SIPSA-P, algunos años identifican la unidad directamente en el encabezado
-    # de precio (p. ej. "Precio_por_kilogramo"), sin una columna de unidad separada.
-    # Solo se infiere COP/kg cuando el encabezado lo declara explícitamente.
-    price_header = norm_text(mapped["price"])
-    inferred_unit = "COP/kg" if ("por kilogramo" in price_header or "por kilo" in price_header or re.search(r"\bkg\b", price_header)) else ""
-    if mapped["unit"]:
+    price_field_norm = norm_text(mapped["price"])
+    # Recent DANE annual files express the dependent variable explicitly as average price
+    # per kilogram and do not include a separate unit column. Treat the measurement unit as
+    # kilogram for those rows; this is grounded in the published variable name, not imputed.
+    price_is_per_kg = (
+        "por kilogramo" in price_field_norm
+        or "promedio kilogramo" in price_field_norm
+        or "por kg" in price_field_norm
+    )
+    if price_is_per_kg:
+        unit_values = pd.Series("Kilogramo", index=table.index, dtype="object")
+    elif mapped["unit"]:
         unit_values = table[mapped["unit"]].astype(str).str.strip()
-        unit_values = unit_values.replace({"nan": "", "None": "", "<NA>": ""})
-        if inferred_unit:
-            unit_values = unit_values.where(unit_values.ne(""), inferred_unit)
     else:
-        unit_values = pd.Series(inferred_unit, index=table.index, dtype="object")
+        unit_values = pd.Series("", index=table.index, dtype="object")
 
     out = pd.DataFrame({
         "fecha": dates,
