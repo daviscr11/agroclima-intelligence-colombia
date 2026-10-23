@@ -1,0 +1,836 @@
+{
+  "entries": {
+    "search|plaza de mercado de arauca arauca colombia": {
+      "status": "not_found",
+      "fetched_at": 1792791077.8293295,
+      "data": []
+    },
+    "reverse|7.08401|-70.75534": {
+      "status": "ok",
+      "fetched_at": 1792791079.353895,
+      "data": {
+        "place_id": 306983758,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 272216168,
+        "lat": "7.0840091",
+        "lon": "-70.7553402",
+        "category": "amenity",
+        "type": "marketplace",
+        "place_rank": 30,
+        "importance": 4.973754482333131e-05,
+        "addresstype": "amenity",
+        "name": "Plaza de Mercado",
+        "display_name": "Plaza de Mercado, Calle 19, Arauca, RAP Llanos, 810001, Colombia",
+        "address": {
+          "amenity": "Plaza de Mercado",
+          "road": "Calle 19",
+          "city": "Arauca",
+          "state": "Arauca",
+          "ISO3166-2-lvl4": "CO-ARA",
+          "region": "RAP Llanos",
+          "postcode": "810001",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Plaza de Mercado"
+        },
+        "boundingbox": [
+          "7.0838661",
+          "7.0841521",
+          "-70.7556432",
+          "-70.7550372"
+        ]
+      }
+    },
+    "search|mercar central mayorista de armenia quindio colombia": {
+      "status": "ok",
+      "fetched_at": 1792791080.860652,
+      "data": [
+        {
+          "place_id": 308975774,
+          "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+          "osm_type": "way",
+          "osm_id": 293128586,
+          "lat": "4.5282564",
+          "lon": "-75.7133036",
+          "category": "amenity",
+          "type": "marketplace",
+          "place_rank": 30,
+          "importance": 5.628213931482441e-05,
+          "addresstype": "amenity",
+          "name": "Mercar - Central Mayorista de Armenia",
+          "display_name": "Mercar - Central Mayorista de Armenia, Doble Calzada Armenia-Montenegro, Urbanización La Cecilia, Alfonso López, Comuna Alfonso López, Perímetro Urbano Armenia, Armenia, Capital, Quindío, RAP Eje Cafetero, 630002, Colombia",
+          "address": {
+            "amenity": "Mercar - Central Mayorista de Armenia",
+            "road": "Doble Calzada Armenia-Montenegro",
+            "neighbourhood": "Urbanización La Cecilia",
+            "suburb": "Alfonso López",
+            "city_district": "Comuna Alfonso López",
+            "city": "Perímetro Urbano Armenia",
+            "county": "Armenia",
+            "state_district": "Capital",
+            "state": "Quindío",
+            "ISO3166-2-lvl4": "CO-QUI",
+            "region": "RAP Eje Cafetero",
+            "postcode": "630002",
+            "country": "Colombia",
+            "country_code": "co"
+          },
+          "namedetails": {
+            "name": "Mercar - Central Mayorista de Armenia"
+          },
+          "boundingbox": [
+            "4.5274520",
+            "4.5291569",
+            "-75.7155614",
+            "-75.7110409"
+          ]
+        }
+      ]
+    },
+    "reverse|4.52830|-75.71330": {
+      "status": "ok",
+      "fetched_at": 1792791082.3628938,
+      "data": {
+        "place_id": 308261806,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "node",
+        "osm_id": 13076483926,
+        "lat": "4.5279060",
+        "lon": "-75.7124383",
+        "category": "shop",
+        "type": "greengrocer",
+        "place_rank": 30,
+        "importance": 5.628213931482441e-05,
+        "addresstype": "shop",
+        "name": "López",
+        "display_name": "López, Doble Calzada Armenia-Montenegro, Urbanización La Cecilia, Alfonso López, Comuna Alfonso López, Perímetro Urbano Armenia, Armenia, Capital, Quindío, RAP Eje Cafetero, 630002, Colombia",
+        "address": {
+          "shop": "López",
+          "road": "Doble Calzada Armenia-Montenegro",
+          "neighbourhood": "Urbanización La Cecilia",
+          "suburb": "Alfonso López",
+          "city_district": "Comuna Alfonso López",
+          "city": "Perímetro Urbano Armenia",
+          "county": "Armenia",
+          "state_district": "Capital",
+          "state": "Quindío",
+          "ISO3166-2-lvl4": "CO-QUI",
+          "region": "RAP Eje Cafetero",
+          "postcode": "630002",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "López"
+        },
+        "boundingbox": [
+          "4.5278560",
+          "4.5279560",
+          "-75.7124883",
+          "-75.7123883"
+        ]
+      }
+    },
+    "search|granabastos soledad atlantico colombia": {
+      "status": "ok",
+      "fetched_at": 1792791083.560399,
+      "data": [
+        {
+          "place_id": 304138595,
+          "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+          "osm_type": "way",
+          "osm_id": 201507633,
+          "lat": "10.8875042",
+          "lon": "-74.7991488",
+          "category": "landuse",
+          "type": "retail",
+          "place_rank": 24,
+          "importance": 0.08004778896772714,
+          "addresstype": "retail",
+          "name": "GranAbastos",
+          "display_name": "GranAbastos, Soledad, Atlántico, RAP Caribe, Colombia",
+          "address": {
+            "retail": "GranAbastos",
+            "town": "Soledad",
+            "state": "Atlántico",
+            "ISO3166-2-lvl4": "CO-ATL",
+            "region": "RAP Caribe",
+            "country": "Colombia",
+            "country_code": "co"
+          },
+          "namedetails": {
+            "name": "GranAbastos"
+          },
+          "boundingbox": [
+            "10.8826817",
+            "10.8926374",
+            "-74.8032989",
+            "-74.7942322"
+          ]
+        }
+      ]
+    },
+    "reverse|10.88766|-74.79877": {
+      "status": "ok",
+      "fetched_at": 1792791085.1266506,
+      "data": {
+        "place_id": 305436045,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 1103698268,
+        "lat": "10.8884956",
+        "lon": "-74.8014548",
+        "category": "leisure",
+        "type": "pitch",
+        "place_rank": 30,
+        "importance": 4.778896772712318e-05,
+        "addresstype": "leisure",
+        "name": "",
+        "display_name": "Calle 56, La Candelaria II, Soledad, Atlántico, RAP Caribe, 083010, Colombia",
+        "address": {
+          "road": "Calle 56",
+          "neighbourhood": "La Candelaria II",
+          "town": "Soledad",
+          "state": "Atlántico",
+          "ISO3166-2-lvl4": "CO-ATL",
+          "region": "RAP Caribe",
+          "postcode": "083010",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": null,
+        "boundingbox": [
+          "10.8882239",
+          "10.8887627",
+          "-74.8016961",
+          "-74.8012081"
+        ]
+      }
+    },
+    "search|mercado barranquillita barranquilla atlantico colombia": {
+      "status": "ok",
+      "fetched_at": 1792791086.6402857,
+      "data": [
+        {
+          "place_id": 308735768,
+          "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+          "osm_type": "way",
+          "osm_id": 709619879,
+          "lat": "10.9817725",
+          "lon": "-74.7742428",
+          "category": "amenity",
+          "type": "marketplace",
+          "place_rank": 30,
+          "importance": 6.592736705572622e-05,
+          "addresstype": "amenity",
+          "name": "Mercado Barranquillita",
+          "display_name": "Mercado Barranquillita, Carrera 43, Barranquillita, Localidad Norte - Centro Histórico, Perímetro Urbano Barranquilla, Barranquilla, Atlántico, RAP Caribe, 080003, Colombia",
+          "address": {
+            "amenity": "Mercado Barranquillita",
+            "road": "Carrera 43",
+            "neighbourhood": "Barranquillita",
+            "city_district": "Localidad Norte - Centro Histórico",
+            "city": "Perímetro Urbano Barranquilla",
+            "county": "Barranquilla",
+            "state": "Atlántico",
+            "ISO3166-2-lvl4": "CO-ATL",
+            "region": "RAP Caribe",
+            "postcode": "080003",
+            "country": "Colombia",
+            "country_code": "co"
+          },
+          "namedetails": {
+            "name": "Mercado Barranquillita"
+          },
+          "boundingbox": [
+            "10.9815506",
+            "10.9819945",
+            "-74.7743601",
+            "-74.7741255"
+          ]
+        }
+      ]
+    },
+    "reverse|10.98177|-74.77424": {
+      "status": "ok",
+      "fetched_at": 1792791088.0354075,
+      "data": {
+        "place_id": 308406685,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 709619879,
+        "lat": "10.9817725",
+        "lon": "-74.7742428",
+        "category": "amenity",
+        "type": "marketplace",
+        "place_rank": 30,
+        "importance": 6.592736705572622e-05,
+        "addresstype": "amenity",
+        "name": "Mercado Barranquillita",
+        "display_name": "Mercado Barranquillita, Carrera 43, Barranquillita, Localidad Norte - Centro Histórico, Perímetro Urbano Barranquilla, Barranquilla, Atlántico, RAP Caribe, 080003, Colombia",
+        "address": {
+          "amenity": "Mercado Barranquillita",
+          "road": "Carrera 43",
+          "neighbourhood": "Barranquillita",
+          "city_district": "Localidad Norte - Centro Histórico",
+          "city": "Perímetro Urbano Barranquilla",
+          "county": "Barranquilla",
+          "state": "Atlántico",
+          "ISO3166-2-lvl4": "CO-ATL",
+          "region": "RAP Caribe",
+          "postcode": "080003",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Mercado Barranquillita"
+        },
+        "boundingbox": [
+          "10.9815506",
+          "10.9819945",
+          "-74.7743601",
+          "-74.7741255"
+        ]
+      }
+    },
+    "search|corabastos bogota colombia": {
+      "status": "ok",
+      "fetched_at": 1792791089.5249279,
+      "data": [
+        {
+          "place_id": 309991244,
+          "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+          "osm_type": "relation",
+          "osm_id": 11350664,
+          "lat": "4.6311179",
+          "lon": "-74.1612580",
+          "category": "boundary",
+          "type": "administrative",
+          "place_rank": 18,
+          "importance": 0.16007831921873805,
+          "addresstype": "quarter",
+          "name": "UPZ Corabastos",
+          "display_name": "UPZ Corabastos, Localidad Kennedy, Bogotá ciudad, Bogotá, Distrito Capital, RAP (Especial) Central, Colombia",
+          "address": {
+            "quarter": "UPZ Corabastos",
+            "suburb": "Localidad Kennedy",
+            "city": "Bogotá ciudad",
+            "state": "Bogotá, Distrito Capital",
+            "ISO3166-2-lvl4": "CO-DC",
+            "region": "RAP (Especial) Central",
+            "country": "Colombia",
+            "country_code": "co"
+          },
+          "namedetails": {
+            "ref": "80",
+            "name": "UPZ Corabastos",
+            "name:es": "UPZ Corabastos",
+            "_place_name": "Corabastos",
+            "_place_name:es": "Corabastos",
+            "short_name": "UPZ Corabastos",
+            "official_name": "Unidad de Planeamiento Zonal Corabastos"
+          },
+          "boundingbox": [
+            "4.6210362",
+            "4.6405825",
+            "-74.1707571",
+            "-74.1535681"
+          ]
+        }
+      ]
+    },
+    "reverse|4.63069|-74.15916": {
+      "status": "ok",
+      "fetched_at": 1792791090.823858,
+      "data": {
+        "place_id": 309993750,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "node",
+        "osm_id": 9112370053,
+        "lat": "4.6306901",
+        "lon": "-74.1591579",
+        "category": "amenity",
+        "type": "marketplace",
+        "place_rank": 30,
+        "importance": 7.831921873803338e-05,
+        "addresstype": "amenity",
+        "name": "Corabastos",
+        "display_name": "Corabastos, Avenida Carrera 80, UPZs de Bogotá, Localidad Kennedy, Bogotá ciudad, Bogotá, Distrito Capital, RAP (Especial) Central, 110851, Colombia",
+        "address": {
+          "amenity": "Corabastos",
+          "road": "Avenida Carrera 80",
+          "neighbourhood": "UPZs de Bogotá",
+          "suburb": "Localidad Kennedy",
+          "city": "Bogotá ciudad",
+          "state": "Bogotá, Distrito Capital",
+          "ISO3166-2-lvl4": "CO-DC",
+          "region": "RAP (Especial) Central",
+          "postcode": "110851",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Corabastos"
+        },
+        "boundingbox": [
+          "4.6306401",
+          "4.6307401",
+          "-74.1592079",
+          "-74.1591079"
+        ]
+      }
+    },
+    "search|centroabastos bucaramanga santander colombia": {
+      "status": "ok",
+      "fetched_at": 1792791092.0584462,
+      "data": [
+        {
+          "place_id": 306171074,
+          "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+          "osm_type": "way",
+          "osm_id": 836205854,
+          "lat": "7.1032407",
+          "lon": "-73.1677486",
+          "category": "amenity",
+          "type": "marketplace",
+          "place_rank": 30,
+          "importance": 2.8699931334355954e-05,
+          "addresstype": "amenity",
+          "name": "Central de Abastos de Bucaramanga - CentroAbastos",
+          "display_name": "Central de Abastos de Bucaramanga - CentroAbastos, Autopista Chimitá, Río de Oro I, Comuna 4 - Occidental, Perímetro Urbano Bucaramanga, Bucaramanga, Metropolitana, Santander, RAP Gran Santander, 687541, Colombia",
+          "address": {
+            "amenity": "Central de Abastos de Bucaramanga - CentroAbastos",
+            "road": "Autopista Chimitá",
+            "neighbourhood": "Río de Oro I",
+            "suburb": "Comuna 4 - Occidental",
+            "city": "Perímetro Urbano Bucaramanga",
+            "county": "Bucaramanga",
+            "state_district": "Metropolitana",
+            "state": "Santander",
+            "ISO3166-2-lvl4": "CO-SAN",
+            "region": "RAP Gran Santander",
+            "postcode": "687541",
+            "country": "Colombia",
+            "country_code": "co"
+          },
+          "namedetails": {
+            "name": "Central de Abastos de Bucaramanga - CentroAbastos"
+          },
+          "boundingbox": [
+            "7.1005102",
+            "7.1058748",
+            "-73.1709649",
+            "-73.1649656"
+          ]
+        }
+      ]
+    },
+    "reverse|7.10319|-73.16797": {
+      "status": "ok",
+      "fetched_at": 1792791093.5671399,
+      "data": {
+        "place_id": 308807305,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 836205854,
+        "lat": "7.1032407",
+        "lon": "-73.1677486",
+        "category": "amenity",
+        "type": "marketplace",
+        "place_rank": 30,
+        "importance": 2.8699931334355954e-05,
+        "addresstype": "amenity",
+        "name": "Central de Abastos de Bucaramanga - CentroAbastos",
+        "display_name": "Central de Abastos de Bucaramanga - CentroAbastos, Autopista Chimitá, Río de Oro I, Comuna 4 - Occidental, Perímetro Urbano Bucaramanga, Bucaramanga, Metropolitana, Santander, RAP Gran Santander, 687541, Colombia",
+        "address": {
+          "amenity": "Central de Abastos de Bucaramanga - CentroAbastos",
+          "road": "Autopista Chimitá",
+          "neighbourhood": "Río de Oro I",
+          "suburb": "Comuna 4 - Occidental",
+          "city": "Perímetro Urbano Bucaramanga",
+          "county": "Bucaramanga",
+          "state_district": "Metropolitana",
+          "state": "Santander",
+          "ISO3166-2-lvl4": "CO-SAN",
+          "region": "RAP Gran Santander",
+          "postcode": "687541",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Central de Abastos de Bucaramanga - CentroAbastos"
+        },
+        "boundingbox": [
+          "7.1005102",
+          "7.1058748",
+          "-73.1709649",
+          "-73.1649656"
+        ]
+      }
+    },
+    "search|galeria de pueblo nuevo plaza de mercado jose hilario lopez buenaventura valle del cauca colombia": {
+      "status": "not_found",
+      "fetched_at": 1792791095.3120055,
+      "data": []
+    },
+    "reverse|3.88291|-77.07397": {
+      "status": "ok",
+      "fetched_at": 1792791096.9028459,
+      "data": {
+        "place_id": 307993176,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 1179886650,
+        "lat": "3.8829086",
+        "lon": "-77.0740080",
+        "category": "building",
+        "type": "commercial",
+        "place_rank": 30,
+        "importance": 5.428168154416751e-05,
+        "addresstype": "building",
+        "name": "Galeria de Peublo Nuevo",
+        "display_name": "Galeria de Peublo Nuevo, k 8b, Calle 2, Centenario, Localidad Isla Cascajal, Buenaventura urbana, Buenaventura, Valle del Cauca, RAP Pacífico, 746501, Colombia",
+        "address": {
+          "building": "Galeria de Peublo Nuevo",
+          "house_number": "k 8b",
+          "road": "Calle 2",
+          "neighbourhood": "Centenario",
+          "suburb": "Localidad Isla Cascajal",
+          "city_district": "Buenaventura urbana",
+          "city": "Buenaventura",
+          "state": "Valle del Cauca",
+          "ISO3166-2-lvl4": "CO-VAC",
+          "region": "RAP Pacífico",
+          "postcode": "746501",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Galeria de Peublo Nuevo"
+        },
+        "boundingbox": [
+          "3.8826164",
+          "3.8832113",
+          "-77.0742431",
+          "-77.0736928"
+        ]
+      }
+    },
+    "search|cavasa central de abastecimientos del valle del cauca candelaria colombia": {
+      "status": "not_found",
+      "fetched_at": 1792791098.2957878,
+      "data": []
+    },
+    "reverse|3.41259|-76.41383": {
+      "status": "ok",
+      "fetched_at": 1792791099.5778544,
+      "data": {
+        "place_id": 308081057,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "relation",
+        "osm_id": 17709930,
+        "lat": "3.4125917",
+        "lon": "-76.4138299",
+        "category": "amenity",
+        "type": "marketplace",
+        "place_rank": 30,
+        "importance": 4.697413595783959e-05,
+        "addresstype": "amenity",
+        "name": "Central de Avastecimientos del Valle del Cauca S.A. (CAVASA)",
+        "display_name": "Central de Avastecimientos del Valle del Cauca S.A. (CAVASA), Via Florida, El Carmelo, Candelaria, Sur, Valle del Cauca, RAP Pacífico, 763577, Colombia",
+        "address": {
+          "amenity": "Central de Avastecimientos del Valle del Cauca S.A. (CAVASA)",
+          "road": "Via Florida",
+          "village": "El Carmelo",
+          "town": "Candelaria",
+          "state_district": "Sur",
+          "state": "Valle del Cauca",
+          "ISO3166-2-lvl4": "CO-VAC",
+          "region": "RAP Pacífico",
+          "postcode": "763577",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Central de Avastecimientos del Valle del Cauca S.A. (CAVASA)",
+          "name:es": "Central de Avastecimientos del Valle del Cauca S.A. (CAVASA)",
+          "short_name": "CAVASA"
+        },
+        "boundingbox": [
+          "3.4103900",
+          "3.4146260",
+          "-76.4175083",
+          "-76.4094698"
+        ]
+      }
+    },
+    "search|mercado de bazurto cartagena bolivar colombia": {
+      "status": "ok",
+      "fetched_at": 1792791100.9506717,
+      "data": [
+        {
+          "place_id": 307677238,
+          "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+          "osm_type": "way",
+          "osm_id": 94687123,
+          "lat": "10.4126304",
+          "lon": "-75.5246392",
+          "category": "landuse",
+          "type": "retail",
+          "place_rank": 24,
+          "importance": 0.08006611963073164,
+          "addresstype": "retail",
+          "name": "Mercado de Bazurto",
+          "display_name": "Mercado de Bazurto, Barrio Chino, Cartagena de Indias, Dique, Bolívar, RAP Caribe, Colombia",
+          "address": {
+            "retail": "Mercado de Bazurto",
+            "suburb": "Barrio Chino",
+            "city": "Cartagena de Indias",
+            "state_district": "Dique",
+            "state": "Bolívar",
+            "ISO3166-2-lvl4": "CO-BOL",
+            "region": "RAP Caribe",
+            "country": "Colombia",
+            "country_code": "co"
+          },
+          "namedetails": {
+            "name": "Mercado de Bazurto"
+          },
+          "boundingbox": [
+            "10.4112726",
+            "10.4137488",
+            "-75.5262276",
+            "-75.5230050"
+          ]
+        },
+        {
+          "place_id": 307507228,
+          "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+          "osm_type": "way",
+          "osm_id": 49612080,
+          "lat": "10.4122362",
+          "lon": "-75.5248119",
+          "category": "building",
+          "type": "yes",
+          "place_rank": 30,
+          "importance": 6.61196307316246e-05,
+          "addresstype": "building",
+          "name": "Mercado de Bazurto",
+          "display_name": "Mercado de Bazurto, Calle 29B, Barrio Chino, Cartagena de Indias, Dique, Bolívar, RAP Caribe, 130015, Colombia",
+          "address": {
+            "building": "Mercado de Bazurto",
+            "road": "Calle 29B",
+            "neighbourhood": "Barrio Chino",
+            "suburb": "Barrio Chino",
+            "city": "Cartagena de Indias",
+            "state_district": "Dique",
+            "state": "Bolívar",
+            "ISO3166-2-lvl4": "CO-BOL",
+            "region": "RAP Caribe",
+            "postcode": "130015",
+            "country": "Colombia",
+            "country_code": "co"
+          },
+          "namedetails": {
+            "name": "Mercado de Bazurto"
+          },
+          "boundingbox": [
+            "10.4119407",
+            "10.4124634",
+            "-75.5252861",
+            "-75.5243448"
+          ]
+        }
+      ]
+    },
+    "reverse|10.41251|-75.52462": {
+      "status": "ok",
+      "fetched_at": 1792791102.3763824,
+      "data": {
+        "place_id": 308532651,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "node",
+        "osm_id": 8443037317,
+        "lat": "10.4131901",
+        "lon": "-75.5247698",
+        "category": "shop",
+        "type": "beauty",
+        "place_rank": 30,
+        "importance": 6.61196307316246e-05,
+        "addresstype": "shop",
+        "name": "Uñas Las Venezolanas",
+        "display_name": "Uñas Las Venezolanas, Calle 22C Bis, Barrio Chino, Cartagena de Indias, Dique, Bolívar, RAP Caribe, 130015, Colombia",
+        "address": {
+          "shop": "Uñas Las Venezolanas",
+          "road": "Calle 22C Bis",
+          "neighbourhood": "Barrio Chino",
+          "suburb": "Barrio Chino",
+          "city": "Cartagena de Indias",
+          "state_district": "Dique",
+          "state": "Bolívar",
+          "ISO3166-2-lvl4": "CO-BOL",
+          "region": "RAP Caribe",
+          "postcode": "130015",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Uñas Las Venezolanas",
+          "name:en": "Las Venezolanas Nails",
+          "name:es": "Uñas Las Venezolanas",
+          "name:fr": "Ongles Las Venezolanas"
+        },
+        "boundingbox": [
+          "10.4131401",
+          "10.4132401",
+          "-75.5248198",
+          "-75.5247198"
+        ]
+      }
+    },
+    "search|plaza de mercado de cartago valle del cauca colombia": {
+      "status": "not_found",
+      "fetched_at": 1792791103.84938,
+      "data": []
+    },
+    "reverse|4.74729|-75.91592": {
+      "status": "ok",
+      "fetched_at": 1792791105.1837158,
+      "data": {
+        "place_id": 307873036,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 527112588,
+        "lat": "4.7472475",
+        "lon": "-75.9159203",
+        "category": "highway",
+        "type": "secondary",
+        "place_rank": 26,
+        "importance": 0.05338443961242081,
+        "addresstype": "secondary",
+        "name": "Carrera 7",
+        "display_name": "Carrera 7, El Palatino, Comuna 4, Cabecera Municipal Cartago, Cartago, Norte, Valle del Cauca, RAP Pacífico, Colombia",
+        "address": {
+          "road": "Carrera 7",
+          "neighbourhood": "El Palatino",
+          "city_district": "Comuna 4",
+          "city": "Cabecera Municipal Cartago",
+          "county": "Cartago",
+          "state_district": "Norte",
+          "state": "Valle del Cauca",
+          "ISO3166-2-lvl4": "CO-VAC",
+          "region": "RAP Pacífico",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Carrera 7"
+        },
+        "boundingbox": [
+          "4.7471202",
+          "4.7472857",
+          "-75.9185766",
+          "-75.9124957"
+        ]
+      }
+    },
+    "search|plaza de mercado de chiquinquira boyaca colombia": {
+      "status": "not_found",
+      "fetched_at": 1792791106.610841,
+      "data": []
+    },
+    "reverse|5.61408|-73.81997": {
+      "status": "ok",
+      "fetched_at": 1792791108.1421773,
+      "data": {
+        "place_id": 308612271,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 99645269,
+        "lat": "5.6141344",
+        "lon": "-73.8199107",
+        "category": "amenity",
+        "type": "marketplace",
+        "place_rank": 30,
+        "importance": 5.370946822304139e-05,
+        "addresstype": "amenity",
+        "name": "Centro de Acopio y Mercadeo",
+        "display_name": "Centro de Acopio y Mercadeo, Avenida Carrera 9, Boyacá, Occidental, Chiquinquirá, Occidente, Boyacá, RAP (Especial) Central, 154640, Colombia",
+        "address": {
+          "amenity": "Centro de Acopio y Mercadeo",
+          "road": "Avenida Carrera 9",
+          "neighbourhood": "Boyacá",
+          "quarter": "Occidental",
+          "town": "Chiquinquirá",
+          "state_district": "Occidente",
+          "state": "Boyacá",
+          "ISO3166-2-lvl4": "CO-BOY",
+          "region": "RAP (Especial) Central",
+          "postcode": "154640",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Centro de Acopio y Mercadeo"
+        },
+        "boundingbox": [
+          "5.6130375",
+          "5.6151303",
+          "-73.8207517",
+          "-73.8191829"
+        ]
+      }
+    },
+    "search|cenabastos cucuta norte de santander colombia": {
+      "status": "not_found",
+      "fetched_at": 1792791109.6159337,
+      "data": []
+    },
+    "reverse|7.92524|-72.49234": {
+      "status": "ok",
+      "fetched_at": 1792791111.140272,
+      "data": {
+        "place_id": 310153788,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "node",
+        "osm_id": 587671358,
+        "lat": "7.9257583",
+        "lon": "-72.4924883",
+        "category": "shop",
+        "type": "supermarket",
+        "place_rank": 30,
+        "importance": 6.0255588616724154e-05,
+        "addresstype": "shop",
+        "name": "",
+        "display_name": "Avenida 2, Los Azafranes, Comuna 6 - Norte, Perímetro Urbano Cúcuta, Cúcuta, Oriental, Norte de Santander, RAP Gran Santander, 540002, Colombia",
+        "address": {
+          "road": "Avenida 2",
+          "neighbourhood": "Los Azafranes",
+          "city_district": "Comuna 6 - Norte",
+          "city": "Perímetro Urbano Cúcuta",
+          "county": "Cúcuta",
+          "state_district": "Oriental",
+          "state": "Norte de Santander",
+          "ISO3166-2-lvl4": "CO-NSA",
+          "region": "RAP Gran Santander",
+          "postcode": "540002",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": null,
+        "boundingbox": [
+          "7.9257083",
+          "7.9258083",
+          "-72.4925383",
+          "-72.4924383"
+        ]
+      }
+    }
+  },
+  "version": 2,
+  "source": "OpenStreetMap Nominatim; datos sujetos a ODbL",
+  "updated_at": "2026-10-23T21:31:51.140277+00:00"
+}
