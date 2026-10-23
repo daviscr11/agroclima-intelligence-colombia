@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+from difflib import SequenceMatcher
 import os
 import re
 import sys
@@ -36,7 +37,7 @@ USER_AGENT = os.getenv(
     "AgroClimaIntelligenceColombia/1.1 (+https://github.com/DavisCR/agroclima-intelligence-colombia)",
 )
 ONLINE_CHECK = os.getenv("AGROCLIMA_COORD_ONLINE_CHECK", "1").strip().lower() not in {"0", "false", "no"}
-REQUEST_INTERVAL_SECONDS = max(1.05, float(os.getenv("AGROCLIMA_COORD_REQUEST_INTERVAL", "1.1")))
+REQUEST_INTERVAL_SECONDS = max(15.1, float(os.getenv("AGROCLIMA_COORD_REQUEST_INTERVAL", "15.1")))
 CACHE_TTL_DAYS = int(os.getenv("AGROCLIMA_COORD_CACHE_TTL_DAYS", "90"))
 MAX_FORWARD_DISTANCE_KM = float(os.getenv("AGROCLIMA_COORD_MAX_DISTANCE_KM", "1.0"))
 
@@ -54,11 +55,11 @@ MARKET_RULES: list[dict[str, Any]] = [
     {"key": "barranquilla barranquillita", "query": "Mercado Barranquillita, Barranquilla, Atlantico, Colombia", "facility_terms": ["barranquillita", "mercado barranquillita"], "localities": ["barranquilla"]},
     {"key": "bogota d c corabastos", "query": "Corabastos, Bogota, Colombia", "facility_terms": ["corabastos"], "localities": ["bogota"]},
     {"key": "bucaramanga centroabastos", "query": "Centroabastos, Bucaramanga, Santander, Colombia", "facility_terms": ["centroabastos", "centro abastos", "central de abastos de bucaramanga"], "localities": ["bucaramanga"]},
-    {"key": "buenaventura valle del cauca", "query": "Galeria de Pueblo Nuevo Plaza de Mercado Jose Hilario Lopez, Buenaventura, Valle del Cauca, Colombia", "facility_terms": ["galeria de pueblo nuevo", "pueblo nuevo", "jose hilario lopez", "plaza de mercado"], "localities": ["buenaventura"]},
+    {"key": "buenaventura valle del cauca", "query": "Galeria de Pueblo Nuevo Plaza de Mercado Jose Hilario Lopez, Buenaventura, Valle del Cauca, Colombia", "facility_terms": ["galeria de pueblo nuevo", "pueblo nuevo", "jose hilario lopez", "plaza de mercado jose hilario lopez"], "localities": ["buenaventura"]},
     {"key": "cali cavasa", "query": "CAVASA Central de Abastecimientos del Valle del Cauca, Candelaria, Colombia", "facility_terms": ["cavasa", "central de abastecimientos del valle"], "localities": ["candelaria", "cali"]},
     {"key": "cartagena bazurto", "query": "Mercado de Bazurto, Cartagena, Bolivar, Colombia", "facility_terms": ["bazurto", "mercado de bazurto"], "localities": ["cartagena"]},
     {"key": "cartago valle del cauca", "query": "Plaza de Mercado de Cartago, Valle del Cauca, Colombia", "facility_terms": ["plaza de mercado de cartago", "mercado de cartago", "plaza de mercado"], "localities": ["cartago"]},
-    {"key": "chiquinquira boyaca", "query": "Plaza de Mercado de Chiquinquira, Boyaca, Colombia", "facility_terms": ["plaza de mercado de chiquinquira", "mercado de chiquinquira", "plaza de mercado"], "localities": ["chiquinquira"]},
+    {"key": "chiquinquira boyaca", "query": "Plaza de Mercado de Chiquinquira, Boyaca, Colombia", "facility_terms": ["centro de acopio y mercadeo", "centro de acopio", "plaza de mercado de chiquinquira", "mercado de chiquinquira", "plaza de mercado"], "localities": ["chiquinquira"]},
     {"key": "cucuta cenabastos", "query": "Cenabastos, Cucuta, Norte de Santander, Colombia", "facility_terms": ["cenabastos", "central de abastos de cucuta"], "localities": ["cucuta"]},
 ]
 
@@ -243,43 +244,122 @@ def choose_search_candidate(candidates: list[dict[str, Any]], rule: dict[str, An
     return scored[0][2]
 
 
+# Clasificación de objetos OSM: las categorías pueden variar entre objetos.
+ADMIN_OR_LINEAR_TYPES = {
+    ("boundary", "administrative"), ("highway", "secondary"), ("highway", "tertiary"),
+    ("highway", "primary"), ("highway", "residential"), ("highway", "service"),
+    ("place", "suburb"), ("place", "neighbourhood"), ("place", "city"),
+}
+MARKET_FEATURE_TYPES = {
+    ("amenity", "marketplace"), ("amenity", "market"),
+    ("landuse", "retail"), ("building", "commercial"),
+    ("shop", "wholesale"), ("shop", "marketplace"),
+}
+NON_MARKET_NEAR_TYPES = {
+    "bank", "school", "university", "college", "clothes", "waste_transfer_station",
+    "hospital", "clinic", "place_of_worship", "fuel", "restaurant", "cafe",
+    "fast_food", "hotel", "pharmacy", "police", "post_office", "kindergarten",
+    "beauty", "beauty_salon", "greengrocer", "supermarket", "convenience",
+}
+
+
+def term_match(text: str, terms: list[str]) -> bool:
+    """Matcha alias exacto o errata menor en el nombre; evita difuminado de frases genéricas."""
+    text_norm = norm(text)
+    words = text_norm.split()
+    for raw_term in terms:
+        term = norm(raw_term)
+        if not term:
+            continue
+        if term in text_norm:
+            return True
+        term_words = term.split()
+        # Fuzzy matching solo para alias suficientemente distintivos; no para "plaza de mercado".
+        if len(term_words) < 3 or term in {"plaza de mercado", "mercado", "plaza"}:
+            continue
+        low, high = max(2, len(term_words) - 1), len(term_words) + 1
+        for size in range(low, high + 1):
+            for start in range(0, max(0, len(words) - size + 1)):
+                window = " ".join(words[start:start + size])
+                if SequenceMatcher(None, term, window).ratio() >= 0.84:
+                    return True
+    return False
+
+
+def is_market_feature(item: dict[str, Any] | None, identity_match: bool) -> bool:
+    """Indica que el objeto es compatible con una instalación mercantil, sin inferir por cercanía sola."""
+    if not isinstance(item, dict):
+        return False
+    category = norm(item.get("category", ""))
+    feature_type = norm(item.get("type", ""))
+    if (category, feature_type) in MARKET_FEATURE_TYPES:
+        return True
+    # Algunos recintos están mapeados como terrenos comerciales en vez de marketplace.
+    if identity_match and category == "landuse" and feature_type in {"retail", "commercial"}:
+        return True
+    if identity_match and category == "building" and feature_type in {"commercial", "retail"}:
+        return True
+    # Una coincidencia textual en un límite administrativo o una vía no equivale al mercado físico.
+    if (category, feature_type) in ADMIN_OR_LINEAR_TYPES or category in {"boundary", "highway"}:
+        return False
+    return bool(identity_match and feature_type in {"marketplace", "market", "wholesale"})
+
+
+def safe_km(value: float | None) -> str | float:
+    return round(float(value), 3) if value is not None and math.isfinite(float(value)) else ""
+
+
 def inspect_market(name: str, lat: float, lon: float, source: str, precision: str,
                    client: NominatimClient | None, duplicate_name: bool, duplicate_coord: bool) -> dict[str, Any]:
+    """Clasifica evidencia de identidad del mercado y riesgo de ubicación, sin mover coordenadas."""
     issues: list[str] = []
-    status = "REVISAR"
-    if not name:
+    name_clean = str(name or "").strip()
+    precision_text = str(precision or "")
+    source_text = str(source or "")
+
+    if not name_clean:
         issues.append("Nombre de mercado vacío")
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         issues.append("Coordenadas fuera de los límites geográficos globales")
-        return {"estado": "ERROR", "nivel_evidencia": "nulo", "observaciones": " | ".join(issues)}
+        return {
+            "estado": "ERROR", "nivel_evidencia": "nula",
+            "prioridad_revision": "ALTA", "diagnostico_automatico": "Las coordenadas no son numéricamente válidas.",
+            "observaciones": " | ".join(issues),
+        }
     if not (LAT_MIN <= lat <= LAT_MAX and LON_MIN <= lon <= LON_MAX):
         issues.append("Coordenadas fuera del rango territorial aproximado de Colombia")
-        return {"estado": "ERROR", "nivel_evidencia": "nulo", "observaciones": " | ".join(issues)}
+        return {
+            "estado": "ERROR", "nivel_evidencia": "nula",
+            "prioridad_revision": "ALTA", "diagnostico_automatico": "Las coordenadas están fuera del rango geográfico de control.",
+            "observaciones": " | ".join(issues),
+        }
+
     if duplicate_name:
         issues.append("Nombre de mercado duplicado en el CSV")
     if duplicate_coord:
         issues.append("La coordenada se repite en otra fila; confirmar si es intencional")
-    precision_norm = norm(precision)
+
+    precision_norm = norm(precision_text)
     flagged_approx = any(norm(word) in precision_norm for word in APPROX_WORDS)
     if flagged_approx:
-        issues.append("La ficha declara que el punto es aproximado o necesita confirmación")
+        issues.append("La ficha de coordenadas declara que el punto es aproximado o requiere confirmación")
 
-    rule = get_rule(name)
+    rule = get_rule(name_clean)
     search_item = None
     reverse_item = None
     search_note = reverse_note = "Consulta en línea desactivada"
     search_distance = reverse_distance = None
     search_text = search_category = search_type = search_locality = ""
     reverse_text = reverse_category = reverse_type = reverse_locality = ""
-    identity_match = locality_match = reverse_locality_match = False
-    reverse_unrelated_near = False
-    reverse_suspicious_type = False
+    search_name_match = search_locality_match = False
+    reverse_name_match = reverse_locality_match = False
+    search_physical_market = reverse_physical_market = False
     any_online_evidence = False
 
     if client is not None:
         if rule is None:
-            search_note = "No hay alias configurado para este nombre; se evita una búsqueda ambigua"
-            issues.append("Añadir alias de instalación específico para mejorar la búsqueda por nombre")
+            search_note = "No hay alias de instalación configurado; se evita una búsqueda ambigua por ciudad"
+            issues.append("Añadir alias específico para reforzar la búsqueda por nombre")
         else:
             candidates, search_note = client.search(rule["query"])
             search_item = choose_search_candidate(candidates, rule, lat, lon)
@@ -292,17 +372,23 @@ def inspect_market(name: str, lat: float, lon: float, source: str, precision: st
                 search_coords = item_coords(search_item)
                 if search_coords:
                     search_distance = haversine_km(lat, lon, *search_coords)
-                candidate_norm = norm(address_text(search_item))
-                identity_match = any(norm(term) in candidate_norm for term in rule.get("facility_terms", []))
-                locality_match = any(norm(term) in candidate_norm for term in rule.get("localities", []))
-                if not identity_match:
-                    issues.append("La búsqueda por nombre no encontró una coincidencia clara con la instalación esperada")
+                candidate_text = address_text(search_item)
+                search_name_match = term_match(candidate_text, rule.get("facility_terms", []))
+                search_locality_match = any(
+                    norm(term) in norm(candidate_text + " " + search_locality)
+                    for term in rule.get("localities", [])
+                )
+                search_physical_market = is_market_feature(search_item, search_name_match)
+                if not search_name_match:
+                    issues.append("El resultado por nombre no contiene un alias claro de la instalación esperada")
+                elif not search_physical_market:
+                    issues.append("El resultado por nombre coincide textualmente, pero el objeto OSM es administrativo/no físico o no confirma el mercado")
                 if search_distance is not None and search_distance > MAX_FORWARD_DISTANCE_KM:
-                    issues.append(f"El resultado de búsqueda de la instalación está a {search_distance:.2f} km del punto guardado")
-                if not locality_match:
-                    issues.append("La localidad esperada no aparece claramente en el resultado de búsqueda")
+                    issues.append(f"El resultado de búsqueda está a {search_distance:.2f} km de la coordenada guardada")
+                if not search_locality_match:
+                    issues.append("La localidad esperada no queda confirmada en el resultado de búsqueda")
             else:
-                issues.append("No se encontró candidato por nombre de instalación en Nominatim")
+                issues.append("La búsqueda por nombre no devolvió un candidato identificable")
 
         reverse_item, reverse_note = client.reverse(lat, lon)
         if reverse_item:
@@ -314,53 +400,119 @@ def inspect_market(name: str, lat: float, lon: float, source: str, precision: st
             reverse_coords = item_coords(reverse_item)
             if reverse_coords:
                 reverse_distance = haversine_km(lat, lon, *reverse_coords)
-            if rule:
-                reverse_locality_match = any(norm(term) in norm(reverse_text + " " + reverse_locality) for term in rule.get("localities", []))
-                if not reverse_locality_match:
-                    issues.append("La dirección inversa no confirma claramente la localidad esperada")
-            if reverse_type in NON_MARKET_TYPES:
-                reverse_suspicious_type = True
-                reverse_unrelated_near = reverse_distance is not None and reverse_distance <= 0.15
-                if reverse_unrelated_near:
-                    issues.append(f"En las coordenadas exactas, Nominatim devuelve un objeto de tipo '{reverse_type}', no una central/plaza mayorista")
+            reverse_full_text = address_text(reverse_item)
+            reverse_name_match = bool(rule and term_match(reverse_full_text, rule.get("facility_terms", [])))
+            reverse_locality_match = bool(rule and any(
+                norm(term) in norm(reverse_full_text + " " + reverse_locality)
+                for term in rule.get("localities", [])
+            ))
+            reverse_physical_market = is_market_feature(reverse_item, reverse_name_match)
+            if rule and not reverse_locality_match:
+                issues.append("La geocodificación inversa no confirma claramente la localidad esperada")
+            if reverse_name_match and reverse_physical_market:
+                issues.append("La consulta inversa identifica un objeto compatible con el mercado en el punto o su proximidad inmediata")
+            elif reverse_physical_market:
+                issues.append("La consulta inversa devuelve una categoría compatible con mercado, pero el nombre no confirma inequívocamente la instalación")
+            elif reverse_type in NON_MARKET_NEAR_TYPES or reverse_category in {"highway", "boundary"}:
+                if reverse_distance is not None and reverse_distance <= 0.025:
+                    issues.append(f"El objeto inverso es '{reverse_type or reverse_category}' a unos {reverse_distance*1000:.0f} m: riesgo de que el marcador caiga sobre una vía/objeto vecino")
                 else:
-                    issues.append(f"El objeto más cercano figura como '{reverse_type}'; puede ser un predio vecino y requiere revisión")
-        else:
-            issues.append("No hubo resultado de geocodificación inversa para las coordenadas exactas")
+                    issues.append(f"El objeto inverso más cercano es '{reverse_type or reverse_category}', que no confirma por sí solo la identidad del mercado")
+            else:
+                issues.append("El objeto inverso no aporta identidad clara del mercado")
 
-    # Nunca convertir el mero rango territorial en una validación positiva.
+    # Evidencia positiva requiere identidad y proximidad, no solo coordenadas dentro de Colombia.
+    reverse_market_evidence = (
+        reverse_item is not None and reverse_name_match and reverse_physical_market
+        and reverse_locality_match and reverse_distance is not None and reverse_distance <= 0.15
+    )
+    forward_market_evidence = (
+        search_item is not None and search_name_match and search_physical_market
+        and search_locality_match and search_distance is not None and search_distance <= 0.10
+    )
+    strong_identity = reverse_market_evidence or forward_market_evidence
+    locality_conflict = bool(
+        rule and any_online_evidence
+        and ((search_item is not None and not search_locality_match)
+             or (reverse_item is not None and not reverse_locality_match))
+    )
+    reverse_is_unrelated_near = bool(
+        reverse_item is not None and not reverse_physical_market
+        and reverse_distance is not None and reverse_distance <= 0.025
+    )
     duplicate_problem = duplicate_name or duplicate_coord
+
     if client is None:
         status, evidence = "NO VERIFICABLE", "solo controles geométricos"
-        issues.append("La comprobación en línea no se ejecutó; no puede verificarse el lugar real")
+        diagnosis = "No se consultó la fuente geográfica externa; solo se revisó la forma de las coordenadas."
     elif not any_online_evidence:
         status, evidence = "NO VERIFICABLE", "sin evidencia externa"
-        issues.append("No hay evidencia externa suficiente para pronunciarse sobre la ubicación")
-    elif identity_match and search_distance is not None and search_distance <= 0.25 and locality_match \
-            and reverse_item is not None and reverse_locality_match \
-            and not reverse_suspicious_type and not reverse_unrelated_near \
-            and not flagged_approx and not duplicate_problem:
-        status, evidence = "COINCIDENCIA PROBABLE", "alta, pero no certificada"
-        issues.append("Nombre de instalación, localidad y proximidad son compatibles; confirmar visualmente sobre mapa")
+        diagnosis = "OpenStreetMap no devolvió evidencia suficiente para evaluar la identidad del mercado."
+    elif strong_identity and not locality_conflict and not duplicate_problem:
+        status, evidence = "COINCIDENCIA PROBABLE", "identidad y proximidad compatibles; no certificada"
+        if reverse_market_evidence and forward_market_evidence:
+            diagnosis = "La búsqueda por nombre y la consulta inversa coinciden en un objeto compatible con el mercado y la localidad."
+        elif reverse_market_evidence:
+            diagnosis = "La consulta inversa identifica un objeto compatible con el mercado en la localidad esperada, aunque la búsqueda directa no haya encontrado un candidato físico."
+        else:
+            diagnosis = "La búsqueda por nombre identifica la instalación física muy cerca del punto; la consulta inversa puede estar devolviendo un comercio vecino."
     else:
-        status, evidence = "REVISAR", "parcial o contradictoria"
-        if reverse_unrelated_near:
-            issues.append("Prioridad alta: revisar el marcador exacto sobre cartografía")
-        elif identity_match and search_distance is not None and search_distance <= 1:
-            issues.append("La instalación aparece cerca, pero no hay evidencia suficiente para validar el punto exacto")
-        elif not identity_match:
-            issues.append("La validación automática no pudo vincular inequívocamente el punto con el mercado SIPSA")
+        status, evidence = "REVISAR", "parcial, contradictoria o insuficiente"
+        if reverse_category == "highway" and not search_physical_market and not reverse_name_match:
+            diagnosis = "La coordenada queda junto a una vía y no hay evidencia directa que vincule el punto con la plaza/central; revisar visualmente en el mapa."
+        elif reverse_is_unrelated_near and not forward_market_evidence:
+            diagnosis = "La consulta inversa devuelve un objeto distinto muy cerca y no se confirmó la instalación por nombre; riesgo alto de punto desplazado o mal identificado."
+        elif reverse_item is not None and not reverse_physical_market and not forward_market_evidence and reverse_distance is not None and reverse_distance <= 0.10:
+            diagnosis = f"La consulta inversa devuelve un objeto de tipo '{reverse_type or reverse_category}' a unos {reverse_distance*1000:.0f} m, pero no identifica el mercado. La proximidad no confirma ni descarta la coordenada; revisar el recinto en cartografía."
+        elif search_name_match and search_distance is not None and search_distance > 0.10:
+            diagnosis = "El resultado con nombre parecido está a más de 100 m; confirmar si la coordenada representa el recinto, una entrada o una referencia cercana."
+        elif not search_physical_market and not reverse_market_evidence:
+            diagnosis = "No hay un objeto físico de mercado claramente identificado en las respuestas; las coincidencias de localidad/nombre no bastan."
+        else:
+            diagnosis = "Hay evidencia parcial, metadatos de aproximación o discrepancias entre el objeto buscado y el objeto inverso; necesita revisión cartográfica."
+
+    if duplicate_problem or locality_conflict:
+        priority = "ALTA"
+    elif status == "ERROR":
+        priority = "ALTA"
+    elif status == "NO VERIFICABLE":
+        priority = "MEDIA"
+    elif status == "REVISAR":
+        priority = "ALTA" if reverse_is_unrelated_near or (
+            reverse_category == "highway" and not search_physical_market
+        ) else "MEDIA"
+    elif flagged_approx or (reverse_item is not None and not reverse_physical_market) or (
+        search_item is not None and search_name_match and not search_physical_market
+    ):
+        priority = "MEDIA"
+    else:
+        priority = "BAJA"
+
+    if flagged_approx and status == "COINCIDENCIA PROBABLE":
+        diagnosis += " La ficha original aún la describe como aproximada; mantener confirmación visual."
+    if status == "COINCIDENCIA PROBABLE":
+        issues.append("Esta etiqueta indica evidencia automática favorable; no reemplaza la comprobación visual ni una fuente oficial.")
+    if duplicate_problem:
+        issues.append("Resolver duplicidad antes de dar por aprobada la ubicación.")
+    if locality_conflict:
+        issues.append("La discrepancia de localidad eleva la prioridad de revisión.")
 
     return {
         "estado": status,
         "nivel_evidencia": evidence,
-        "distancia_busqueda_km": round(search_distance, 3) if search_distance is not None else "",
+        "prioridad_revision": priority,
+        "diagnostico_automatico": diagnosis,
+        "distancia_busqueda_km": safe_km(search_distance),
         "nombre_busqueda_osm": search_text,
         "categoria_busqueda_osm": search_category,
         "tipo_busqueda_osm": search_type,
-        "coincide_nombre_instalacion": "sí" if identity_match else "no" if search_item else "sin resultado",
+        "coincide_nombre_instalacion": (
+            "sí; objeto físico compatible" if search_name_match and search_physical_market
+            else "sí; objeto no físico/ambiguo" if search_name_match
+            else "no" if search_item else "sin resultado"
+        ),
         "localidad_busqueda_osm": search_locality,
-        "distancia_objeto_reverse_km": round(reverse_distance, 3) if reverse_distance is not None else "",
+        "distancia_objeto_reverse_km": safe_km(reverse_distance),
         "lugar_cercano_a_coordenada": reverse_text,
         "categoria_reverse_osm": reverse_category,
         "tipo_reverse_osm": reverse_type,
@@ -412,16 +564,21 @@ def main() -> None:
         print(f"[{i + 1}/{len(df)}] {market}: {audit.get('estado', 'REVISAR')}")
 
     result = pd.DataFrame(rows)
-    # Ordenar severidad para que los problemas más relevantes salgan al principio del CSV.
-    order = {"ERROR": 0, "REVISAR": 1, "NO VERIFICABLE": 2, "COINCIDENCIA PROBABLE": 3}
-    result["_orden"] = result["estado"].map(order).fillna(9)
-    result = result.sort_values(["_orden", "mercado"]).drop(columns="_orden")
+    # Prioriza acciones: errores y riesgos altos primero; las coincidencias probables quedan después.
+    priority_order = {"ALTA": 0, "MEDIA": 1, "BAJA": 2}
+    status_order = {"ERROR": 0, "REVISAR": 1, "NO VERIFICABLE": 2, "COINCIDENCIA PROBABLE": 3}
+    result["_orden_prioridad"] = result["prioridad_revision"].map(priority_order).fillna(9)
+    result["_orden_estado"] = result["estado"].map(status_order).fillna(9)
+    result = result.sort_values(["_orden_prioridad", "_orden_estado", "mercado"]).drop(
+        columns=["_orden_prioridad", "_orden_estado"]
+    )
     result.to_csv(REPORT_FILE, index=False, encoding="utf-8-sig")
     counts = result["estado"].value_counts().to_dict()
     print(f"\nInforme generado: {REPORT_FILE}")
     print("Resumen:", counts)
     print(f"Caché persistente: {CACHE_FILE}")
-    print("Las coordenadas originales NO se han modificado. Una coincidencia probable no equivale a verificación oficial.")
+    print("Las coordenadas originales NO se han modificado. 'COINCIDENCIA PROBABLE' no equivale a verificación oficial.")
+    print("Revise primero prioridad_revision=ALTA; después MEDIA. La geocodificación inversa puede devolver objetos vecinos.")
 
 
 if __name__ == "__main__":
