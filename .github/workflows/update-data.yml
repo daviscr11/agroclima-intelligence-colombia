@@ -39,6 +39,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Probar formatos de fecha y unidad SIPSA-P
+        run: python -m unittest discover -s tests -v
+
       - name: Descargar datos y estimar modelo
         env:
           AGROCLIMA_FORCE_REFRESH: "1"
