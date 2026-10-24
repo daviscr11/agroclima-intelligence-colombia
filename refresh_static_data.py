@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from dane_auto import DANE_CATALOG_URL, download_sipsa_archives
+from sipsa_audit_report import SipsaAuditCollector, assert_selected_products_scale
 from agroclima_spvarx_real import (
     norm_text,
     load_sipsa_data,
@@ -444,7 +445,10 @@ def main() -> None:
             if extracted.is_dir():
                 shutil.rmtree(extracted, ignore_errors=True)
     archives = download_sipsa_archives(START_YEAR, END_YEAR, RAW_DIR, force=force_refresh)
-    raw, audit = load_sipsa_data(RAW_DIR)
+    sipsa_scale_min = float(os.getenv("AGROCLIMA_SIPSA_AUDIT_MIN_SCALE_RATIO", "0.1"))
+    sipsa_scale_max = float(os.getenv("AGROCLIMA_SIPSA_AUDIT_MAX_SCALE_RATIO", "10"))
+    sipsa_audit_collector = SipsaAuditCollector(RAW_DIR, START_YEAR, END_YEAR, sipsa_scale_min, sipsa_scale_max)
+    raw, audit = load_sipsa_data(RAW_DIR, table_audit_callback=sipsa_audit_collector.capture_table)
     raw["fecha"] = pd.to_datetime(raw["fecha"], errors="coerce").dt.to_period("M").dt.to_timestamp()
     raw = raw[raw["fecha"].between(f"{START_YEAR}-01-01", f"{END_YEAR}-12-31")].copy()
     # Auditoría explícita de qué archivos y años logró leer el parser SIPSA.
@@ -469,6 +473,11 @@ def main() -> None:
     if raw.empty:
         raise RuntimeError("Los ZIP oficiales se descargaron, pero no se reconocieron observaciones en el rango solicitado.")
 
+    # Genera trazabilidad de las fuentes antes de seleccionar productos/modelar.
+    # El generador reconcilia canónicas antes/después de deduplicar; si no cuadra, falla.
+    sipsa_audit_paths = sipsa_audit_collector.write(canonical_raw=raw, output_dir=DATA_DIR)
+    print("[SIPSA audit] Trazabilidad detallada generada correctamente.")
+
     # A previous parser could silently discard DANE rows whose dates were stored as
     # Spanish labels like "ene-24". Do not publish a newer JSON with a truncated range.
     year_counts = raw["fecha"].dt.year.value_counts().to_dict()
@@ -491,6 +500,13 @@ def main() -> None:
     end = min(raw_end, configured_end)
     chosen, monthly, balanced_prices, market_names, dates, summary = choose_best_pair(raw, start, end)
     product_names = [x["producto"] for x in chosen]
+    assert_selected_products_scale(
+        sipsa_audit_paths["year_product_csv"],
+        product_names,
+        min_ratio=sipsa_scale_min,
+        max_ratio=sipsa_scale_max,
+    )
+    print(f"[SIPSA audit] Control interanual de escala superado para los productos seleccionados ({sipsa_scale_min:g}–{sipsa_scale_max:g}).")
     unit_map = {x["producto"]: x["unidad"] for x in chosen}
     variety_map = {x["producto"]: x["variedad"] for x in chosen if norm_text(x["variedad"])}
 

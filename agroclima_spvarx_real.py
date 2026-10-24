@@ -23,7 +23,7 @@ import unicodedata
 import zipfile
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -344,11 +344,17 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
                 yield str(path), frame
 
 
-def load_sipsa_data(raw_dir: str | Path, column_map: Optional[Dict[str, Optional[str]]] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Lee archivos públicos descargados de SIPSA-P y devuelve filas canónicas + auditoría.
+def load_sipsa_data(
+    raw_dir: str | Path,
+    column_map: Optional[Dict[str, Optional[str]]] = None,
+    table_audit_callback: Optional[Callable[[str, pd.DataFrame, Optional[pd.DataFrame]], None]] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Lee archivos SIPSA-P y devuelve filas canónicas + auditoría resumida.
 
     No realiza imputación ni crea observaciones. COLUMN_MAP permite fijar los nombres exactos
-    de las columnas cuando la estructura del ZIP cambia.
+    de las columnas cuando la estructura del ZIP cambia. `table_audit_callback`, si se aporta,
+    recibe una vez cada tabla ya leída junto con sus filas canónicas (o None si no se reconoce),
+    evitando volver a leer los archivos para generar auditorías detalladas.
     """
     raw_dir = Path(raw_dir)
     if not raw_dir.exists():
@@ -357,6 +363,8 @@ def load_sipsa_data(raw_dir: str | Path, column_map: Optional[Dict[str, Optional
     frames, audit = [], []
     for source, table in _iter_tables(raw_dir):
         canonical = _canonicalize_table(table, source, column_map)
+        if table_audit_callback is not None:
+            table_audit_callback(source, table, canonical)
         if canonical is not None and not canonical.empty:
             frames.append(canonical)
             audit.append({"archivo_hoja": source, "filas_canonicas": len(canonical), "mercados": canonical["mercado"].nunique(), "productos": canonical["producto"].nunique(), "fecha_min": canonical["fecha"].min(), "fecha_max": canonical["fecha"].max()})
