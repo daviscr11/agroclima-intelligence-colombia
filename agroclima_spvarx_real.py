@@ -23,7 +23,7 @@ import unicodedata
 import zipfile
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -86,17 +86,41 @@ def _resolve_col(columns: Sequence[Any], role: str, column_map: Optional[Dict[st
 
 
 def _parse_number(series: pd.Series) -> pd.Series:
-    """Convierte números con formato decimal colombiano sin reinterpretar decimales con punto."""
+    """Parsea números y precios SIPSA con separadores de miles/decimales.
+
+    En archivos oficiales SIPSA-P hay precios en texto como ``2.947`` que significan
+    2.947 pesos (dos mil novecientos cuarenta y siete), no 2,947 pesos decimales.
+    Los puntos/comas que agrupan exactamente tres dígitos se interpretan como separadores
+    de miles. Se conservan decimales genuinos como ``2.5`` y formatos mixtos como
+    ``1.234,56`` o ``1,234.56``.
+    """
     if pd.api.types.is_numeric_dtype(series):
         return pd.to_numeric(series, errors="coerce")
-    s = series.astype(str).str.strip().str.replace("$", "", regex=False).str.replace(" ", "", regex=False)
+
+    s = (series.astype(str).str.strip()
+         .str.replace("$", "", regex=False)
+         .str.replace(" ", "", regex=False))
+    missing = s.str.lower().isin({"", "nan", "nat", "none", "null", "na", "<na>"})
+    s.loc[missing] = np.nan
+
     both = s.str.contains(",", na=False) & s.str.contains(r"\.", na=False)
-    comma_only = s.str.contains(",", na=False) & ~s.str.contains(r"\.", na=False)
-    # Si hay punto y coma, en la mayor parte de los formatos locales el último separador es decimal.
     comma_decimal = both & (s.str.rfind(",") > s.str.rfind("."))
     dot_decimal = both & ~comma_decimal
-    s.loc[comma_decimal] = s.loc[comma_decimal].str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
+
+    # Formatos mixtos: eliminar el separador de miles y convertir el decimal a punto.
+    s.loc[comma_decimal] = (s.loc[comma_decimal]
+                            .str.replace(".", "", regex=False)
+                            .str.replace(",", ".", regex=False))
     s.loc[dot_decimal] = s.loc[dot_decimal].str.replace(",", "", regex=False)
+
+    # Separador único con grupos de tres dígitos: es miles, no decimal.
+    dot_grouping = s.str.fullmatch(r"[+-]?\d{1,3}(?:\.\d{3})+", na=False)
+    comma_grouping = s.str.fullmatch(r"[+-]?\d{1,3}(?:,\d{3})+", na=False)
+    s.loc[dot_grouping] = s.loc[dot_grouping].str.replace(".", "", regex=False)
+    s.loc[comma_grouping] = s.loc[comma_grouping].str.replace(",", "", regex=False)
+
+    # Coma única no reconocida como agrupación: decimal, p. ej. ``2,5``.
+    comma_only = s.str.contains(",", na=False) & ~s.str.contains(r"\.", na=False)
     s.loc[comma_only] = s.loc[comma_only].str.replace(",", ".", regex=False)
     return pd.to_numeric(s, errors="coerce")
 
@@ -210,28 +234,14 @@ def _canonicalize_table(table: pd.DataFrame, source: str, column_map: Optional[D
 
     price = _parse_number(table[mapped["price"]])
     price_field_norm = norm_text(mapped["price"])
-    # DANE uses a per-kilogram price field in the recent annual files. In the published
-    # 2022-2024 feed, these values appear on a 1-999 scale (e.g. ~2.5 for produce), whereas
-    # the historical feed is expressed on a peso scale (~2,500). Normalize the recent
-    # series to COP/kg before combining years. The value-range guard avoids multiplying
-    # again if a future DANE download already comes in pesos.
+    # Recent DANE annual files express the dependent variable explicitly as average price
+    # per kilogram and do not include a separate unit column. Treat the measurement unit as
+    # kilogram for those rows; this is grounded in the published variable name, not imputed.
     price_is_per_kg = (
         "por kilogramo" in price_field_norm
         or "promedio kilogramo" in price_field_norm
         or "por kg" in price_field_norm
     )
-    price_scale_factor = 1.0
-    source_years = re.findall(r"(?<!\d)(20\d{2})(?!\d)", str(source))
-    source_year = int(source_years[-1]) if source_years else None
-    valid_prices = price[np.isfinite(price) & (price > 0)]
-    median_price = float(valid_prices.median()) if not valid_prices.empty else np.nan
-    if price_is_per_kg and source_year is not None and source_year >= 2022:
-        if np.isfinite(median_price) and 0 < median_price < 100:
-            price = price * 1000.0
-            price_scale_factor = 1000.0
-        elif np.isfinite(median_price) and median_price >= 100:
-            # Already expressed in COP/kg; don't double-scale.
-            price_scale_factor = 1.0
     if price_is_per_kg:
         unit_values = pd.Series("Kilogramo", index=table.index, dtype="object")
     elif mapped["unit"]:
@@ -247,7 +257,6 @@ def _canonicalize_table(table: pd.DataFrame, source: str, column_map: Optional[D
         "unidad": unit_values,
         "variedad": table[mapped["variety"]].astype(str).str.strip() if mapped["variety"] else "",
         "fuente_archivo": str(source),
-        "factor_escala_precio": price_scale_factor,
     })
     out = out[out["fecha"].notna() & out["precio"].notna() & (out["precio"] > 0)].copy()
     out = out[out["mercado"].notna() & out["producto"].notna()]
@@ -279,6 +288,18 @@ def _extract_archives(raw_dir: Path) -> None:
 
 
 def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
+    """Lee tablas SIPSA priorizando el CSV/TXT cuando existe su exportación equivalente.
+
+    Algunas entregas anuales de DANE contienen el mismo registro en CSV y Stata (.dta).
+    En casos como SIPSA-P 2024, el CSV conserva el token de precio como ``2.733`` (2.733
+    pesos, con punto de miles), mientras que el .dta almacena ese mismo token como float
+    ``2.733``. Si se corrige el CSV y se suma también el .dta, ambos registros pasan a
+    parecer observaciones distintas y la media queda aproximadamente a la mitad.
+
+    Por ello, si hay un CSV/TXT con el mismo nombre base normalizado en la misma carpeta,
+    se considera la representación textual como fuente primaria y se omite el .dta duplicado.
+    El .dta sigue siendo un respaldo cuando no hay archivo CSV/TXT equivalente.
+    """
     exts = {".csv", ".txt", ".xlsx", ".xls", ".dta"}
     for path in raw_dir.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in exts:
@@ -286,6 +307,18 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
         if path.name.startswith("~$") or path.name == ".done":
             continue
         if path.suffix.lower() == ".dta":
+            # Exports like ``mensual 24.csv`` and ``Mensual_24.dta`` share a normalized
+            # basename. Keep only the textual version so price tokens are parsed once.
+            normalized_stem = norm_text(path.stem)
+            text_sibling = any(
+                sibling.is_file()
+                and sibling.suffix.lower() in {".csv", ".txt"}
+                and norm_text(sibling.stem) == normalized_stem
+                for sibling in path.parent.iterdir()
+            )
+            if text_sibling:
+                print(f"SIPSA: se omite exportación Stata duplicada {path.name}; se prioriza CSV/TXT equivalente.")
+                continue
             try:
                 yield str(path), pd.read_stata(path)
             except Exception as exc:
@@ -302,7 +335,7 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
             frame = None
             for encoding in ["utf-8-sig", "latin-1", "cp1252"]:
                 try:
-                    frame = pd.read_csv(path, sep=None, engine="python", encoding=encoding)
+                    frame = pd.read_csv(path, sep=None, engine="python", encoding=encoding, dtype=str)
                     if frame.shape[1] > 1:
                         break
                 except Exception:
@@ -311,11 +344,17 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
                 yield str(path), frame
 
 
-def load_sipsa_data(raw_dir: str | Path, column_map: Optional[Dict[str, Optional[str]]] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Lee archivos públicos descargados de SIPSA-P y devuelve filas canónicas + auditoría.
+def load_sipsa_data(
+    raw_dir: str | Path,
+    column_map: Optional[Dict[str, Optional[str]]] = None,
+    table_audit_callback: Optional[Callable[[str, pd.DataFrame, Optional[pd.DataFrame]], None]] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Lee archivos SIPSA-P y devuelve filas canónicas + auditoría resumida.
 
     No realiza imputación ni crea observaciones. COLUMN_MAP permite fijar los nombres exactos
-    de las columnas cuando la estructura del ZIP cambia.
+    de las columnas cuando la estructura del ZIP cambia. `table_audit_callback`, si se aporta,
+    recibe una vez cada tabla ya leída junto con sus filas canónicas (o None si no se reconoce),
+    evitando volver a leer los archivos para generar auditorías detalladas.
     """
     raw_dir = Path(raw_dir)
     if not raw_dir.exists():
@@ -324,22 +363,11 @@ def load_sipsa_data(raw_dir: str | Path, column_map: Optional[Dict[str, Optional
     frames, audit = [], []
     for source, table in _iter_tables(raw_dir):
         canonical = _canonicalize_table(table, source, column_map)
+        if table_audit_callback is not None:
+            table_audit_callback(source, table, canonical)
         if canonical is not None and not canonical.empty:
             frames.append(canonical)
-            audit.append({
-                "archivo_hoja": source,
-                "filas_canonicas": len(canonical),
-                "mercados": canonical["mercado"].nunique(),
-                "productos": canonical["producto"].nunique(),
-                "fecha_min": canonical["fecha"].min(),
-                "fecha_max": canonical["fecha"].max(),
-                "factor_escala_precio": float(canonical["factor_escala_precio"].iloc[0]),
-            })
-            if canonical["factor_escala_precio"].iloc[0] == 1000.0:
-                print(
-                    f"[SIPSA escala] {source}: valores per kg normalizados de miles de COP "
-                    "a COP/kg (factor x1000)."
-                )
+            audit.append({"archivo_hoja": source, "filas_canonicas": len(canonical), "mercados": canonical["mercado"].nunique(), "productos": canonical["producto"].nunique(), "fecha_min": canonical["fecha"].min(), "fecha_max": canonical["fecha"].max()})
         else:
             # Informar una muestra de esquemas que requieren mapeo manual.
             if len(audit) < 8:
