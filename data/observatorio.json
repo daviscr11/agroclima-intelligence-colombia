@@ -1,9 +1,9 @@
 {
   "status": "ready",
-  "generated_at": "2026-10-24T00:43:46.729059+00:00",
+  "generated_at": "2026-10-24T19:47:00.137158+00:00",
   "message": "Datos oficiales procesados; revise las notas metodológicas antes de interpretar los resultados.",
   "metadata": {
-    "generated_at": "2026-10-24T00:43:46.729059+00:00",
+    "generated_at": "2026-10-24T19:47:00.137158+00:00",
     "start_date": "2019-01",
     "end_date": "2024-12",
     "n_markets": 12,
@@ -26,10 +26,10 @@
       "method": "KNN haversine simétrico",
       "k": 4,
       "n": 12,
-      "spectral_radius_W": 0.9999999999999973
+      "spectral_radius_W": 0.9999999999999998
     },
     "stability": {
-      "spectral_radius_transition": 0.30183084585679626,
+      "spectral_radius_transition": 0.30183084585679726,
       "stable": true,
       "interpretation": "Estabilidad de la transición temporal-espacial rezagada estimada; no es evidencia causal."
     },
@@ -50,15 +50,15 @@
         {
           "producto_dependiente": "Tomate de árbol",
           "fecha_residuo": "2024-12-01T00:00:00",
-          "Moran_I_residuos": -0.04987203050023965,
-          "p_sim": 0.315,
+          "Moran_I_residuos": -0.04987203050024052,
+          "p_sim": 0.336,
           "n": 12
         },
         {
           "producto_dependiente": "Pimentón",
           "fecha_residuo": "2024-12-01T00:00:00",
-          "Moran_I_residuos": 0.46629020665694015,
-          "p_sim": 0.005,
+          "Moran_I_residuos": 0.46629020665694076,
+          "p_sim": 0.006,
           "n": 12
         }
       ],
@@ -501,433 +501,433 @@
     {
       "fecha": "2022-01-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.8609166666666668,
+      "precio_promedio_mercados": 2860.9166666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2022-01-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.51925,
+      "precio_promedio_mercados": 2519.25,
       "n_mercados": 12
     },
     {
       "fecha": "2022-02-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.032083333333333,
+      "precio_promedio_mercados": 3032.0833333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2022-02-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.5874166666666665,
+      "precio_promedio_mercados": 2587.4166666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2022-03-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.05025,
+      "precio_promedio_mercados": 3050.25,
       "n_mercados": 12
     },
     {
       "fecha": "2022-03-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.9310833333333335,
+      "precio_promedio_mercados": 2931.0833333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2022-04-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.5475,
+      "precio_promedio_mercados": 3547.5,
       "n_mercados": 12
     },
     {
       "fecha": "2022-04-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.216416666666667,
+      "precio_promedio_mercados": 3216.4166666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2022-05-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.58475,
+      "precio_promedio_mercados": 4584.75,
       "n_mercados": 12
     },
     {
       "fecha": "2022-05-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.2237500000000003,
+      "precio_promedio_mercados": 3223.75,
       "n_mercados": 12
     },
     {
       "fecha": "2022-06-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.875333333333333,
+      "precio_promedio_mercados": 4875.333333333333,
       "n_mercados": 12
     },
     {
       "fecha": "2022-06-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.1177499999999996,
+      "precio_promedio_mercados": 3117.75,
       "n_mercados": 12
     },
     {
       "fecha": "2022-07-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.424666666666667,
+      "precio_promedio_mercados": 3424.6666666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2022-07-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.2276666666666665,
+      "precio_promedio_mercados": 3227.6666666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2022-08-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.55125,
+      "precio_promedio_mercados": 2551.25,
       "n_mercados": 12
     },
     {
       "fecha": "2022-08-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.5295833333333335,
+      "precio_promedio_mercados": 3529.5833333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2022-09-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.3825,
+      "precio_promedio_mercados": 2382.5,
       "n_mercados": 12
     },
     {
       "fecha": "2022-09-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.6358333333333337,
+      "precio_promedio_mercados": 3635.8333333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2022-10-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.66,
+      "precio_promedio_mercados": 2660.0,
       "n_mercados": 12
     },
     {
       "fecha": "2022-10-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.2473333333333336,
+      "precio_promedio_mercados": 3247.3333333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2022-11-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.938833333333333,
+      "precio_promedio_mercados": 2938.8333333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2022-11-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.7295,
+      "precio_promedio_mercados": 2729.5,
       "n_mercados": 12
     },
     {
       "fecha": "2022-12-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.885166666666667,
+      "precio_promedio_mercados": 4885.166666666667,
       "n_mercados": 12
     },
     {
       "fecha": "2022-12-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.6916666666666664,
+      "precio_promedio_mercados": 2691.6666666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2023-01-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 5.183833333333333,
+      "precio_promedio_mercados": 5183.833333333333,
       "n_mercados": 12
     },
     {
       "fecha": "2023-01-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.029333333333333,
+      "precio_promedio_mercados": 3029.3333333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2023-02-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 5.300333333333334,
+      "precio_promedio_mercados": 5300.333333333333,
       "n_mercados": 12
     },
     {
       "fecha": "2023-02-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.2786666666666666,
+      "precio_promedio_mercados": 3278.6666666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2023-03-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 5.673333333333333,
+      "precio_promedio_mercados": 5673.333333333333,
       "n_mercados": 12
     },
     {
       "fecha": "2023-03-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.4625,
+      "precio_promedio_mercados": 3462.5,
       "n_mercados": 12
     },
     {
       "fecha": "2023-04-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.738416666666667,
+      "precio_promedio_mercados": 4738.416666666667,
       "n_mercados": 12
     },
     {
       "fecha": "2023-04-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.436166666666667,
+      "precio_promedio_mercados": 3436.1666666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2023-05-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.7113333333333336,
+      "precio_promedio_mercados": 3711.3333333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2023-05-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.7055000000000002,
+      "precio_promedio_mercados": 3705.5,
       "n_mercados": 12
     },
     {
       "fecha": "2023-06-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.1198333333333337,
+      "precio_promedio_mercados": 3119.8333333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2023-06-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 4.371333333333333,
+      "precio_promedio_mercados": 4371.333333333333,
       "n_mercados": 12
     },
     {
       "fecha": "2023-07-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.3876666666666666,
+      "precio_promedio_mercados": 2387.6666666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2023-07-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 4.5992500000000005,
+      "precio_promedio_mercados": 4599.25,
       "n_mercados": 12
     },
     {
       "fecha": "2023-08-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 1.9669166666666669,
+      "precio_promedio_mercados": 1966.9166666666667,
       "n_mercados": 12
     },
     {
       "fecha": "2023-08-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.5315,
+      "precio_promedio_mercados": 3531.5,
       "n_mercados": 12
     },
     {
       "fecha": "2023-09-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.6976666666666667,
+      "precio_promedio_mercados": 2697.6666666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2023-09-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.0544166666666666,
+      "precio_promedio_mercados": 3054.4166666666665,
       "n_mercados": 12
     },
     {
       "fecha": "2023-10-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.818,
+      "precio_promedio_mercados": 3818.0,
       "n_mercados": 12
     },
     {
       "fecha": "2023-10-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.85,
+      "precio_promedio_mercados": 2850.0,
       "n_mercados": 12
     },
     {
       "fecha": "2023-11-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.542833333333333,
+      "precio_promedio_mercados": 4542.833333333333,
       "n_mercados": 12
     },
     {
       "fecha": "2023-11-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.36575,
+      "precio_promedio_mercados": 2365.75,
       "n_mercados": 12
     },
     {
       "fecha": "2023-12-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.015583333333333,
+      "precio_promedio_mercados": 4015.5833333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2023-12-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.0625833333333334,
+      "precio_promedio_mercados": 2062.5833333333335,
       "n_mercados": 12
     },
     {
       "fecha": "2024-01-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.5585,
+      "precio_promedio_mercados": 1781.0292499999998,
       "n_mercados": 12
     },
     {
       "fecha": "2024-01-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.2992500000000002,
+      "precio_promedio_mercados": 1150.774625,
       "n_mercados": 12
     },
     {
       "fecha": "2024-02-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.9130833333333332,
+      "precio_promedio_mercados": 1457.9982083333334,
       "n_mercados": 12
     },
     {
       "fecha": "2024-02-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.49625,
+      "precio_promedio_mercados": 1249.373125,
       "n_mercados": 12
     },
     {
       "fecha": "2024-03-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.8670833333333334,
+      "precio_promedio_mercados": 1434.9752083333333,
       "n_mercados": 12
     },
     {
       "fecha": "2024-03-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.97575,
+      "precio_promedio_mercados": 1489.362875,
       "n_mercados": 12
     },
     {
       "fecha": "2024-04-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 2.9175,
+      "precio_promedio_mercados": 1460.20875,
       "n_mercados": 12
     },
     {
       "fecha": "2024-04-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.905,
+      "precio_promedio_mercados": 1954.4525,
       "n_mercados": 12
     },
     {
       "fecha": "2024-05-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.0880833333333335,
+      "precio_promedio_mercados": 2046.0857083333333,
       "n_mercados": 12
     },
     {
       "fecha": "2024-05-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 4.059583333333333,
+      "precio_promedio_mercados": 2031.821458333333,
       "n_mercados": 12
     },
     {
       "fecha": "2024-06-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 5.189916666666667,
+      "precio_promedio_mercados": 2597.5532916666666,
       "n_mercados": 12
     },
     {
       "fecha": "2024-06-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 4.2935,
+      "precio_promedio_mercados": 2148.89675,
       "n_mercados": 12
     },
     {
       "fecha": "2024-07-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 5.208166666666666,
+      "precio_promedio_mercados": 2606.6874166666666,
       "n_mercados": 12
     },
     {
       "fecha": "2024-07-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.6924166666666665,
+      "precio_promedio_mercados": 1848.0545416666666,
       "n_mercados": 12
     },
     {
       "fecha": "2024-08-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.3455,
+      "precio_promedio_mercados": 1674.42275,
       "n_mercados": 12
     },
     {
       "fecha": "2024-08-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.0354166666666664,
+      "precio_promedio_mercados": 1519.2260416666668,
       "n_mercados": 12
     },
     {
       "fecha": "2024-09-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 3.5243333333333333,
+      "precio_promedio_mercados": 1763.9288333333334,
       "n_mercados": 12
     },
     {
       "fecha": "2024-09-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.9644999999999997,
+      "precio_promedio_mercados": 1483.73225,
       "n_mercados": 12
     },
     {
       "fecha": "2024-10-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.076833333333334,
+      "precio_promedio_mercados": 2040.4550833333333,
       "n_mercados": 12
     },
     {
       "fecha": "2024-10-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.981833333333333,
+      "precio_promedio_mercados": 1492.4075833333334,
       "n_mercados": 12
     },
     {
       "fecha": "2024-11-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 4.680666666666666,
+      "precio_promedio_mercados": 2342.6736666666666,
       "n_mercados": 12
     },
     {
       "fecha": "2024-11-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 3.0375833333333335,
+      "precio_promedio_mercados": 1520.3104583333334,
       "n_mercados": 12
     },
     {
       "fecha": "2024-12-01T00:00:00",
       "producto": "Pimentón",
-      "precio_promedio_mercados": 5.073916666666666,
+      "precio_promedio_mercados": 2539.4952916666666,
       "n_mercados": 12
     },
     {
       "fecha": "2024-12-01T00:00:00",
       "producto": "Tomate de árbol",
-      "precio_promedio_mercados": 2.954166666666667,
+      "precio_promedio_mercados": 1478.5604166666665,
       "n_mercados": 12
     }
   ],
@@ -940,8 +940,8 @@
       "fuente_coordenada": "OpenStreetMap/Mapcarta: https://mapcarta.com/es/W272216168",
       "precision_geografica": "Punto de plaza de mercado identificado; verificar que coincida con el punto operativo SIPSA",
       "cambios_log_precio": {
-        "Tomate de árbol": -0.16140029163331482,
-        "Pimentón": 0.21955730559851783
+        "Tomate de árbol": -0.16140029163331526,
+        "Pimentón": 0.21955730559851894
       }
     },
     {
@@ -964,8 +964,8 @@
       "fuente_coordenada": "OpenStreetMap/Mapcarta: https://mapcarta.com/es/W709619879",
       "precision_geografica": "Mercado identificado en OSM; punto representativo del recinto",
       "cambios_log_precio": {
-        "Tomate de árbol": 0.065536881057905,
-        "Pimentón": 0.16485096648771358
+        "Tomate de árbol": 0.06553688105790556,
+        "Pimentón": 0.16485096648771336
       }
     },
     {
@@ -976,8 +976,8 @@
       "fuente_coordenada": "OpenStreetMap vía Mapcarta: https://mapcarta.com/W201507633; dirección contrastada con https://www.granabastos.com.co/landing/conocenos",
       "precision_geografica": "complejo mayorista aproximado; verificar",
       "cambios_log_precio": {
-        "Tomate de árbol": 0.01957009619409722,
-        "Pimentón": 0.11054521382761284
+        "Tomate de árbol": 0.019570096194096998,
+        "Pimentón": 0.11054521382761262
       }
     },
     {
@@ -989,7 +989,7 @@
       "precision_geografica": "Mercado identificado en OSM; punto representativo del recinto",
       "cambios_log_precio": {
         "Tomate de árbol": -0.030771658666753687,
-        "Pimentón": 0.024538371511259705
+        "Pimentón": 0.024538371511258816
       }
     },
     {
@@ -1000,8 +1000,8 @@
       "fuente_coordenada": "OpenStreetMap/Mapcarta: https://mapcarta.com/es/W836205854",
       "precision_geografica": "Mercado identificado en OSM; punto representativo del recinto",
       "cambios_log_precio": {
-        "Tomate de árbol": -0.022894601039871065,
-        "Pimentón": 0.40620103356760184
+        "Tomate de árbol": -0.022894601039871176,
+        "Pimentón": 0.4062010335676023
       }
     },
     {
@@ -1012,8 +1012,8 @@
       "fuente_coordenada": "OpenStreetMap/Mapcarta: https://mapcarta.com/W1179886650; identificación oficial del mercado: https://www.buenaventura.gov.co/articulos/al-ritmo-del-pacifico-se-inauguro-la-modernizada-plaza-de-mercados-jose-hilario-lopez",
       "precision_geografica": "Ubicación de Galería de Pueblo Nuevo asociada a la plaza; confirmar que SIPSA corresponda a esta sede",
       "cambios_log_precio": {
-        "Tomate de árbol": -0.06988522265014896,
-        "Pimentón": -0.13474826851095822
+        "Tomate de árbol": -0.0698852226501483,
+        "Pimentón": -0.13474826851095756
       }
     },
     {
@@ -1024,8 +1024,8 @@
       "fuente_coordenada": "Sitio oficial: https://cavasa.co/sobre-cavasa/; referencia de entorno: https://mapcarta.com/es/W1204066378",
       "precision_geografica": "Centro aproximado del complejo CAVASA; el complejo ocupa un área extensa",
       "cambios_log_precio": {
-        "Tomate de árbol": -0.0551714279395773,
-        "Pimentón": -0.186971526422814
+        "Tomate de árbol": -0.05517142793957763,
+        "Pimentón": -0.18697152642281356
       }
     },
     {
@@ -1037,7 +1037,7 @@
       "precision_geografica": "Mercado identificado en OSM; punto representativo del recinto",
       "cambios_log_precio": {
         "Tomate de árbol": -0.022825527342224206,
-        "Pimentón": 0.006442087222033432
+        "Pimentón": 0.0064420872220338765
       }
     },
     {
@@ -1048,7 +1048,7 @@
       "fuente_coordenada": "Ubicación oficial descrita por la Alcaldía: https://municipio.cartago.gov.co/wp-content/uploads/2023/01/MGA-2022761470066.pdf; referencia secundaria de coordenadas: https://es.scribd.com/document/1015278753/Trabajo-de-Campo",
       "precision_geografica": "Coordenada aproximada derivada de referencias de la plaza y cruces viales; confirmar sobre cartografía",
       "cambios_log_precio": {
-        "Tomate de árbol": 0.041823963260808394,
+        "Tomate de árbol": 0.04182396326080884,
         "Pimentón": 0.07318686106122207
       }
     },
@@ -1060,8 +1060,8 @@
       "fuente_coordenada": "OpenStreetMap/Mapcarta: https://mapcarta.com/es/W69314107; dirección oficial: https://cenabastos.com/contacto/",
       "precision_geografica": "Mercado identificado en OSM; punto representativo del recinto",
       "cambios_log_precio": {
-        "Tomate de árbol": -0.006409385185183636,
-        "Pimentón": 0.38703893080505436
+        "Tomate de árbol": -0.006409385185183858,
+        "Pimentón": 0.3870389308050539
       }
     },
     {
@@ -1072,7 +1072,7 @@
       "fuente_coordenada": "OpenStreetMap Nominatim; consulta=Florencia (Caquetá), Colombia",
       "precision_geografica": "instalación/lugar devuelto por Nominatim; verificar",
       "cambios_log_precio": {
-        "Tomate de árbol": 0.04749841608588534,
+        "Tomate de árbol": 0.047498416085885786,
         "Pimentón": -0.009839540804062352
       }
     }
@@ -1081,178 +1081,178 @@
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "L1__y0",
-      "coeficiente": 0.019108811491837262,
-      "error_estandar_DK": 0.06281356994453324,
-      "p_value": 0.761048596980332,
-      "ic95_inf": -0.1040057855994479,
-      "ic95_sup": 0.1422234085831224,
+      "coeficiente": 0.01910881149183686,
+      "error_estandar_DK": 0.06281356994453316,
+      "p_value": 0.7610485969803364,
+      "ic95_inf": -0.10400578559944812,
+      "ic95_sup": 0.14222340858312185,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "L1__y1",
-      "coeficiente": 0.008623458224521366,
-      "error_estandar_DK": 0.019120037470289834,
-      "p_value": 0.6521076308686709,
-      "ic95_inf": -0.02885181521724671,
-      "ic95_sup": 0.046098731666289444,
+      "coeficiente": 0.008623458224521447,
+      "error_estandar_DK": 0.019120037470289807,
+      "p_value": 0.6521076308686675,
+      "ic95_inf": -0.028851815217246574,
+      "ic95_sup": 0.04609873166628947,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "WL1__y0",
-      "coeficiente": 0.002216987653816827,
-      "error_estandar_DK": 0.1467479551013061,
-      "p_value": 0.9879504684288647,
-      "ic95_inf": -0.2854090043447431,
-      "ic95_sup": 0.28984297965237676,
+      "coeficiente": 0.002216987653816981,
+      "error_estandar_DK": 0.14674795510130614,
+      "p_value": 0.9879504684288638,
+      "ic95_inf": -0.28540900434474303,
+      "ic95_sup": 0.28984297965237704,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "WL1__y1",
-      "coeficiente": -3.930054571122055e-06,
-      "error_estandar_DK": 0.09790198698041265,
-      "p_value": 0.9999679813833835,
-      "ic95_inf": -0.1918918245361799,
-      "ic95_sup": 0.19188396442703767,
+      "coeficiente": -3.930054571653751e-06,
+      "error_estandar_DK": 0.09790198698041269,
+      "p_value": 0.9999679813833793,
+      "ic95_inf": -0.19189182453618053,
+      "ic95_sup": 0.1918839644270372,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "X0__temp_anom",
-      "coeficiente": -0.007152312911893126,
-      "error_estandar_DK": 0.0062795630441605,
-      "p_value": 0.2550735953307428,
-      "ic95_inf": -0.019460256478447707,
-      "ic95_sup": 0.005155630654661453,
+      "coeficiente": -0.007152312911893131,
+      "error_estandar_DK": 0.0062795630441604905,
+      "p_value": 0.2550735953307417,
+      "ic95_inf": -0.019460256478447693,
+      "ic95_sup": 0.0051556306546614306,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "X0__precip_anom",
-      "coeficiente": 0.0023261160578192676,
-      "error_estandar_DK": 0.006070783474402682,
-      "p_value": 0.7017053333554903,
-      "ic95_inf": -0.009572619552009987,
-      "ic95_sup": 0.014224851667648523,
+      "coeficiente": 0.002326116057819265,
+      "error_estandar_DK": 0.006070783474402678,
+      "p_value": 0.7017053333554908,
+      "ic95_inf": -0.009572619552009986,
+      "ic95_sup": 0.014224851667648515,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "X1__temp_anom",
-      "coeficiente": 0.0028657966806335945,
-      "error_estandar_DK": 0.005534018882405133,
-      "p_value": 0.6047148091887493,
-      "ic95_inf": -0.007980880328880465,
-      "ic95_sup": 0.013712473690147655,
+      "coeficiente": 0.0028657966806336,
+      "error_estandar_DK": 0.005534018882405134,
+      "p_value": 0.6047148091887486,
+      "ic95_inf": -0.007980880328880462,
+      "ic95_sup": 0.013712473690147662,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Tomate de árbol",
       "termino": "X1__precip_anom",
-      "coeficiente": -0.009264625311815336,
-      "error_estandar_DK": 0.005196344672132826,
-      "p_value": 0.07500445481610307,
-      "ic95_inf": -0.019449460869195676,
-      "ic95_sup": 0.0009202102455650035,
+      "coeficiente": -0.009264625311815345,
+      "error_estandar_DK": 0.005196344672132825,
+      "p_value": 0.07500445481610285,
+      "ic95_inf": -0.019449460869195682,
+      "ic95_sup": 0.0009202102455649931,
       "n_obs": 840,
-      "r2_within": -0.001274970669279174
+      "r2_within": 0.02564303249339961
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "L1__y0",
-      "coeficiente": 0.0620805381462199,
-      "error_estandar_DK": 0.08050176744772931,
-      "p_value": 0.4408488031349762,
-      "ic95_inf": -0.09570292605132956,
+      "coeficiente": 0.062080538146220006,
+      "error_estandar_DK": 0.08050176744772926,
+      "p_value": 0.4408488031349751,
+      "ic95_inf": -0.09570292605132935,
       "ic95_sup": 0.21986400234376935,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "L1__y1",
-      "coeficiente": -0.2508052016087492,
-      "error_estandar_DK": 0.04782113653649405,
+      "coeficiente": -0.2508052016087491,
+      "error_estandar_DK": 0.04782113653649397,
       "p_value": 2.0380439957889962e-07,
-      "ic95_inf": -0.34453462922027756,
-      "ic95_sup": -0.15707577399722086,
+      "ic95_inf": -0.3445346292202773,
+      "ic95_sup": -0.1570757739972209,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "WL1__y0",
-      "coeficiente": -0.16988927442829063,
-      "error_estandar_DK": 0.21504078660778841,
-      "p_value": 0.4297579922383641,
-      "ic95_inf": -0.591369216179556,
-      "ic95_sup": 0.25159066732297464,
+      "coeficiente": -0.16988927442828916,
+      "error_estandar_DK": 0.21504078660778816,
+      "p_value": 0.4297579922383674,
+      "ic95_inf": -0.591369216179554,
+      "ic95_sup": 0.25159066732297564,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "WL1__y1",
-      "coeficiente": 0.11129908890879676,
-      "error_estandar_DK": 0.12199634801372893,
-      "p_value": 0.3618957227228221,
-      "ic95_inf": -0.12781375319811195,
+      "coeficiente": 0.11129908890879704,
+      "error_estandar_DK": 0.12199634801372879,
+      "p_value": 0.36189572272282033,
+      "ic95_inf": -0.1278137531981114,
       "ic95_sup": 0.35041193101570545,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "X0__temp_anom",
-      "coeficiente": -0.0002918425820817665,
-      "error_estandar_DK": 0.007643047399798725,
-      "p_value": 0.9695510773994642,
-      "ic95_inf": -0.015272215485687269,
-      "ic95_sup": 0.014688530321523735,
+      "coeficiente": -0.0002918425820817758,
+      "error_estandar_DK": 0.007643047399798706,
+      "p_value": 0.9695510773994631,
+      "ic95_inf": -0.01527221548568724,
+      "ic95_sup": 0.014688530321523688,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "X0__precip_anom",
-      "coeficiente": 0.0005110692182667469,
-      "error_estandar_DK": 0.007571702136898216,
-      "p_value": 0.9462038013118608,
-      "ic95_inf": -0.014329466970053757,
-      "ic95_sup": 0.015351605406587249,
+      "coeficiente": 0.0005110692182667095,
+      "error_estandar_DK": 0.007571702136898217,
+      "p_value": 0.9462038013118648,
+      "ic95_inf": -0.014329466970053795,
+      "ic95_sup": 0.015351605406587214,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "X1__temp_anom",
-      "coeficiente": 0.0005173589219609085,
-      "error_estandar_DK": 0.0072860946998985305,
-      "p_value": 0.9434116131658064,
-      "ic95_inf": -0.013763386689840212,
+      "coeficiente": 0.0005173589219609196,
+      "error_estandar_DK": 0.0072860946998985245,
+      "p_value": 0.943411613165805,
+      "ic95_inf": -0.013763386689840187,
       "ic95_sup": 0.014798104533762027,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     },
     {
       "producto_dependiente": "Pimentón",
       "termino": "X1__precip_anom",
-      "coeficiente": -0.00207648209869802,
-      "error_estandar_DK": 0.009649989228515449,
-      "p_value": 0.829685613162561,
-      "ic95_inf": -0.0209904609865883,
-      "ic95_sup": 0.01683749678919226,
+      "coeficiente": -0.0020764820986980052,
+      "error_estandar_DK": 0.009649989228515472,
+      "p_value": 0.8296856131625625,
+      "ic95_inf": -0.02099046098658833,
+      "ic95_sup": 0.01683749678919232,
       "n_obs": 840,
-      "r2_within": -0.050269260831152796
+      "r2_within": -0.07440477564105041
     }
   ],
   "irfs": [
@@ -1260,792 +1260,792 @@
       "choque": "temp_anom",
       "horizonte": 0,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -0.007152312911893125,
+      "directo": -0.007152312911893134,
       "spillover_medio_receptores": 0.0,
-      "media_red": -0.0005960260759910939,
-      "total_red_suma": -0.007152312911893125,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "media_red": -0.0005960260759910942,
+      "total_red_suma": -0.007152312911893134,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 0,
       "producto_respuesta": "Pimentón",
-      "directo": -0.0002918425820817665,
+      "directo": -0.00029184258208177574,
       "spillover_medio_receptores": 0.0,
-      "media_red": -2.4320215173480543e-05,
-      "total_red_suma": -0.0002918425820817665,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "media_red": -2.4320215173481315e-05,
+      "total_red_suma": -0.00029184258208177574,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 1,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 0.0027266077891548762,
-      "spillover_medio_receptores": -1.4414038604207258e-06,
-      "media_red": 0.00022589602889085407,
-      "total_red_suma": 0.0027107523466902493,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 0.002726607789154885,
+      "spillover_medio_receptores": -1.4414038604208124e-06,
+      "media_red": 0.00022589602889085464,
+      "total_red_suma": 0.0027107523466902554,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 1,
       "producto_respuesta": "Pimentón",
-      "directo": 0.00014653512503746152,
-      "spillover_medio_receptores": 0.0001075108579631933,
-      "media_red": 0.00011076288021938232,
-      "total_red_suma": 0.0013291545626325878,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 0.00014653512503747383,
+      "spillover_medio_receptores": 0.00010751085796319232,
+      "media_red": 0.00011076288021938248,
+      "total_red_suma": 0.001329154562632589,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 2,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 5.335795134593999e-05,
-      "spillover_medio_receptores": 1.4461539934560204e-06,
-      "media_red": 5.772137106163017e-06,
-      "total_red_suma": 6.926564527395622e-05,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 5.3357951345939036e-05,
+      "spillover_medio_receptores": 1.446153993456006e-06,
+      "media_red": 5.772137106162925e-06,
+      "total_red_suma": 6.92656452739551e-05,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 2,
       "producto_respuesta": "Pimentón",
-      "directo": 0.0001592549890569322,
-      "spillover_medio_receptores": -5.790208728523121e-05,
-      "media_red": -3.980566425671759e-05,
-      "total_red_suma": -0.00047766797108061114,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 0.00015925498905692973,
+      "spillover_medio_receptores": -5.790208728523065e-05,
+      "media_red": -3.9805664256717294e-05,
+      "total_red_suma": -0.00047766797108060734,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 3,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 2.4004802290126575e-06,
-      "spillover_medio_receptores": -4.5823704752895e-07,
-      "media_red": -2.2001060781714928e-07,
-      "total_red_suma": -2.640127293805791e-06,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 2.4004802290126804e-06,
+      "spillover_medio_receptores": -4.5823704752893326e-07,
+      "media_red": -2.200106078171321e-07,
+      "total_red_suma": -2.6401272938055857e-06,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 3,
       "producto_respuesta": "Pimentón",
-      "directo": -5.190646705494204e-05,
-      "spillover_medio_receptores": 1.009787519790218e-05,
-      "media_red": 4.930846676831829e-06,
-      "total_red_suma": 5.917016012198196e-05,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -5.190646705494135e-05,
+      "spillover_medio_receptores": 1.0097875197902076e-05,
+      "media_red": 4.93084667683179e-06,
+      "total_red_suma": 5.917016012198148e-05,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 4,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -4.0418264331745076e-07,
-      "spillover_medio_receptores": 7.799078917478902e-08,
-      "media_red": 3.78096698004357e-08,
-      "total_red_suma": 4.5371603760522853e-07,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -4.041826433174638e-07,
+      "spillover_medio_receptores": 7.799078917478787e-08,
+      "media_red": 3.7809669800433565e-08,
+      "total_red_suma": 4.537160376052028e-07,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 4,
       "producto_respuesta": "Pimentón",
-      "directo": 1.6291711732491635e-05,
-      "spillover_medio_receptores": -2.2056074519794616e-06,
-      "media_red": -6.641641866068701e-07,
-      "total_red_suma": -7.969970239282442e-06,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 1.6291711732491435e-05,
+      "spillover_medio_receptores": -2.2056074519794375e-06,
+      "media_red": -6.641641866068647e-07,
+      "total_red_suma": -7.969970239282379e-06,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 5,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 1.3325318678620306e-07,
-      "spillover_medio_receptores": -1.7479519335475635e-08,
-      "media_red": -4.9184604920024135e-09,
-      "total_red_suma": -5.902152590402895e-08,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 1.3325318678620597e-07,
+      "spillover_medio_receptores": -1.7479519335475585e-08,
+      "media_red": -4.918460492002123e-09,
+      "total_red_suma": -5.902152590402547e-08,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 5,
       "producto_respuesta": "Pimentón",
-      "directo": -4.8558796799855025e-06,
-      "spillover_medio_receptores": 5.380749721597251e-07,
-      "media_red": 8.857875114762295e-08,
-      "total_red_suma": 1.0629450137714754e-06,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -4.855879679985444e-06,
+      "spillover_medio_receptores": 5.380749721597191e-07,
+      "media_red": 8.857875114762226e-08,
+      "total_red_suma": 1.062945013771467e-06,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 6,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -3.94476444052314e-08,
-      "spillover_medio_receptores": 4.304640698894858e-09,
-      "media_red": 6.586169402176697e-10,
-      "total_red_suma": 7.903403282612036e-09,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -3.9447644405232185e-08,
+      "spillover_medio_receptores": 4.3046406988948875e-09,
+      "media_red": 6.586169402176313e-10,
+      "total_red_suma": 7.903403282611576e-09,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 6,
       "producto_respuesta": "Pimentón",
-      "directo": 1.4194057492075486e-06,
-      "spillover_medio_receptores": -1.4193909454285922e-07,
-      "media_red": -1.1827024230325249e-08,
-      "total_red_suma": -1.4192429076390298e-07,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 1.4194057492075323e-06,
+      "spillover_medio_receptores": -1.4193909454285763e-07,
+      "media_red": -1.182702423032516e-08,
+      "total_red_suma": -1.4192429076390192e-07,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 7,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 1.1517751067914474e-08,
-      "spillover_medio_receptores": -1.1429568271983685e-09,
-      "media_red": -8.789783593896533e-11,
-      "total_red_suma": -1.0547740312675838e-09,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 1.1517751067914694e-08,
+      "spillover_medio_receptores": -1.1429568271983834e-09,
+      "media_red": -8.789783593896015e-11,
+      "total_red_suma": -1.0547740312675218e-09,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 7,
       "producto_respuesta": "Pimentón",
-      "directo": -4.113332814260928e-07,
-      "spillover_medio_receptores": 3.9116411964366975e-08,
-      "media_red": 1.5789375151619904e-09,
-      "total_red_suma": 1.894725018194389e-08,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -4.1133328142608813e-07,
+      "spillover_medio_receptores": 3.911641196436654e-08,
+      "media_red": 1.5789375151619797e-09,
+      "total_red_suma": 1.8947250181943757e-08,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 8,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -3.335674416019921e-09,
-      "spillover_medio_receptores": 3.160451703246743e-10,
-      "media_red": 1.1735204795958002e-11,
-      "total_red_suma": 1.4082245755149602e-10,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -3.3356744160199847e-09,
+      "spillover_medio_receptores": 3.160451703246793e-10,
+      "media_red": 1.1735204795957317e-11,
+      "total_red_suma": 1.408224575514878e-10,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 8,
       "producto_respuesta": "Pimentón",
-      "directo": 1.1880303276758497e-07,
-      "spillover_medio_receptores": -1.103023419376794e-08,
-      "media_red": -2.1079528032186241e-10,
-      "total_red_suma": -2.529543363862349e-09,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 1.1880303276758367e-07,
+      "spillover_medio_receptores": -1.1030234193767821e-08,
+      "media_red": -2.1079528032186112e-10,
+      "total_red_suma": -2.5295433638623334e-09,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 9,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 9.632028763902144e-10,
-      "spillover_medio_receptores": -8.927301774792692e-11,
-      "media_red": -1.5666932364151327e-12,
-      "total_red_suma": -1.8800318836981596e-11,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 9.63202876390233e-10,
+      "spillover_medio_receptores": -8.927301774792851e-11,
+      "media_red": -1.5666932364150497e-12,
+      "total_red_suma": -1.880031883698059e-11,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 9,
       "producto_respuesta": "Pimentón",
-      "directo": -3.428522044353587e-08,
-      "spillover_medio_receptores": 3.147538664904136e-09,
-      "media_red": 2.8142072534136206e-11,
-      "total_red_suma": 3.377048704096345e-10,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -3.428522044353551e-08,
+      "spillover_medio_receptores": 3.147538664904103e-09,
+      "media_red": 2.8142072534136258e-11,
+      "total_red_suma": 3.377048704096349e-10,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 10,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -2.7795620442690713e-10,
-      "spillover_medio_receptores": 2.5496920840649147e-11,
-      "media_red": 2.0916040168612407e-13,
-      "total_red_suma": 2.5099248202334867e-12,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -2.7795620442691256e-10,
+      "spillover_medio_receptores": 2.549692084064963e-11,
+      "media_red": 2.0916040168611462e-13,
+      "total_red_suma": 2.5099248202333736e-12,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 10,
       "producto_respuesta": "Pimentón",
-      "directo": 9.898517975143836e-09,
-      "spillover_medio_receptores": -9.039639118399102e-10,
-      "media_red": -3.7570879245978635e-12,
-      "total_red_suma": -4.5085055095174327e-11,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 9.898517975143737e-09,
+      "spillover_medio_receptores": -9.039639118399011e-10,
+      "media_red": -3.757087924597889e-12,
+      "total_red_suma": -4.508505509517474e-11,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 11,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 8.025234917315545e-11,
-      "spillover_medio_receptores": -7.326130447545915e-12,
-      "media_red": -2.7923812487468463e-14,
-      "total_red_suma": -3.3508574984962187e-13,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 8.025234917315705e-11,
+      "spillover_medio_receptores": -7.32613044754606e-12,
+      "media_red": -2.7923812487467614e-14,
+      "total_red_suma": -3.3508574984961217e-13,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 11,
       "producto_respuesta": "Pimentón",
-      "directo": -2.8607475810789856e-09,
-      "spillover_medio_receptores": 2.606151481848313e-10,
-      "media_red": 5.015874128465557e-13,
-      "total_red_suma": 6.019048954158659e-12,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -2.860747581078957e-09,
+      "spillover_medio_receptores": 2.606151481848287e-10,
+      "media_red": 5.015874128465452e-13,
+      "total_red_suma": 6.019048954158521e-12,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 12,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -2.319552426310044e-11,
-      "spillover_medio_receptores": 2.1127508776108417e-12,
-      "media_red": 3.7279492182347465e-15,
-      "total_red_suma": 4.473539061881688e-14,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -2.3195524263100923e-11,
+      "spillover_medio_receptores": 2.112750877610885e-12,
+      "media_red": 3.7279492182345525e-15,
+      "total_red_suma": 4.473539061881486e-14,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 12,
       "producto_respuesta": "Pimentón",
-      "directo": 8.278654129450104e-10,
-      "spillover_medio_receptores": -7.53335438086835e-11,
-      "media_red": -6.696407920898645e-14,
-      "total_red_suma": -8.035689505078395e-13,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 8.278654129450027e-10,
+      "spillover_medio_receptores": -7.533354380868278e-11,
+      "media_red": -6.696407920899937e-14,
+      "total_red_suma": -8.035689505079946e-13,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 13,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 6.713212182969348e-12,
-      "spillover_medio_receptores": -6.108349591108826e-13,
-      "media_red": -4.976972708634258e-16,
-      "total_red_suma": -5.972367250361176e-15,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 6.71321218296949e-12,
+      "spillover_medio_receptores": -6.108349591108957e-13,
+      "media_red": -4.976972708634847e-16,
+      "total_red_suma": -5.972367250361782e-15,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 13,
       "producto_respuesta": "Pimentón",
-      "directo": -2.3991963800764697e-10,
-      "spillover_medio_receptores": 2.1820628902026266e-11,
-      "media_red": 8.939992886833571e-15,
-      "total_red_suma": 1.0727991464200291e-13,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -2.399196380076448e-10,
+      "spillover_medio_receptores": 2.1820628902026072e-11,
+      "media_red": 8.93999288683825e-15,
+      "total_red_suma": 1.0727991464206e-13,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 14,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -1.9457464159880056e-12,
-      "spillover_medio_receptores": 1.7695852297544785e-13,
-      "media_red": 6.644472849343412e-17,
-      "total_red_suma": 7.973367419211973e-16,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.945746415988048e-12,
+      "spillover_medio_receptores": 1.769585229754518e-13,
+      "media_red": 6.644472849348185e-17,
+      "total_red_suma": 7.973367419217864e-16,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 14,
       "producto_respuesta": "Pimentón",
-      "directo": 6.963330502752974e-11,
-      "spillover_medio_receptores": -6.331602487093306e-12,
-      "media_red": -1.193527541384485e-15,
-      "total_red_suma": -1.4322330496614644e-14,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 6.963330502752914e-11,
+      "spillover_medio_receptores": -6.331602487093251e-12,
+      "media_red": -1.193527541385743e-15,
+      "total_red_suma": -1.4322330496628648e-14,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 15,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 5.647919202950179e-13,
-      "spillover_medio_receptores": -5.1354397107543925e-14,
-      "media_red": -8.870657330437929e-18,
-      "total_red_suma": -1.0644788796525804e-16,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 5.647919202950307e-13,
+      "spillover_medio_receptores": -5.1354397107545086e-14,
+      "media_red": -8.87065733044069e-18,
+      "total_red_suma": -1.0644788796529169e-16,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 15,
       "producto_respuesta": "Pimentón",
-      "directo": -2.024016727599155e-11,
-      "spillover_medio_receptores": 1.840189033525218e-12,
-      "media_red": 1.5934106548731254e-16,
-      "total_red_suma": 1.9120927858478935e-15,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -2.0240167275991382e-11,
+      "spillover_medio_receptores": 1.8401890335252028e-12,
+      "media_red": 1.5934106548738615e-16,
+      "total_red_suma": 1.9120927858488358e-15,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 16,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -1.641861255165232e-13,
-      "spillover_medio_receptores": 1.4927303342534192e-14,
-      "media_red": 1.1842709460798861e-18,
-      "total_red_suma": 1.4211251352958437e-17,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.6418612551652695e-13,
+      "spillover_medio_receptores": 1.4927303342534536e-14,
+      "media_red": 1.184270946079804e-18,
+      "total_red_suma": 1.4211251352959488e-17,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 16,
       "producto_respuesta": "Pimentón",
-      "directo": 5.891800034187718e-12,
-      "spillover_medio_receptores": -5.356413915279192e-13,
-      "media_red": -2.1272718282812005e-17,
-      "total_red_suma": -2.5527261939369144e-16,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 5.891800034187669e-12,
+      "spillover_medio_receptores": -5.35641391527915e-13,
+      "media_red": -2.12727182828667e-17,
+      "total_red_suma": -2.5527261939433096e-16,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 17,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 4.7799174988562595e-14,
-      "spillover_medio_receptores": -4.34555202289132e-15,
-      "media_red": -1.5810527016005542e-19,
-      "total_red_suma": -1.897263241920386e-18,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 4.779917498856373e-14,
+      "spillover_medio_receptores": -4.345552022891423e-15,
+      "media_red": -1.5810527016012938e-19,
+      "total_red_suma": -1.8972632419219635e-18,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "temp_anom",
       "horizonte": 17,
       "producto_respuesta": "Pimentón",
-      "directo": -1.7175303121682291e-12,
-      "spillover_medio_receptores": 1.5614221746927182e-13,
-      "media_red": 2.839999480080969e-18,
-      "total_red_suma": 3.407999376096269e-17,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.7175303121682164e-12,
+      "spillover_medio_receptores": 1.5614221746927064e-13,
+      "media_red": 2.839999480099902e-18,
+      "total_red_suma": 3.407999376118147e-17,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 0,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 0.002326116057819267,
+      "directo": 0.0023261160578192655,
       "spillover_medio_receptores": 0.0,
-      "media_red": 0.0001938430048182723,
-      "total_red_suma": 0.002326116057819267,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "media_red": 0.00019384300481827208,
+      "total_red_suma": 0.0023261160578192655,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 0,
       "producto_respuesta": "Pimentón",
-      "directo": 0.0005110692182667469,
+      "directo": 0.0005110692182667096,
       "spillover_medio_receptores": 0.0,
-      "media_red": 4.25891015222289e-05,
-      "total_red_suma": 0.0005110692182667469,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "media_red": 4.258910152222579e-05,
+      "total_red_suma": 0.0005110692182667096,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 1,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -0.00921576881450477,
-      "spillover_medio_receptores": 4.686329137829978e-07,
-      "media_red": -0.0007675511543710965,
-      "total_red_suma": -0.009210613852453158,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -0.00921576881450478,
+      "spillover_medio_receptores": 4.686329137830052e-07,
+      "media_red": -0.0007675511543710975,
+      "total_red_suma": -0.009210613852453168,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 1,
       "producto_respuesta": "Pimentón",
-      "directo": -0.002060254380361454,
-      "spillover_medio_receptores": -3.0754602812408284e-05,
-      "media_red": -0.00019987958427482872,
-      "total_red_suma": -0.002398555011297945,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -0.00206025438036143,
+      "spillover_medio_receptores": -3.07546028124083e-05,
+      "media_red": -0.00019987958427482668,
+      "total_red_suma": -0.0023985550112979206,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 2,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -0.00019386636698597037,
-      "spillover_medio_receptores": -2.111976956971167e-06,
-      "media_red": -1.8091509459387773e-05,
-      "total_red_suma": -0.00021709811351265323,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -0.0001938663669859668,
+      "spillover_medio_receptores": -2.111976956971188e-06,
+      "media_red": -1.809150945938749e-05,
+      "total_red_suma": -0.00021709811351264987,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 2,
       "producto_respuesta": "Pimentón",
-      "directo": -6.306685314766934e-05,
-      "spillover_medio_receptores": 0.00012642405260781327,
-      "media_red": 0.00011063314379485636,
-      "total_red_suma": 0.0013275977255382768,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -6.30668531476772e-05,
+      "spillover_medio_receptores": 0.0001264240526078124,
+      "media_red": 0.00011063314379485495,
+      "total_red_suma": 0.0013275977255382593,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 3,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -4.2597582510146415e-06,
-      "spillover_medio_receptores": 1.0066575891802213e-06,
-      "media_red": 5.677896024973161e-07,
-      "total_red_suma": 6.813475229967793e-06,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -4.259758251014716e-06,
+      "spillover_medio_receptores": 1.0066575891801716e-06,
+      "media_red": 5.677896024972641e-07,
+      "total_red_suma": 6.813475229967169e-06,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 3,
       "producto_respuesta": "Pimentón",
-      "directo": 3.555849102558998e-05,
-      "spillover_medio_receptores": -1.7941946879792056e-05,
-      "media_red": -1.3483577054343551e-05,
-      "total_red_suma": -0.00016180292465212264,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 3.5558491025592013e-05,
+      "spillover_medio_receptores": -1.7941946879792036e-05,
+      "media_red": -1.3483577054343367e-05,
+      "total_red_suma": -0.00016180292465212037,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 4,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 2.3034323443030871e-07,
-      "spillover_medio_receptores": -1.3451866338285763e-07,
-      "media_red": -1.0411350523176044e-07,
-      "total_red_suma": -1.2493620627811256e-06,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 2.3034323443035422e-07,
+      "spillover_medio_receptores": -1.3451866338285477e-07,
+      "media_red": -1.0411350523175399e-07,
+      "total_red_suma": -1.249362062781048e-06,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 4,
       "producto_respuesta": "Pimentón",
-      "directo": -1.4714409955573986e-05,
-      "spillover_medio_receptores": 3.3229413493675364e-06,
-      "media_red": 1.8198287406224098e-06,
-      "total_red_suma": 2.1837944887468918e-05,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.4714409955574489e-05,
+      "spillover_medio_receptores": 3.322941349367555e-06,
+      "media_red": 1.8198287406223848e-06,
+      "total_red_suma": 2.1837944887468616e-05,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 5,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -1.2331519362044962e-07,
-      "spillover_medio_receptores": 2.5900393667339857e-08,
-      "media_red": 1.3465761393357407e-08,
-      "total_red_suma": 1.6158913672028891e-07,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.233151936204596e-07,
+      "spillover_medio_receptores": 2.5900393667339814e-08,
+      "media_red": 1.3465761393356532e-08,
+      "total_red_suma": 1.615891367202784e-07,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 5,
       "producto_respuesta": "Pimentón",
-      "directo": 4.862045643010847e-06,
-      "spillover_medio_receptores": -7.067163907700219e-07,
-      "media_red": -2.4265288795494956e-07,
-      "total_red_suma": -2.911834655459395e-06,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 4.862045643010978e-06,
+      "spillover_medio_receptores": -7.067163907700303e-07,
+      "media_red": -2.4265288795494617e-07,
+      "total_red_suma": -2.9118346554593543e-06,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 6,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 3.975306125396788e-08,
-      "spillover_medio_receptores": -5.582334965374634e-09,
-      "media_red": -1.804385280429424e-09,
-      "total_red_suma": -2.1652623365153092e-08,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 3.975306125397051e-08,
+      "spillover_medio_receptores": -5.5823349653747465e-09,
+      "media_red": -1.8043852804293083e-09,
+      "total_red_suma": -2.1652623365151696e-08,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 6,
       "producto_respuesta": "Pimentón",
-      "directo": -1.4992016487087438e-06,
-      "spillover_medio_receptores": 1.7163633288092403e-07,
-      "media_red": 3.2399834415118366e-08,
-      "total_red_suma": 3.8879801298142047e-07,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.4992016487087794e-06,
+      "spillover_medio_receptores": 1.716363328809268e-07,
+      "media_red": 3.239983441511791e-08,
+      "total_red_suma": 3.887980129814149e-07,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 7,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -1.2212156199329741e-08,
-      "spillover_medio_receptores": 1.3728774661620023e-09,
-      "media_red": 2.407913273710236e-10,
-      "total_red_suma": 2.8894959284522825e-09,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.2212156199330457e-08,
+      "spillover_medio_receptores": 1.3728774661620503e-09,
+      "media_red": 2.4079132737100793e-10,
+      "total_red_suma": 2.8894959284520947e-09,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 7,
       "producto_respuesta": "Pimentón",
-      "directo": 4.4838527559662144e-07,
-      "spillover_medio_receptores": -4.548096664099419e-08,
-      "media_red": -4.325446454526232e-09,
-      "total_red_suma": -5.190535745431479e-08,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 4.4838527559663123e-07,
+      "spillover_medio_receptores": -4.548096664099503e-08,
+      "media_red": -4.325446454526173e-09,
+      "total_red_suma": -5.19053574543141e-08,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 8,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 3.6446029996562135e-09,
-      "spillover_medio_receptores": -3.6639835278205985e-10,
-      "media_red": -3.2148240078870404e-11,
-      "total_red_suma": -3.8577888094644487e-10,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 3.6446029996564133e-09,
+      "spillover_medio_receptores": -3.663983527820758e-10,
+      "media_red": -3.214824007886832e-11,
+      "total_red_suma": -3.8577888094641985e-10,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 8,
       "producto_respuesta": "Pimentón",
-      "directo": -1.3224085460759407e-07,
-      "spillover_medio_receptores": 1.26518596681644e-08,
-      "media_red": 5.77466811851195e-10,
-      "total_red_suma": 6.929601742214339e-09,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.3224085460759682e-07,
+      "spillover_medio_receptores": 1.265185966816464e-08,
+      "media_red": 5.774668118511856e-10,
+      "total_red_suma": 6.9296017422142265e-09,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 9,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -1.0738385025986723e-09,
-      "spillover_medio_receptores": 1.0230375973568417e-10,
-      "media_red": 4.291904541154476e-12,
-      "total_red_suma": 5.150285449385371e-11,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.0738385025987294e-09,
+      "spillover_medio_receptores": 1.0230375973568906e-10,
+      "media_red": 4.291904541154191e-12,
+      "total_red_suma": 5.1502854493850274e-11,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 9,
       "producto_respuesta": "Pimentón",
-      "directo": 3.8747713220097265e-08,
-      "spillover_medio_receptores": -3.606622244370296e-09,
-      "media_red": -7.70942889979994e-11,
-      "total_red_suma": -9.251314679759927e-10,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 3.874771322009804e-08,
+      "spillover_medio_receptores": -3.6066222443703655e-09,
+      "media_red": -7.709428899799842e-11,
+      "total_red_suma": -9.251314679759811e-10,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 10,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 3.144986149603734e-10,
-      "spillover_medio_receptores": -2.921586110719419e-11,
-      "media_red": -5.729881015635591e-13,
-      "total_red_suma": -6.875857218762715e-12,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 3.144986149603897e-10,
+      "spillover_medio_receptores": -2.9215861107195633e-11,
+      "media_red": -5.729881015635251e-13,
+      "total_red_suma": -6.875857218762297e-12,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 10,
       "producto_respuesta": "Pimentón",
-      "directo": -1.1320557526264747e-08,
-      "spillover_medio_receptores": 1.040369687585507e-09,
-      "media_red": 1.0292419764652529e-11,
-      "total_red_suma": 1.2350903717583022e-10,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -1.132055752626497e-08,
+      "spillover_medio_receptores": 1.040369687585527e-09,
+      "media_red": 1.029241976465234e-11,
+      "total_red_suma": 1.2350903717582807e-10,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 11,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -9.186543333132803e-11,
-      "spillover_medio_receptores": 8.434853618773364e-12,
-      "media_red": 7.649637293158032e-14,
-      "total_red_suma": 9.17956475178964e-13,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -9.186543333133277e-11,
+      "spillover_medio_receptores": 8.434853618773787e-12,
+      "media_red": 7.649637293157525e-14,
+      "total_red_suma": 9.179564751789033e-13,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 11,
       "producto_respuesta": "Pimentón",
-      "directo": 3.303901148124261e-09,
-      "spillover_medio_receptores": -3.0185364875512396e-10,
-      "media_red": -1.3740823485085912e-12,
-      "total_red_suma": -1.648898818210311e-11,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 3.303901148124325e-09,
+      "spillover_medio_receptores": -3.018536487551298e-10,
+      "media_red": -1.374082348508566e-12,
+      "total_red_suma": -1.6488988182102765e-11,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 12,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 2.680898215268723e-11,
-      "spillover_medio_receptores": -2.448321208672975e-12,
-      "media_red": -1.0212595226291197e-14,
-      "total_red_suma": -1.2255114271549422e-13,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 2.68089821526886e-11,
+      "spillover_medio_receptores": -2.448321208673099e-12,
+      "media_red": -1.0212595226290495e-14,
+      "total_red_suma": -1.2255114271548614e-13,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 12,
       "producto_respuesta": "Pimentón",
-      "directo": -9.641392418736494e-10,
-      "spillover_medio_receptores": 8.78491447990672e-11,
-      "media_red": 1.8344590967413722e-13,
-      "total_red_suma": 2.2013509160896406e-12,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -9.641392418736678e-10,
+      "spillover_medio_receptores": 8.784914479906885e-11,
+      "media_red": 1.834459096741369e-13,
+      "total_red_suma": 2.201350916089649e-12,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 13,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -7.823339297936411e-12,
-      "spillover_medio_receptores": 7.127000366468154e-13,
-      "media_red": 1.3634254315466056e-15,
-      "total_red_suma": 1.6361105178559214e-14,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -7.82333929793681e-12,
+      "spillover_medio_receptores": 7.127000366468518e-13,
+      "media_red": 1.3634254315465058e-15,
+      "total_red_suma": 1.6361105178558072e-14,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 13,
       "producto_respuesta": "Pimentón",
-      "directo": 2.8146844679135527e-10,
-      "spillover_medio_receptores": -2.5614757874229216e-11,
-      "media_red": -2.449081876383991e-14,
-      "total_red_suma": -2.9388982516607895e-13,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 2.8146844679136065e-10,
+      "spillover_medio_receptores": -2.5614757874229695e-11,
+      "media_red": -2.4490818763840446e-14,
+      "total_red_suma": -2.938898251660854e-13,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 14,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 2.2840075712786496e-12,
-      "spillover_medio_receptores": -2.0783562266024466e-13,
-      "media_red": -1.8202316533680505e-16,
-      "total_red_suma": -2.184277984041681e-15,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 2.2840075712787655e-12,
+      "spillover_medio_receptores": -2.0783562266025527e-13,
+      "media_red": -1.8202316533684464e-16,
+      "total_red_suma": -2.1842779840421525e-15,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 14,
       "producto_respuesta": "Pimentón",
-      "directo": -8.222810405028046e-11,
-      "spillover_medio_receptores": 7.478849055207087e-12,
-      "media_red": 3.2696297497924332e-15,
-      "total_red_suma": 3.923555699750948e-14,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -8.2228104050282e-11,
+      "spillover_medio_receptores": 7.478849055207229e-12,
+      "media_red": 3.2696297497927022e-15,
+      "total_red_suma": 3.9235556997512176e-14,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 15,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -6.672867708895052e-13,
-      "spillover_medio_receptores": 6.068894376406755e-14,
-      "media_red": 2.43008762698148e-17,
-      "total_red_suma": 2.916105152377776e-16,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -6.672867708895391e-13,
+      "spillover_medio_receptores": 6.068894376407063e-14,
+      "media_red": 2.4300876269818677e-17,
+      "total_red_suma": 2.9161051523781965e-16,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 15,
       "producto_respuesta": "Pimentón",
-      "directo": 2.4042548528375203e-11,
-      "spillover_medio_receptores": -2.186162422196581e-12,
-      "media_red": -4.365096489326441e-16,
-      "total_red_suma": -5.238115787191729e-15,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 2.4042548528375652e-11,
+      "spillover_medio_receptores": -2.1861624221966217e-12,
+      "media_red": -4.3650964893255364e-16,
+      "total_red_suma": -5.2381157871906525e-15,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 16,
       "producto_respuesta": "Tomate de árbol",
-      "directo": 1.9512017920475694e-13,
-      "spillover_medio_receptores": -1.7741737314915033e-14,
-      "media_red": -3.2442716090354794e-18,
-      "total_red_suma": -3.8931259308423585e-17,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 1.9512017920476691e-13,
+      "spillover_medio_receptores": -1.774173731491594e-14,
+      "media_red": -3.2442716090377473e-18,
+      "total_red_suma": -3.893125930845304e-17,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 16,
       "producto_respuesta": "Pimentón",
-      "directo": -7.036373395086756e-12,
-      "spillover_medio_receptores": 6.397338823724512e-13,
-      "media_red": 5.827591751743505e-17,
-      "total_red_suma": 6.993110102092732e-16,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -7.036373395086886e-12,
+      "spillover_medio_receptores": 6.397338823724633e-13,
+      "media_red": 5.827591751742558e-17,
+      "total_red_suma": 6.993110102091386e-16,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 17,
       "producto_respuesta": "Tomate de árbol",
-      "directo": -5.71087681796147e-14,
-      "spillover_medio_receptores": 5.192178697304569e-15,
-      "media_red": 4.3312422796276745e-19,
-      "total_red_suma": 5.197490735553193e-18,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": -5.710876817961762e-14,
+      "spillover_medio_receptores": 5.192178697304834e-15,
+      "media_red": 4.331242279626771e-19,
+      "total_red_suma": 5.197490735552141e-18,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     },
     {
       "choque": "precip_anom",
       "horizonte": 17,
       "producto_respuesta": "Pimentón",
-      "directo": 2.0613222005964554e-12,
-      "spillover_medio_receptores": -1.874014146933809e-13,
-      "media_red": -7.780085894544224e-18,
-      "total_red_suma": -9.336103073453122e-17,
-      "radio_espectral_transicion": 0.30183084585679626,
+      "directo": 2.061322200596494e-12,
+      "spillover_medio_receptores": -1.874014146933844e-13,
+      "media_red": -7.780085894561053e-18,
+      "total_red_suma": -9.336103073473317e-17,
+      "radio_espectral_transicion": 0.30183084585679726,
       "sistema_estable": true
     }
   ],
@@ -2054,192 +2054,192 @@
       {
         "producto": "Tomate de árbol",
         "mercado_key": "arauca arauca",
-        "ADF_stat": -8.152702475813893,
-        "ADF_pvalue": 9.60053924465217e-13,
+        "ADF_stat": -6.731349571103915,
+        "ADF_pvalue": 3.2899063839192027e-09,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "armenia mercar",
-        "ADF_stat": -8.15321434634862,
-        "ADF_pvalue": 9.571759911215384e-13,
+        "ADF_stat": -5.947664793985951,
+        "ADF_pvalue": 2.1846711784281871e-07,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "barranquilla barranquillita",
-        "ADF_stat": -8.006503475988556,
-        "ADF_pvalue": 2.2602422180338506e-12,
+        "ADF_stat": -5.111782713722332,
+        "ADF_pvalue": 1.3274026235407068e-05,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "barranquilla granabastos",
-        "ADF_stat": -8.080356750708686,
-        "ADF_pvalue": 1.467056979486833e-12,
+        "ADF_stat": -4.959252425201081,
+        "ADF_pvalue": 2.6705126063346803e-05,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "bogota d c corabastos",
-        "ADF_stat": -8.174727970055558,
-        "ADF_pvalue": 8.436877346734808e-13,
+        "ADF_stat": -6.734323464467473,
+        "ADF_pvalue": 3.2363034230213545e-09,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "bucaramanga centroabastos",
-        "ADF_stat": -8.040753397630139,
-        "ADF_pvalue": 1.8498712008675864e-12,
+        "ADF_stat": -6.207968024345343,
+        "ADF_pvalue": 5.597332626744922e-08,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "buenaventura valle del cauca",
-        "ADF_stat": -8.188591141281837,
-        "ADF_pvalue": 7.777709213354608e-13,
+        "ADF_stat": -6.152221405242598,
+        "ADF_pvalue": 7.514395017776248e-08,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "cali cavasa",
-        "ADF_stat": -8.132428639134089,
-        "ADF_pvalue": 1.0812523263289537e-12,
+        "ADF_stat": -6.017358224482132,
+        "ADF_pvalue": 1.522423485908024e-07,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "cartagena bazurto",
-        "ADF_stat": -8.027372983915988,
-        "ADF_pvalue": 2.0005200781378976e-12,
+        "ADF_stat": -6.2402492184942515,
+        "ADF_pvalue": 4.7163901924000935e-08,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "cartago valle del cauca",
-        "ADF_stat": -8.214134306087763,
-        "ADF_pvalue": 6.694740288140268e-13,
+        "ADF_stat": -7.249615494614513,
+        "ADF_pvalue": 1.7943180817014987e-10,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "cucuta cenabastos",
-        "ADF_stat": -8.314651624984787,
-        "ADF_pvalue": 3.7087881201288887e-13,
+        "ADF_stat": -6.801996118382278,
+        "ADF_pvalue": 2.224925549894745e-09,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Tomate de árbol",
         "mercado_key": "florencia caqueta",
-        "ADF_stat": -8.313228012782519,
-        "ADF_pvalue": 3.7399635711640266e-13,
+        "ADF_stat": -4.858618439426512,
+        "ADF_pvalue": 4.1953756095083444e-05,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "arauca arauca",
-        "ADF_stat": -8.046275741475828,
-        "ADF_pvalue": 1.7910412523545649e-12,
+        "ADF_stat": -7.77180616568553,
+        "ADF_pvalue": 8.880135387354085e-12,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "armenia mercar",
-        "ADF_stat": -8.467543751358436,
-        "ADF_pvalue": 1.508189635068329e-13,
+        "ADF_stat": -4.256941919230106,
+        "ADF_pvalue": 0.0005269818981024674,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "barranquilla barranquillita",
-        "ADF_stat": -8.297832706208125,
-        "ADF_pvalue": 4.094270777353267e-13,
+        "ADF_stat": -6.92280682238997,
+        "ADF_pvalue": 1.1350436716186788e-09,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "barranquilla granabastos",
-        "ADF_stat": -8.265027763962342,
-        "ADF_pvalue": 4.964897278862113e-13,
+        "ADF_stat": -5.906395819974921,
+        "ADF_pvalue": 2.702278474538018e-07,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "bogota d c corabastos",
-        "ADF_stat": -8.166093696542365,
-        "ADF_pvalue": 8.875272834777319e-13,
+        "ADF_stat": -7.488290324787217,
+        "ADF_pvalue": 4.576739517815091e-11,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "bucaramanga centroabastos",
-        "ADF_stat": -8.399277078733185,
-        "ADF_pvalue": 2.254329843482355e-13,
+        "ADF_stat": -6.447143515734997,
+        "ADF_pvalue": 1.5557244397990782e-08,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "buenaventura valle del cauca",
-        "ADF_stat": -8.655826095388903,
-        "ADF_pvalue": 4.9723029031562936e-14,
+        "ADF_stat": -5.915151812987081,
+        "ADF_pvalue": 2.583278780398893e-07,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "cali cavasa",
-        "ADF_stat": -8.6238050382961,
-        "ADF_pvalue": 6.005457273199768e-14,
+        "ADF_stat": -6.462341659523239,
+        "ADF_pvalue": 1.432912465586248e-08,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "cartagena bazurto",
-        "ADF_stat": -8.129456384948945,
-        "ADF_pvalue": 1.1002588358827536e-12,
+        "ADF_stat": -6.306222389828104,
+        "ADF_pvalue": 3.318526745096278e-08,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "cartago valle del cauca",
-        "ADF_stat": -8.368851822339757,
-        "ADF_pvalue": 2.696357219311425e-13,
+        "ADF_stat": -6.3528026364478904,
+        "ADF_pvalue": 2.5859801789864014e-08,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "cucuta cenabastos",
-        "ADF_stat": -8.555203320757965,
-        "ADF_pvalue": 8.998306643040126e-14,
+        "ADF_stat": -6.8401372819514075,
+        "ADF_pvalue": 1.800010823680161e-09,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       },
       {
         "producto": "Pimentón",
         "mercado_key": "florencia caqueta",
-        "ADF_stat": -8.248574686349295,
-        "ADF_pvalue": 5.468790759003514e-13,
+        "ADF_stat": -6.020145652550375,
+        "ADF_pvalue": 1.5005099739066686e-07,
         "rechaza_raiz_unitaria_5pct": true,
         "n": 70
       }
@@ -2248,15 +2248,15 @@
       {
         "producto_dependiente": "Tomate de árbol",
         "fecha_residuo": "2024-12-01T00:00:00",
-        "Moran_I_residuos": -0.04987203050023965,
-        "p_sim": 0.315,
+        "Moran_I_residuos": -0.04987203050024052,
+        "p_sim": 0.336,
         "n": 12
       },
       {
         "producto_dependiente": "Pimentón",
         "fecha_residuo": "2024-12-01T00:00:00",
-        "Moran_I_residuos": 0.46629020665694015,
-        "p_sim": 0.005,
+        "Moran_I_residuos": 0.46629020665694076,
+        "p_sim": 0.006,
         "n": 12
       }
     ]
