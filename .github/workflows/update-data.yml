@@ -1,4 +1,3 @@
-
 name: Actualizar datos oficiales y publicar en Hugging Face
 
 on:
@@ -76,11 +75,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/observatorio.json data/market_coordinates.csv data/coordinate_validation_report.csv data/coordinate_validation_cache.json data/sipsa_audit_files.csv data/sipsa_audit_year_product.csv data/sipsa_audit_summary.json
+          git add data/observatorio.json data/market_coordinates.csv data/coordinate_validation_report.csv data/coordinate_validation_cache.json data/sipsa_audit_files.csv data/sipsa_audit_year_product.csv data/sipsa_audit_summary.json data/residual_moran_panel_audit.csv
           if git diff --cached --quiet; then
             echo "No hay cambios para confirmar."
           else
-            git commit -m "Actualizar resultados oficiales"
+            git commit -m "Actualizar resultados oficiales y auditoría Moran"
             git push
           fi
 
