@@ -55,6 +55,14 @@ jobs:
           AGROCLIMA_IRF_HORIZON: "18"
         run: python refresh_static_data.py
 
+      - name: Validar integridad del JSON antes de publicar
+        env:
+          AGROCLIMA_START_YEAR: "2019"
+          AGROCLIMA_END_YEAR: "2024"
+          AGROCLIMA_INTEGRITY_MIN_MONTHLY_RATIO: "0.1"
+          AGROCLIMA_INTEGRITY_MAX_MONTHLY_RATIO: "10"
+        run: python validate_observatorio_integrity.py data/observatorio.json
+
       - name: Auditar coordenadas de mercados
         env:
           AGROCLIMA_COORD_ONLINE_CHECK: "1"
