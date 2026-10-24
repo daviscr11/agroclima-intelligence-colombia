@@ -867,9 +867,51 @@
           "-75.6205060"
         ]
       }
+    },
+    "reverse|1.61629|-75.61542": {
+      "status": "ok",
+      "fetched_at": 1792877188.7709816,
+      "data": {
+        "place_id": 307930184,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "node",
+        "osm_id": 5079308422,
+        "lat": "1.6160890",
+        "lon": "-75.6154496",
+        "category": "amenity",
+        "type": "fast_food",
+        "place_rank": 30,
+        "importance": 5.085145342179015e-05,
+        "addresstype": "amenity",
+        "name": "Comederos del Mercado",
+        "display_name": "Comederos del Mercado, Calle 16, Comuna Occidental, Perímetro Urbano Florencia, Florencia, Caquetá, RAP Amazonía, 180001, Colombia",
+        "address": {
+          "amenity": "Comederos del Mercado",
+          "road": "Calle 16",
+          "city_district": "Comuna Occidental",
+          "city": "Perímetro Urbano Florencia",
+          "county": "Florencia",
+          "state": "Caquetá",
+          "ISO3166-2-lvl4": "CO-CAQ",
+          "region": "RAP Amazonía",
+          "postcode": "180001",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Comederos del Mercado",
+          "name:es": "Comederos del Mercado"
+        },
+        "boundingbox": [
+          "1.6160390",
+          "1.6161390",
+          "-75.6154996",
+          "-75.6153996"
+        ]
+      }
     }
   },
   "version": 2,
   "source": "OpenStreetMap Nominatim; datos sujetos a ODbL",
-  "updated_at": "2026-10-24T00:43:47.687192+00:00"
+  "updated_at": "2026-10-24T21:26:28.770987+00:00"
 }
