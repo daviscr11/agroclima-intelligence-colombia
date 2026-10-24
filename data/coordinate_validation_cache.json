@@ -828,9 +828,48 @@
           "-72.4924383"
         ]
       }
+    },
+    "reverse|1.56944|-75.62056": {
+      "status": "ok",
+      "fetched_at": 1792802627.6871843,
+      "data": {
+        "place_id": 308171633,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "node",
+        "osm_id": 12480717662,
+        "lat": "1.5694440",
+        "lon": "-75.6205560",
+        "category": "amenity",
+        "type": "school",
+        "place_rank": 30,
+        "importance": 2.8699931334355954e-05,
+        "addresstype": "amenity",
+        "name": "Escuela Colombia",
+        "display_name": "Escuela Colombia, Vía San José del Fragua - Florencia, Florencia, Caquetá, RAP Amazonía, 180001, Colombia",
+        "address": {
+          "amenity": "Escuela Colombia",
+          "road": "Vía San José del Fragua - Florencia",
+          "county": "Florencia",
+          "state": "Caquetá",
+          "ISO3166-2-lvl4": "CO-CAQ",
+          "region": "RAP Amazonía",
+          "postcode": "180001",
+          "country": "Colombia",
+          "country_code": "co"
+        },
+        "namedetails": {
+          "name": "Escuela Colombia"
+        },
+        "boundingbox": [
+          "1.5693940",
+          "1.5694940",
+          "-75.6206060",
+          "-75.6205060"
+        ]
+      }
     }
   },
   "version": 2,
   "source": "OpenStreetMap Nominatim; datos sujetos a ODbL",
-  "updated_at": "2026-10-23T21:31:51.140277+00:00"
+  "updated_at": "2026-10-24T00:43:47.687192+00:00"
 }
