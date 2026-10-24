@@ -41,7 +41,7 @@ MONTHS_ES = {
 }
 
 COLUMN_CANDIDATES = {
-    "market": ["mercado", "nombre mercado", "mercado mayorista", "ciudad", "municipio", "nombre municipio", "nom mpio"],
+    "market": ["mercado", "nombre mercado", "mercado mayorista", "ciudad", "municipio", "nombre municipio", "nom mpio", "fuente", "nombre fuente", "nombre de la fuente"],
     "product": ["producto", "nombre producto", "producto nombre", "nom producto", "alimento"],
     "price": ["precio promedio", "precio promedio mensual", "promedio precio", "precio medio", "precio", "valor precio"],
     "date": ["fecha", "fecha mes", "periodo", "periodo referencia", "fecha referencia"],
