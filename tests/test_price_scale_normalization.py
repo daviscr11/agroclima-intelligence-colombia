@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from agroclima_spvarx_real import _canonicalize_table, _iter_tables, _parse_number
+from agroclima_spvarx_real import _canonicalize_table, _iter_tables, _parse_number, load_sipsa_data
 
 
 class SipsaPriceParsingTests(unittest.TestCase):
@@ -48,6 +48,33 @@ class SipsaPriceParsingTests(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result["precio"].tolist(), [2947.0, 560.0])
         self.assertEqual(result["unidad"].tolist(), ["Kilogramo", "Kilogramo"])
+
+
+    def test_equivalent_csv_takes_priority_over_duplicate_stata_export(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            csv_path = root / "mensual 24.csv"
+            dta_path = root / "Mensual_24.dta"
+            csv_path.write_text(
+                "Fecha;Mercado;Producto;Precio promedio por kilogramo*\n"
+                "ene-24;Arauca (Arauca);Tomate de árbol;2.733\n",
+                encoding="utf-8",
+            )
+            # The DTA representation has the same row but stores the textual token as a float.
+            # This models the duplicate export in the official 2024 ZIP.
+            pd.DataFrame({
+                "Fecha": ["ene-24"],
+                "Mercado": ["Arauca (Arauca)"],
+                "Producto": ["Tomate de árbol"],
+                "Precio_promedio_por_kilogramo_": [2.733],
+            }).to_stata(dta_path, write_index=False, version=118)
+
+            data, audit = load_sipsa_data(root)
+            matched = data[(data["producto"] == "Tomate de árbol") & (data["mercado"] == "Arauca (Arauca)")]
+            self.assertEqual(len(matched), 1)
+            self.assertEqual(float(matched["precio"].iloc[0]), 2733.0)
+            self.assertTrue(matched["fuente_archivo"].iloc[0].endswith("mensual 24.csv"))
+
 
 
 if __name__ == "__main__":
