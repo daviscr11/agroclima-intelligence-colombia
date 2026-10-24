@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-10-24T21:03:50.602538+00:00",
+  "period_start_year": 2019,
+  "period_end_year": 2024,
+  "source_tables_processed": 9,
+  "source_tables_recognized": 9,
+  "source_tables_unrecognized": 0,
+  "source_tables_stata_omitted_in_favor_of_text": 6,
+  "original_rows_in_processed_tables": 495236,
+  "original_rows_without_parseable_year_product": 0,
+  "canonical_rows_before_exact_deduplication": 495236,
+  "exact_duplicate_rows_removed": 166874,
+  "canonical_rows_after_exact_deduplication": 328362,
+  "year_product_rows": 2116,
+  "reconciliation_passed": true,
+  "scale_controls_total": {
+    "tokens_punto_miles_interpretados": 154433,
+    "tokens_coma_miles_interpretados": 0,
+    "tokens_formato_mixto_normalizados": 0,
+    "valores_precio_nativos_numericos": 166870,
+    "tokens_punto_decimal_no_miles": 0,
+    "tokens_precio_no_nulo": 495236
+  },
+  "interannual_scale_alerts": 0,
+  "min_interannual_scale_ratio": 0.1,
+  "max_interannual_scale_ratio": 10.0,
+  "rows_by_year_after_deduplication": [
+    {
+      "anio": 2019,
+      "observaciones_despues_deduplicar": 56626
+    },
+    {
+      "anio": 2020,
+      "observaciones_despues_deduplicar": 55716
+    },
+    {
+      "anio": 2021,
+      "observaciones_despues_deduplicar": 54524
+    },
+    {
+      "anio": 2022,
+      "observaciones_despues_deduplicar": 53647
+    },
+    {
+      "anio": 2023,
+      "observaciones_despues_deduplicar": 53807
+    },
+    {
+      "anio": 2024,
+      "observaciones_despues_deduplicar": 54042
+    }
+  ],
+  "notes": [
+    "Filas originales por año/producto cuentan filas fuente con fecha y producto parseables, antes de filtrar precio o mercado.",
+    "Filas canónicas reconocidas son los registros con fecha, precio positivo, mercado y producto válidos antes de deduplicar.",
+    "Duplicados eliminados reproducen las claves de load_sipsa_data: fecha, mercado, producto, precio, unidad y variedad.",
+    "Los conteos de separadores muestran patrones de entrada; no se aplica un factor monetario global.",
+    "Las exportaciones .dta con CSV/TXT equivalente se registran como omitidas para evitar mezclar representaciones de escala.",
+    "El total original cubre las tablas leídas por el parser; no suma las filas desconocidas de .dta omitidos, pero estos quedan registrados por separado.",
+    "Las filas fuente no asignables a año/producto permanecen contabilizadas en el resumen y en el informe por archivo."
+  ]
+}
