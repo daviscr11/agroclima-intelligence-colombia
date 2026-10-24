@@ -288,6 +288,18 @@ def _extract_archives(raw_dir: Path) -> None:
 
 
 def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
+    """Lee tablas SIPSA priorizando el CSV/TXT cuando existe su exportación equivalente.
+
+    Algunas entregas anuales de DANE contienen el mismo registro en CSV y Stata (.dta).
+    En casos como SIPSA-P 2024, el CSV conserva el token de precio como ``2.733`` (2.733
+    pesos, con punto de miles), mientras que el .dta almacena ese mismo token como float
+    ``2.733``. Si se corrige el CSV y se suma también el .dta, ambos registros pasan a
+    parecer observaciones distintas y la media queda aproximadamente a la mitad.
+
+    Por ello, si hay un CSV/TXT con el mismo nombre base normalizado en la misma carpeta,
+    se considera la representación textual como fuente primaria y se omite el .dta duplicado.
+    El .dta sigue siendo un respaldo cuando no hay archivo CSV/TXT equivalente.
+    """
     exts = {".csv", ".txt", ".xlsx", ".xls", ".dta"}
     for path in raw_dir.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in exts:
@@ -295,6 +307,18 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
         if path.name.startswith("~$") or path.name == ".done":
             continue
         if path.suffix.lower() == ".dta":
+            # Exports like ``mensual 24.csv`` and ``Mensual_24.dta`` share a normalized
+            # basename. Keep only the textual version so price tokens are parsed once.
+            normalized_stem = norm_text(path.stem)
+            text_sibling = any(
+                sibling.is_file()
+                and sibling.suffix.lower() in {".csv", ".txt"}
+                and norm_text(sibling.stem) == normalized_stem
+                for sibling in path.parent.iterdir()
+            )
+            if text_sibling:
+                print(f"SIPSA: se omite exportación Stata duplicada {path.name}; se prioriza CSV/TXT equivalente.")
+                continue
             try:
                 yield str(path), pd.read_stata(path)
             except Exception as exc:
