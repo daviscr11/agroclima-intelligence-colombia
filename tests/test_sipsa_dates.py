@@ -44,6 +44,22 @@ class SipsaDateParserTests(unittest.TestCase):
         self.assertIsNotNone(got)
         self.assertEqual(got["unidad"].iloc[0], "")
 
+    def test_2019_official_fuente_field_is_used_as_market_identifier(self):
+        # DANE's 2019 SIPSA-P file calls the market/source field "Fuente".
+        table = pd.DataFrame({
+            "Fecha": ["2019-01-01", "2019-02-01"],
+            "Grupo": ["Frutas", "Frutas"],
+            "Producto": ["Tomate de árbol", "Tomate de árbol"],
+            "Fuente": ["Armenia, Mercar", "Cartagena, Bazurto"],
+            "Precio_por_kilogramo": [3500, 3600],
+        })
+        got = _canonicalize_table(table, "Mensual_2019.csv")
+        self.assertIsNotNone(got)
+        self.assertEqual(len(got), 2)
+        self.assertEqual(got["mercado"].tolist(), ["Armenia, Mercar", "Cartagena, Bazurto"])
+        self.assertEqual(got["fecha"].dt.strftime("%Y-%m").tolist(), ["2019-01", "2019-02"])
+        self.assertEqual(got["unidad"].tolist(), ["Kilogramo", "Kilogramo"])
+
 
 if __name__ == "__main__":
     unittest.main()
