@@ -1,9 +1,9 @@
 {
   "status": "ready",
-  "generated_at": "2026-10-24T21:26:27.569935+00:00",
+  "generated_at": "2026-10-24T22:16:44.525817+00:00",
   "message": "Datos oficiales procesados; revise las notas metodológicas antes de interpretar los resultados.",
   "metadata": {
-    "generated_at": "2026-10-24T21:26:27.569935+00:00",
+    "generated_at": "2026-10-24T22:16:44.525817+00:00",
     "start_date": "2019-01",
     "end_date": "2024-12",
     "n_markets": 12,
@@ -51,14 +51,14 @@
           "producto_dependiente": "Tomate de árbol",
           "fecha_residuo": "2024-12-01T00:00:00",
           "Moran_I_residuos": -0.04987203050023925,
-          "p_sim": 0.298,
+          "p_sim": 0.3166,
           "n": 12
         },
         {
           "producto_dependiente": "Pimentón",
           "fecha_residuo": "2024-12-01T00:00:00",
           "Moran_I_residuos": 0.4662902066569398,
-          "p_sim": 0.005,
+          "p_sim": 0.0036,
           "n": 12
         }
       ],
@@ -2249,14 +2249,14 @@
         "producto_dependiente": "Tomate de árbol",
         "fecha_residuo": "2024-12-01T00:00:00",
         "Moran_I_residuos": -0.04987203050023925,
-        "p_sim": 0.298,
+        "p_sim": 0.3166,
         "n": 12
       },
       {
         "producto_dependiente": "Pimentón",
         "fecha_residuo": "2024-12-01T00:00:00",
         "Moran_I_residuos": 0.4662902066569398,
-        "p_sim": 0.005,
+        "p_sim": 0.0036,
         "n": 12
       }
     ]
