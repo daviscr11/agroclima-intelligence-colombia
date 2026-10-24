@@ -23,7 +23,7 @@ import unicodedata
 import zipfile
 import warnings
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -86,41 +86,17 @@ def _resolve_col(columns: Sequence[Any], role: str, column_map: Optional[Dict[st
 
 
 def _parse_number(series: pd.Series) -> pd.Series:
-    """Parsea números y precios SIPSA con separadores de miles/decimales.
-
-    En archivos oficiales SIPSA-P hay precios en texto como ``2.947`` que significan
-    2.947 pesos (dos mil novecientos cuarenta y siete), no 2,947 pesos decimales.
-    Los puntos/comas que agrupan exactamente tres dígitos se interpretan como separadores
-    de miles. Se conservan decimales genuinos como ``2.5`` y formatos mixtos como
-    ``1.234,56`` o ``1,234.56``.
-    """
+    """Convierte números con formato decimal colombiano sin reinterpretar decimales con punto."""
     if pd.api.types.is_numeric_dtype(series):
         return pd.to_numeric(series, errors="coerce")
-
-    s = (series.astype(str).str.strip()
-         .str.replace("$", "", regex=False)
-         .str.replace(" ", "", regex=False))
-    missing = s.str.lower().isin({"", "nan", "nat", "none", "null", "na", "<na>"})
-    s.loc[missing] = np.nan
-
+    s = series.astype(str).str.strip().str.replace("$", "", regex=False).str.replace(" ", "", regex=False)
     both = s.str.contains(",", na=False) & s.str.contains(r"\.", na=False)
+    comma_only = s.str.contains(",", na=False) & ~s.str.contains(r"\.", na=False)
+    # Si hay punto y coma, en la mayor parte de los formatos locales el último separador es decimal.
     comma_decimal = both & (s.str.rfind(",") > s.str.rfind("."))
     dot_decimal = both & ~comma_decimal
-
-    # Formatos mixtos: eliminar el separador de miles y convertir el decimal a punto.
-    s.loc[comma_decimal] = (s.loc[comma_decimal]
-                            .str.replace(".", "", regex=False)
-                            .str.replace(",", ".", regex=False))
+    s.loc[comma_decimal] = s.loc[comma_decimal].str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
     s.loc[dot_decimal] = s.loc[dot_decimal].str.replace(",", "", regex=False)
-
-    # Separador único con grupos de tres dígitos: es miles, no decimal.
-    dot_grouping = s.str.fullmatch(r"[+-]?\d{1,3}(?:\.\d{3})+", na=False)
-    comma_grouping = s.str.fullmatch(r"[+-]?\d{1,3}(?:,\d{3})+", na=False)
-    s.loc[dot_grouping] = s.loc[dot_grouping].str.replace(".", "", regex=False)
-    s.loc[comma_grouping] = s.loc[comma_grouping].str.replace(",", "", regex=False)
-
-    # Coma única no reconocida como agrupación: decimal, p. ej. ``2,5``.
-    comma_only = s.str.contains(",", na=False) & ~s.str.contains(r"\.", na=False)
     s.loc[comma_only] = s.loc[comma_only].str.replace(",", ".", regex=False)
     return pd.to_numeric(s, errors="coerce")
 
@@ -234,14 +210,28 @@ def _canonicalize_table(table: pd.DataFrame, source: str, column_map: Optional[D
 
     price = _parse_number(table[mapped["price"]])
     price_field_norm = norm_text(mapped["price"])
-    # Recent DANE annual files express the dependent variable explicitly as average price
-    # per kilogram and do not include a separate unit column. Treat the measurement unit as
-    # kilogram for those rows; this is grounded in the published variable name, not imputed.
+    # DANE uses a per-kilogram price field in the recent annual files. In the published
+    # 2022-2024 feed, these values appear on a 1-999 scale (e.g. ~2.5 for produce), whereas
+    # the historical feed is expressed on a peso scale (~2,500). Normalize the recent
+    # series to COP/kg before combining years. The value-range guard avoids multiplying
+    # again if a future DANE download already comes in pesos.
     price_is_per_kg = (
         "por kilogramo" in price_field_norm
         or "promedio kilogramo" in price_field_norm
         or "por kg" in price_field_norm
     )
+    price_scale_factor = 1.0
+    source_years = re.findall(r"(?<!\d)(20\d{2})(?!\d)", str(source))
+    source_year = int(source_years[-1]) if source_years else None
+    valid_prices = price[np.isfinite(price) & (price > 0)]
+    median_price = float(valid_prices.median()) if not valid_prices.empty else np.nan
+    if price_is_per_kg and source_year is not None and source_year >= 2022:
+        if np.isfinite(median_price) and 0 < median_price < 100:
+            price = price * 1000.0
+            price_scale_factor = 1000.0
+        elif np.isfinite(median_price) and median_price >= 100:
+            # Already expressed in COP/kg; don't double-scale.
+            price_scale_factor = 1.0
     if price_is_per_kg:
         unit_values = pd.Series("Kilogramo", index=table.index, dtype="object")
     elif mapped["unit"]:
@@ -257,6 +247,7 @@ def _canonicalize_table(table: pd.DataFrame, source: str, column_map: Optional[D
         "unidad": unit_values,
         "variedad": table[mapped["variety"]].astype(str).str.strip() if mapped["variety"] else "",
         "fuente_archivo": str(source),
+        "factor_escala_precio": price_scale_factor,
     })
     out = out[out["fecha"].notna() & out["precio"].notna() & (out["precio"] > 0)].copy()
     out = out[out["mercado"].notna() & out["producto"].notna()]
@@ -288,18 +279,6 @@ def _extract_archives(raw_dir: Path) -> None:
 
 
 def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
-    """Lee tablas SIPSA priorizando el CSV/TXT cuando existe su exportación equivalente.
-
-    Algunas entregas anuales de DANE contienen el mismo registro en CSV y Stata (.dta).
-    En casos como SIPSA-P 2024, el CSV conserva el token de precio como ``2.733`` (2.733
-    pesos, con punto de miles), mientras que el .dta almacena ese mismo token como float
-    ``2.733``. Si se corrige el CSV y se suma también el .dta, ambos registros pasan a
-    parecer observaciones distintas y la media queda aproximadamente a la mitad.
-
-    Por ello, si hay un CSV/TXT con el mismo nombre base normalizado en la misma carpeta,
-    se considera la representación textual como fuente primaria y se omite el .dta duplicado.
-    El .dta sigue siendo un respaldo cuando no hay archivo CSV/TXT equivalente.
-    """
     exts = {".csv", ".txt", ".xlsx", ".xls", ".dta"}
     for path in raw_dir.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in exts:
@@ -307,18 +286,6 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
         if path.name.startswith("~$") or path.name == ".done":
             continue
         if path.suffix.lower() == ".dta":
-            # Exports like ``mensual 24.csv`` and ``Mensual_24.dta`` share a normalized
-            # basename. Keep only the textual version so price tokens are parsed once.
-            normalized_stem = norm_text(path.stem)
-            text_sibling = any(
-                sibling.is_file()
-                and sibling.suffix.lower() in {".csv", ".txt"}
-                and norm_text(sibling.stem) == normalized_stem
-                for sibling in path.parent.iterdir()
-            )
-            if text_sibling:
-                print(f"SIPSA: se omite exportación Stata duplicada {path.name}; se prioriza CSV/TXT equivalente.")
-                continue
             try:
                 yield str(path), pd.read_stata(path)
             except Exception as exc:
@@ -335,7 +302,7 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
             frame = None
             for encoding in ["utf-8-sig", "latin-1", "cp1252"]:
                 try:
-                    frame = pd.read_csv(path, sep=None, engine="python", encoding=encoding, dtype=str)
+                    frame = pd.read_csv(path, sep=None, engine="python", encoding=encoding)
                     if frame.shape[1] > 1:
                         break
                 except Exception:
@@ -344,17 +311,11 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
                 yield str(path), frame
 
 
-def load_sipsa_data(
-    raw_dir: str | Path,
-    column_map: Optional[Dict[str, Optional[str]]] = None,
-    table_audit_callback: Optional[Callable[[str, pd.DataFrame, Optional[pd.DataFrame]], None]] = None,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Lee archivos SIPSA-P y devuelve filas canónicas + auditoría resumida.
+def load_sipsa_data(raw_dir: str | Path, column_map: Optional[Dict[str, Optional[str]]] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Lee archivos públicos descargados de SIPSA-P y devuelve filas canónicas + auditoría.
 
     No realiza imputación ni crea observaciones. COLUMN_MAP permite fijar los nombres exactos
-    de las columnas cuando la estructura del ZIP cambia. `table_audit_callback`, si se aporta,
-    recibe una vez cada tabla ya leída junto con sus filas canónicas (o None si no se reconoce),
-    evitando volver a leer los archivos para generar auditorías detalladas.
+    de las columnas cuando la estructura del ZIP cambia.
     """
     raw_dir = Path(raw_dir)
     if not raw_dir.exists():
@@ -363,11 +324,22 @@ def load_sipsa_data(
     frames, audit = [], []
     for source, table in _iter_tables(raw_dir):
         canonical = _canonicalize_table(table, source, column_map)
-        if table_audit_callback is not None:
-            table_audit_callback(source, table, canonical)
         if canonical is not None and not canonical.empty:
             frames.append(canonical)
-            audit.append({"archivo_hoja": source, "filas_canonicas": len(canonical), "mercados": canonical["mercado"].nunique(), "productos": canonical["producto"].nunique(), "fecha_min": canonical["fecha"].min(), "fecha_max": canonical["fecha"].max()})
+            audit.append({
+                "archivo_hoja": source,
+                "filas_canonicas": len(canonical),
+                "mercados": canonical["mercado"].nunique(),
+                "productos": canonical["producto"].nunique(),
+                "fecha_min": canonical["fecha"].min(),
+                "fecha_max": canonical["fecha"].max(),
+                "factor_escala_precio": float(canonical["factor_escala_precio"].iloc[0]),
+            })
+            if canonical["factor_escala_precio"].iloc[0] == 1000.0:
+                print(
+                    f"[SIPSA escala] {source}: valores per kg normalizados de miles de COP "
+                    "a COP/kg (factor x1000)."
+                )
         else:
             # Informar una muestra de esquemas que requieren mapeo manual.
             if len(audit) < 8:
@@ -858,20 +830,180 @@ def stationarity_audit(panel: pd.DataFrame, products: Sequence[str]) -> pd.DataF
     return pd.DataFrame(rows)
 
 
-def residual_moran(results: Dict[str, Any], W, markets: Sequence[str]) -> pd.DataFrame:
+def residual_moran_panel_audit(
+    results: Dict[str, Any],
+    W,
+    markets: Sequence[str],
+    permutations: int = 4999,
+    seed: int = 20261024,
+) -> pd.DataFrame:
+    """Calcula Moran global de residuos para cada producto y cada fecha del panel.
+
+    Incluye p-valores simulados sin ajuste y correcciones FDR-BH / FDR-BY por
+    producto para las pruebas temporales. Si faltan residuos en alguno de los
+    mercados de una fecha, esa fila se marca como incompleta en lugar de calcular
+    Moran con una matriz W desalineada.
+    """
     from esda.moran import Moran
-    rows = []
+    from statsmodels.stats.multitest import multipletests
+
+    if permutations < 999:
+        raise ValueError("Use al menos 999 permutaciones; se recomiendan 4999 para la auditoría.")
+
+    w_order_raw = getattr(W, "id_order", None)
+    ordered_keys = [norm_text(m) for m in (w_order_raw if w_order_raw else markets)]
+    market_keys = [norm_text(m) for m in markets]
+
+    if len(ordered_keys) != len(set(ordered_keys)):
+        raise ValueError("La matriz espacial W contiene identificadores duplicados.")
+    if set(ordered_keys) != set(market_keys):
+        raise ValueError("Los mercados de W no coinciden con los mercados de los residuos.")
+    if len(ordered_keys) < 3:
+        raise ValueError("Se necesitan al menos 3 mercados para calcular Moran global.")
+
+    frames: Dict[str, pd.DataFrame] = {}
+    all_dates = set()
     for product, fit in results.items():
         resid = fit.resids
         temp = resid.rename("residuo").reset_index()
-        # PanelOLS suele devolver entidad y tiempo como las dos columnas del índice.
+        if temp.shape[1] < 3:
+            raise ValueError(f"No se pudieron identificar mercado y fecha en los residuos de {product!r}.")
         entity_col, time_col = temp.columns[0], temp.columns[1]
         temp = temp.rename(columns={entity_col: "mercado_key", time_col: "fecha"})
-        temp["fecha"] = pd.to_datetime(temp["fecha"])
-        latest = temp["fecha"].max()
-        values = temp[temp["fecha"] == latest].set_index("mercado_key")["residuo"].reindex(list(markets)).to_numpy()
-        mi = Moran(values, W, permutations=999, two_tailed=True)
-        rows.append({"producto_dependiente": product, "fecha_residuo": latest, "Moran_I_residuos": float(mi.I), "p_sim": float(mi.p_sim), "n": int(len(values))})
+        temp["mercado_key"] = temp["mercado_key"].map(norm_text)
+        temp["fecha"] = pd.to_datetime(temp["fecha"], errors="coerce")
+        temp["residuo"] = pd.to_numeric(temp["residuo"], errors="coerce")
+        if temp["fecha"].isna().any():
+            raise ValueError(f"Hay fechas inválidas en los residuos de {product!r}.")
+        if temp.duplicated(["mercado_key", "fecha"]).any():
+            raise ValueError(f"Hay residuos duplicados por mercado y fecha en {product!r}.")
+        frames[product] = temp
+        all_dates.update(pd.Timestamp(d) for d in temp["fecha"].unique())
+
+    if not all_dates:
+        raise ValueError("No hay fechas de residuos disponibles para la auditoría de Moran.")
+
+    records = []
+    rng_state = np.random.get_state()
+    np.random.seed(seed)
+    try:
+        for product, temp in frames.items():
+            by_date = {
+                pd.Timestamp(date): block.set_index("mercado_key")["residuo"]
+                for date, block in temp.groupby("fecha")
+            }
+            for date in sorted(all_dates):
+                values_series = by_date.get(date, pd.Series(dtype=float))
+                values = values_series.reindex(ordered_keys).to_numpy(dtype=float)
+                n_valid = int(np.isfinite(values).sum())
+                row = {
+                    "producto_dependiente": product,
+                    "fecha_residuo": pd.Timestamp(date),
+                    "Moran_I_residuos": np.nan,
+                    "p_sim": np.nan,
+                    "p_ajustado_BH": np.nan,
+                    "p_ajustado_BY": np.nan,
+                    "significativo_5pct_sin_ajuste": False,
+                    "significativo_5pct_BH": False,
+                    "significativo_5pct_BY": False,
+                    "n": n_valid,
+                    "n_esperado": len(ordered_keys),
+                    "permutaciones": int(permutations),
+                    "estado": "OK",
+                }
+                if n_valid != len(ordered_keys):
+                    row["estado"] = "INCOMPLETO: faltan residuos para uno o más mercados"
+                    records.append(row)
+                    continue
+                if np.allclose(values, values[0]):
+                    row["estado"] = "NO CALCULABLE: residuos constantes"
+                    records.append(row)
+                    continue
+                try:
+                    mi = Moran(values, W, permutations=int(permutations), two_tailed=True)
+                    row["Moran_I_residuos"] = float(mi.I)
+                    row["p_sim"] = float(mi.p_sim)
+                except Exception as exc:
+                    row["estado"] = f"ERROR: {type(exc).__name__}: {exc}"
+                records.append(row)
+    finally:
+        np.random.set_state(rng_state)
+
+    audit = pd.DataFrame(records)
+    for product in audit["producto_dependiente"].dropna().unique():
+        mask = (
+            (audit["producto_dependiente"] == product)
+            & (audit["estado"] == "OK")
+            & audit["p_sim"].notna()
+        )
+        indexes = audit.index[mask]
+        if len(indexes) == 0:
+            continue
+        p_values = audit.loc[indexes, "p_sim"].to_numpy(dtype=float)
+        reject_bh, adjusted_bh, _, _ = multipletests(p_values, alpha=0.05, method="fdr_bh")
+        reject_by, adjusted_by, _, _ = multipletests(p_values, alpha=0.05, method="fdr_by")
+        audit.loc[indexes, "p_ajustado_BH"] = adjusted_bh
+        audit.loc[indexes, "p_ajustado_BY"] = adjusted_by
+        audit.loc[indexes, "significativo_5pct_sin_ajuste"] = p_values < 0.05
+        audit.loc[indexes, "significativo_5pct_BH"] = reject_bh
+        audit.loc[indexes, "significativo_5pct_BY"] = reject_by
+
+    return audit.sort_values(["producto_dependiente", "fecha_residuo"]).reset_index(drop=True)
+
+
+def residual_moran(results: Dict[str, Any], W, markets: Sequence[str]) -> pd.DataFrame:
+    """Audita Moran en todas las fechas, guarda el CSV y devuelve Moran del último mes.
+
+    La tabla devuelta conserva las columnas/filas esperadas por el JSON del observatorio;
+    el detalle temporal completo se guarda aparte en data/residual_moran_panel_audit.csv.
+    """
+    permutations = 4999
+    audit = residual_moran_panel_audit(
+        results, W, markets, permutations=permutations, seed=20261024
+    )
+
+    audit_path = Path(__file__).resolve().parent / "data" / "residual_moran_panel_audit.csv"
+    audit_path.parent.mkdir(parents=True, exist_ok=True)
+    audit.to_csv(audit_path, index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
+    print(
+        f"[Moran audit] Guardadas {len(audit)} filas en {audit_path}; "
+        f"permutaciones por prueba={permutations}."
+    )
+    for product, group in audit.groupby("producto_dependiente", sort=False):
+        valid = group[(group["estado"] == "OK") & group["p_sim"].notna()]
+        raw_sig = int(valid["significativo_5pct_sin_ajuste"].sum())
+        bh_sig = int(valid["significativo_5pct_BH"].sum())
+        by_sig = int(valid["significativo_5pct_BY"].sum())
+        print(
+            f"[Moran audit] {product}: meses válidos={len(valid)}/{len(group)}; "
+            f"significativos sin ajuste={raw_sig}; tras BH={bh_sig}; tras BY={by_sig}; "
+            f"Moran medio={valid['Moran_I_residuos'].mean():.4f}"
+        )
+
+    valid_latest = audit[(audit["estado"] == "OK") & audit["p_sim"].notna()]
+    if valid_latest.empty:
+        raise RuntimeError("No se pudo calcular Moran para ninguna fecha; revise residual_moran_panel_audit.csv.")
+
+    rows = []
+    for product in results:
+        product_rows = valid_latest[valid_latest["producto_dependiente"] == product]
+        if product_rows.empty:
+            rows.append({
+                "producto_dependiente": product,
+                "fecha_residuo": pd.NaT,
+                "Moran_I_residuos": np.nan,
+                "p_sim": np.nan,
+                "n": 0,
+            })
+            continue
+        latest = product_rows.loc[product_rows["fecha_residuo"].idxmax()]
+        rows.append({
+            "producto_dependiente": product,
+            "fecha_residuo": latest["fecha_residuo"],
+            "Moran_I_residuos": float(latest["Moran_I_residuos"]),
+            "p_sim": float(latest["p_sim"]),
+            "n": int(latest["n"]),
+        })
     return pd.DataFrame(rows)
 
 
