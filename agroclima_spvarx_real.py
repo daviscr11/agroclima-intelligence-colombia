@@ -86,17 +86,41 @@ def _resolve_col(columns: Sequence[Any], role: str, column_map: Optional[Dict[st
 
 
 def _parse_number(series: pd.Series) -> pd.Series:
-    """Convierte números con formato decimal colombiano sin reinterpretar decimales con punto."""
+    """Parsea números y precios SIPSA con separadores de miles/decimales.
+
+    En archivos oficiales SIPSA-P hay precios en texto como ``2.947`` que significan
+    2.947 pesos (dos mil novecientos cuarenta y siete), no 2,947 pesos decimales.
+    Los puntos/comas que agrupan exactamente tres dígitos se interpretan como separadores
+    de miles. Se conservan decimales genuinos como ``2.5`` y formatos mixtos como
+    ``1.234,56`` o ``1,234.56``.
+    """
     if pd.api.types.is_numeric_dtype(series):
         return pd.to_numeric(series, errors="coerce")
-    s = series.astype(str).str.strip().str.replace("$", "", regex=False).str.replace(" ", "", regex=False)
+
+    s = (series.astype(str).str.strip()
+         .str.replace("$", "", regex=False)
+         .str.replace(" ", "", regex=False))
+    missing = s.str.lower().isin({"", "nan", "nat", "none", "null", "na", "<na>"})
+    s.loc[missing] = np.nan
+
     both = s.str.contains(",", na=False) & s.str.contains(r"\.", na=False)
-    comma_only = s.str.contains(",", na=False) & ~s.str.contains(r"\.", na=False)
-    # Si hay punto y coma, en la mayor parte de los formatos locales el último separador es decimal.
     comma_decimal = both & (s.str.rfind(",") > s.str.rfind("."))
     dot_decimal = both & ~comma_decimal
-    s.loc[comma_decimal] = s.loc[comma_decimal].str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
+
+    # Formatos mixtos: eliminar el separador de miles y convertir el decimal a punto.
+    s.loc[comma_decimal] = (s.loc[comma_decimal]
+                            .str.replace(".", "", regex=False)
+                            .str.replace(",", ".", regex=False))
     s.loc[dot_decimal] = s.loc[dot_decimal].str.replace(",", "", regex=False)
+
+    # Separador único con grupos de tres dígitos: es miles, no decimal.
+    dot_grouping = s.str.fullmatch(r"[+-]?\d{1,3}(?:\.\d{3})+", na=False)
+    comma_grouping = s.str.fullmatch(r"[+-]?\d{1,3}(?:,\d{3})+", na=False)
+    s.loc[dot_grouping] = s.loc[dot_grouping].str.replace(".", "", regex=False)
+    s.loc[comma_grouping] = s.loc[comma_grouping].str.replace(",", "", regex=False)
+
+    # Coma única no reconocida como agrupación: decimal, p. ej. ``2,5``.
+    comma_only = s.str.contains(",", na=False) & ~s.str.contains(r"\.", na=False)
     s.loc[comma_only] = s.loc[comma_only].str.replace(",", ".", regex=False)
     return pd.to_numeric(s, errors="coerce")
 
@@ -287,7 +311,7 @@ def _iter_tables(raw_dir: Path) -> Iterable[Tuple[str, pd.DataFrame]]:
             frame = None
             for encoding in ["utf-8-sig", "latin-1", "cp1252"]:
                 try:
-                    frame = pd.read_csv(path, sep=None, engine="python", encoding=encoding)
+                    frame = pd.read_csv(path, sep=None, engine="python", encoding=encoding, dtype=str)
                     if frame.shape[1] > 1:
                         break
                 except Exception:
