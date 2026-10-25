@@ -914,13 +914,10 @@ def model_stability(results: Dict[str, Any], products: Sequence[str], W_dense: n
     return {"A_temporal": A, "B_espacial": B, "transition": transition, "spectral_radius": radius, "stable": bool(radius < 1.0), "eigenvalues": eigs}
 
 
-def compute_irfs(results: Dict[str, Any], products: Sequence[str], W_dense: np.ndarray, horizon: int = 12) -> pd.DataFrame:
-    """IRF de un choque climático exógeno de +1 DE, promediando todos los mercados de origen.
-
-    Reporta respuesta directa (mercado afectado), spillover medio por mercado receptor,
-    media de respuesta en la red y suma de respuesta en toda la red. Son IRF puntuales,
-    sin intervalos de confianza; no deben leerse como causalidad sin identificar el choque.
-    """
+def _irf_point_estimates(
+    results: Dict[str, Any], products: Sequence[str], W_dense: np.ndarray, horizon: int
+) -> pd.DataFrame:
+    """Calcula las respuestas puntuales a un choque climático de una DE."""
     products = list(products)
     n, k = W_dense.shape[0], len(products)
     stability = model_stability(results, products, W_dense)
@@ -961,6 +958,121 @@ def compute_irfs(results: Dict[str, Any], products: Sequence[str], W_dense: np.n
                                 "media_red": network_mean, "total_red_suma": network_total,
                                 "radio_espectral_transicion": stability["spectral_radius"], "sistema_estable": stability["stable"]})
     return pd.DataFrame(records)
+
+
+def _moving_block_indices(n_periods: int, block_length: int, rng: np.random.Generator) -> np.ndarray:
+    """Índices de un bootstrap circular por bloques temporales."""
+    blocks = []
+    for _ in range(int(np.ceil(n_periods / block_length))):
+        start = int(rng.integers(0, n_periods))
+        blocks.append((start + np.arange(block_length)) % n_periods)
+    return np.concatenate(blocks)[:n_periods]
+
+
+def _bootstrap_spvarx_results(panel: pd.DataFrame, products: Sequence[str]) -> Dict[str, Any]:
+    """Reestima el SpVARX de dos efectos fijos sobre un panel temporal remuestreado."""
+    try:
+        from linearmodels.panel import PanelOLS
+    except ImportError as exc:
+        raise ImportError("Instale linearmodels para calcular bandas bootstrap.") from exc
+
+    products = list(products)
+    ycols = [f"y{i}" for i in range(len(products))]
+    regressors = (
+        [f"L1__y{i}" for i in range(len(products))]
+        + [f"WL1__y{i}" for i in range(len(products))]
+        + ["X0__temp_anom", "X0__precip_anom", "X1__temp_anom", "X1__precip_anom"]
+    )
+    indexed = panel.set_index(["mercado_key", "fecha"]).sort_index()
+    results = {}
+    for j, product in enumerate(products):
+        model = PanelOLS(
+            indexed[ycols[j]], indexed[regressors], entity_effects=True,
+            time_effects=True, drop_absorbed=True, check_rank=True,
+        )
+        results[product] = model.fit(cov_type="unadjusted")
+    return results
+
+
+def compute_irfs(
+    results: Dict[str, Any],
+    products: Sequence[str],
+    W_dense: np.ndarray,
+    horizon: int = 12,
+    panel: Optional[pd.DataFrame] = None,
+    bootstrap_repetitions: int = 0,
+    bootstrap_seed: int = 20261025,
+    block_length: Optional[int] = None,
+) -> pd.DataFrame:
+    """IRF puntuales e intervalos percentiles punto a punto del 95% por bootstrap.
+
+    Cada bloque contiene todas las observaciones de los mercados en esos meses. Se
+    conservan juntos y, dentro del bloque, en orden los resultados y regresores; en
+    cada réplica se vuelve a estimar el SpVARX con efectos de mercado y tiempo.
+    Las bandas son condicionales a W, la cobertura y los regresores observados, son
+    aproximadas, no son simultáneas para toda la curva, y no resuelven el sesgo
+    potencial del panel dinámico ni identifican una respuesta causal.
+    """
+    point = _irf_point_estimates(results, products, W_dense, horizon)
+    if panel is None or int(bootstrap_repetitions) <= 0:
+        return point
+
+    repetitions = int(bootstrap_repetitions)
+    dates = pd.DatetimeIndex(sorted(pd.to_datetime(panel["fecha"]).unique()))
+    if len(dates) < 12:
+        raise ValueError("El bootstrap IRF requiere al menos 12 meses de estimación.")
+    if block_length is None:
+        block_length = max(2, int(round(len(dates) ** (1 / 3))))
+    block_length = min(int(block_length), len(dates))
+    if block_length < 2:
+        raise ValueError("La longitud del bloque bootstrap debe ser de al menos 2 meses.")
+
+    source_blocks = {
+        pd.Timestamp(date): block.copy()
+        for date, block in panel.assign(fecha=pd.to_datetime(panel["fecha"])).groupby("fecha", sort=True)
+    }
+    anchor = pd.Timestamp("2000-01-01")
+    rng = np.random.default_rng(int(bootstrap_seed))
+    keys = ["choque", "horizonte", "producto_respuesta"]
+    metrics = ["directo", "spillover_medio_receptores", "media_red", "total_red_suma"]
+    draws = []
+
+    for _ in range(repetitions):
+        sampled_indices = _moving_block_indices(len(dates), block_length, rng)
+        sampled_blocks = []
+        for new_period, source_index in enumerate(sampled_indices):
+            source_date = pd.Timestamp(dates[int(source_index)])
+            block = source_blocks[source_date].copy()
+            block["fecha"] = anchor + pd.DateOffset(months=new_period)
+            sampled_blocks.append(block)
+        sampled_panel = pd.concat(sampled_blocks, ignore_index=True)
+        try:
+            draw_results = _bootstrap_spvarx_results(sampled_panel, products)
+            draw = _irf_point_estimates(draw_results, products, W_dense, horizon)
+            if np.isfinite(draw[metrics].to_numpy(dtype=float)).all():
+                draws.append(draw)
+        except Exception:
+            # Una réplica singular o no estimable se descarta y queda contabilizada.
+            continue
+
+    valid = len(draws)
+    minimum_valid = max(50, int(np.ceil(0.8 * repetitions)))
+    point["n_bootstrap_valid"] = valid
+    point["n_bootstrap_requested"] = repetitions
+    point["bootstrap_block_months"] = block_length
+    point["bootstrap_method"] = "Bootstrap circular móvil por bloques temporales; percentiles 2,5–97,5%"
+    distribution = pd.concat(draws, ignore_index=True) if valid >= minimum_valid else None
+    for metric in metrics:
+        lower_name, upper_name = f"{metric}_ic95_inf", f"{metric}_ic95_sup"
+        point[lower_name] = np.nan
+        point[upper_name] = np.nan
+        if distribution is None:
+            continue
+        quantiles = distribution.groupby(keys)[metric].quantile([0.025, 0.975]).unstack(-1)
+        quantiles = quantiles.rename(columns={0.025: lower_name, 0.975: upper_name}).reset_index()
+        point = point.drop(columns=[lower_name, upper_name]).merge(quantiles, on=keys, how="left")
+    point["bootstrap_interval_available"] = valid >= minimum_valid
+    return point
 
 
 # ------------------------------ Diagnósticos ---------------------------------
