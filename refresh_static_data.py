@@ -36,6 +36,7 @@ from agroclima_spvarx_real import (
     compute_irfs,
     stationarity_audit,
     residual_moran,
+    rolling_spvarx_backtest,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -45,6 +46,7 @@ RAW_DIR = RUNTIME_DIR / "sipsa_raw"
 CLIMATE_CACHE = RUNTIME_DIR / "nasa_power_monthly.csv"
 COORDS_FILE = DATA_DIR / "market_coordinates.csv"
 OUTPUT_JSON = DATA_DIR / "observatorio.json"
+BACKTEST_CSV = DATA_DIR / "spvarx_rolling_backtest.csv"
 DEPARTMENTS_GEOJSON = DATA_DIR / "colombia_departments.geojson"
 DEPARTMENTS_GEOJSON_URL = "https://raw.githubusercontent.com/ytolosa/mapas-colombia/main/output/geojson/col_departamentos_real_nacional.geojson"
 
@@ -98,6 +100,7 @@ MAX_CANDIDATE_PRODUCTS = int(os.getenv("AGROCLIMA_MAX_CANDIDATE_PRODUCTS", "24")
 MAX_MARKETS = int(os.getenv("AGROCLIMA_MAX_MARKETS", "12"))
 KNN_K = int(os.getenv("AGROCLIMA_KNN_K", "4"))
 IRF_HORIZON = int(os.getenv("AGROCLIMA_IRF_HORIZON", "18"))
+BACKTEST_MIN_TRAIN_MONTHS = int(os.getenv("AGROCLIMA_BACKTEST_MIN_TRAIN_MONTHS", "36"))
 
 
 def json_safe(value: Any) -> Any:
@@ -590,6 +593,25 @@ def main() -> None:
         moran = pd.DataFrame([{"advertencia": f"No fue posible calcular Moran de residuos: {exc}"}])
 
     residual_panel = build_residual_panel(fits, coords_sorted)
+    backtest_error = None
+    try:
+        backtest = rolling_spvarx_backtest(
+            balanced_prices, climate, markets_keys, dates, product_names, W_dense,
+            min_train_months=BACKTEST_MIN_TRAIN_MONTHS,
+        )
+    except Exception as exc:
+        backtest = pd.DataFrame(columns=[
+            "producto", "mercado_key", "fecha", "latitud", "longitud", "observado",
+            "prediccion_spvarx", "prediccion_sin_cambio", "prediccion_persistencia",
+            "meses_entrenamiento",
+        ])
+        backtest_error = str(exc)
+        print(f"[Backtest] No se pudo completar la validación temporal: {exc}")
+    backtest_temp = BACKTEST_CSV.with_suffix(".csv.tmp")
+    backtest.to_csv(backtest_temp, index=False, encoding="utf-8-sig")
+    backtest_temp.replace(BACKTEST_CSV)
+    if not backtest.empty:
+        print(f"[Backtest] {len(backtest):,} predicciones retenidas para validación temporal.")
 
     # Price series shown in the frontend are actual DANE market observations, summarized by month/product.
     price_series = (balanced_prices.groupby(["fecha", "producto"], as_index=False)
@@ -643,6 +665,9 @@ def main() -> None:
         "irf_note": "IRF puntuales de un choque exógeno +1 DE; no incluyen bandas de confianza ni identificación estructural. No interpretar causalmente.",
         "coordinate_note": "Las coordenadas se guardan en data/market_coordinates.csv. Las coordenadas de instalación documentadas y los fallback al centro urbano llevan fuente y precisión explícitas; el fallback municipal no equivale a la ubicación exacta del mercado y debe revisarse antes de interpretar relaciones espaciales.",
         "residual_note": "Los residuos del mapa son residuos de ajuste en muestra del SpVARX sobre las mismas observaciones usadas en la estimación. El sesgo medio se centra en cero; MAE y RMSE son no negativos y menor indica menor error descriptivo. No son métricas de predicción fuera de muestra. La respuesta está en unidades de Δlog(precio).",
+        "backtest_note": "Validación temporal de un paso con origen móvil. Cada corte reestima una ecuación predictiva con efectos fijos de mercado y sin efectos fijos de tiempo, porque el efecto del mes futuro no se conoce al pronosticar. El clima contemporáneo futuro se fija en anomalía cero (escenario normal) y el clima rezagado usa el último mes observado. Es una proyección condicional a clima normal; no es un pronóstico meteorológico ni una prueba causal. La pareja de productos se seleccionó por cobertura en el periodo completo y se mantiene fija, por lo que el backtest evalúa esa pareja ya definida.",
+        "backtest_min_train_months": BACKTEST_MIN_TRAIN_MONTHS,
+        "backtest_error": backtest_error,
         "department_boundaries_source": "DANE MGN 2025; geometría simplificada: https://github.com/ytolosa/mapas-colombia (CC BY 4.0).",
         "diagnostic_summary": {
             "adf_reject_share": float(adf["rechaza_raiz_unitaria_5pct"].mean()) if "rechaza_raiz_unitaria_5pct" in adf.columns and len(adf) else None,
@@ -657,6 +682,7 @@ def main() -> None:
         "price_series": records(price_series),
         "markets": json_safe(market_payload),
         "residual_panel": records(residual_panel),
+        "rolling_backtest": records(backtest),
         "coefficients": records(coef_df),
         "irfs": records(irfs),
         "diagnostics": {"adf": records(adf), "moran": records(moran)},

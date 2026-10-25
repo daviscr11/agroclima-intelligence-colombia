@@ -14,10 +14,10 @@ Panel exploratorio basado en fuentes reales: precios mayoristas SIPSA-P del DANE
 
 ## Cómo funciona
 
-- `index.html` presenta los resultados guardados en `data/observatorio.json`, la auditoría mensual de Moran, los mercados y un mapa coroplético del error de ajuste por departamento.
+- `index.html` presenta los resultados guardados en `data/observatorio.json`, una lectura automática de los rezagos espaciales, la auditoría mensual de Moran, los mercados y mapas departamentales de errores de ajuste y validación temporal.
 - El archivo JSON **no contiene datos simulados**. Antes de ejecutar el proceso de actualización, el tablero muestra que los resultados aún no han sido publicados.
 - `refresh_static_data.py` descarga y valida los archivos SIPSA-P públicos, selecciona dos series con cobertura temporal compartida, geocodifica mercados si no hay coordenadas en caché, consulta NASA POWER y estima el modelo de panel SpVARX.
-- GitHub Actions ejecuta el proceso una vez al mes o cuando se inicia manualmente. Si termina correctamente, publica en este Space la interfaz, `data/observatorio.json`, `data/residual_moran_panel_audit.csv`, los límites departamentales y el contorno nacional. Si falla, no sustituye los datos por datos sintéticos.
+- GitHub Actions ejecuta el proceso una vez al mes o cuando se inicia manualmente. Si termina correctamente, publica en este Space la interfaz, `data/observatorio.json`, `data/residual_moran_panel_audit.csv`, `data/spvarx_rolling_backtest.csv`, los límites departamentales y el contorno nacional. Si falla, no sustituye los datos por datos sintéticos.
 
 
 ## Fuentes
@@ -37,3 +37,5 @@ Panel exploratorio basado en fuentes reales: precios mayoristas SIPSA-P del DANE
 - La selección automática de productos es una configuración inicial basada en cobertura común. Para un estudio sustantivo, revise los productos, unidades, variedades, mercados y coordenadas.
 - El mapa de puntos muestra mercados georreferenciados y no representa una interpolación. El mapa coroplético resume por departamento los residuos del ajuste en muestra: sesgo medio con signo, MAE y RMSE. Los departamentos sin mercados observados se muestran sin datos; no se interpolan valores.
 - MAE y RMSE son medidas descriptivas dentro de muestra, no errores de pronóstico fuera de muestra. El sesgo puede acercarse a cero por cancelación de errores positivos y negativos; para comparar la magnitud del error, revise MAE o RMSE. Las métricas están en unidades de Δlog(precio).
+- La validación usa origen móvil de un paso y compara el SpVARX predictivo con los pronósticos de cambio cero y persistencia. Reestima usando solo los meses anteriores y no incluye efectos fijos de tiempo, que no se conocen para el mes futuro. Asume anomalía climática contemporánea cero y usa el clima rezagado observado: evalúa una proyección bajo clima normal, no un sistema de pronóstico meteorológico operativo. La pareja de productos se seleccionó por cobertura en el periodo completo y se mantiene fija en los cortes de validación.
+- El panel “Modelo espacial” interpreta rezagos temporales y espaciales con intervalos y p-valores. Los rezagos espaciales son asociaciones condicionales de cambios de precio de mercados vecinos, no efectos causales ni impactos contemporáneos; el radio espectral informa estabilidad de la transición, no precisión predictiva.
