@@ -100,6 +100,8 @@ MAX_CANDIDATE_PRODUCTS = int(os.getenv("AGROCLIMA_MAX_CANDIDATE_PRODUCTS", "24")
 MAX_MARKETS = int(os.getenv("AGROCLIMA_MAX_MARKETS", "12"))
 KNN_K = int(os.getenv("AGROCLIMA_KNN_K", "4"))
 IRF_HORIZON = int(os.getenv("AGROCLIMA_IRF_HORIZON", "18"))
+IRF_BOOTSTRAP_REPS = int(os.getenv("AGROCLIMA_IRF_BOOTSTRAP_REPS", "399"))
+IRF_BOOTSTRAP_SEED = int(os.getenv("AGROCLIMA_IRF_BOOTSTRAP_SEED", "20261025"))
 BACKTEST_MIN_TRAIN_MONTHS = int(os.getenv("AGROCLIMA_BACKTEST_MIN_TRAIN_MONTHS", "36"))
 
 
@@ -585,7 +587,15 @@ def main() -> None:
     panel, panel_meta = build_spvarx_panel(balanced_prices, climate, markets_keys, dates, product_names, W_dense)
     fits, coef_df, model_summary = estimate_spvarx(panel, product_names, bandwidth=min(4, max(1, panel["fecha"].nunique() - 1)))
     stability = model_stability(fits, product_names, W_dense)
-    irfs = compute_irfs(fits, product_names, W_dense, horizon=IRF_HORIZON)
+    print(f"[IRF bootstrap] Calculando bandas con {IRF_BOOTSTRAP_REPS} réplicas...")
+    irfs = compute_irfs(
+        fits, product_names, W_dense, horizon=IRF_HORIZON, panel=panel,
+        bootstrap_repetitions=IRF_BOOTSTRAP_REPS, bootstrap_seed=IRF_BOOTSTRAP_SEED,
+    )
+    irf_bootstrap_valid = int(irfs["n_bootstrap_valid"].max()) if "n_bootstrap_valid" in irfs and not irfs.empty else 0
+    irf_bootstrap_available = bool(irfs["bootstrap_interval_available"].all()) if "bootstrap_interval_available" in irfs and not irfs.empty else False
+    irf_bootstrap_block_months = int(irfs["bootstrap_block_months"].max()) if "bootstrap_block_months" in irfs and not irfs.empty else None
+    print(f"[IRF bootstrap] Réplicas estimables: {irf_bootstrap_valid}/{IRF_BOOTSTRAP_REPS}; bandas disponibles: {irf_bootstrap_available}.")
     adf = stationarity_audit(panel, product_names)
     try:
         moran = residual_moran(fits, w, markets_keys)
@@ -662,7 +672,16 @@ def main() -> None:
         "source_audit_tables_recognized": int((audit.get("filas_canonicas", pd.Series(dtype=float)).fillna(0) > 0).sum()) if not audit.empty else 0,
         "data_note": "Precios nominales mensuales observados de SIPSA-P. NASA POWER aporta variables meteorológicas derivadas de datos/modelos de NASA; no son mediciones directas de estación en cada mercado.",
         "method_note": "Panel SpVARX(1) reducido estimado ecuación por ecuación con efectos de mercado y tiempo. Incluye W*y[t-1], no W*y[t]. La inferencia con efectos fijos y rezagos endógenos requiere contrastes adicionales.",
-        "irf_note": "IRF puntuales de un choque exógeno +1 DE; no incluyen bandas de confianza ni identificación estructural. No interpretar causalmente.",
+        "irf_note": (
+            "IRF de un choque climático de +1 DE con intervalos percentiles aproximados del 95% por horizonte, calculados mediante bootstrap circular de bloques temporales completos. Son intervalos punto a punto, no bandas simultáneas para toda la curva. Condicionan en la matriz W, mercados, productos y regresores observados; no corrigen el posible sesgo del panel dinámico ni identifican causalidad. Si un intervalo contiene cero, esa respuesta no se distingue de cero al nivel descriptivo del intervalo."
+            if irf_bootstrap_available else
+            f"No se alcanzó el mínimo de réplicas válidas para formar bandas IRF ({irf_bootstrap_valid}/{IRF_BOOTSTRAP_REPS}). Se muestran respuestas puntuales; no deben interpretarse causalmente."
+        ),
+        "irf_bootstrap_method": "Bootstrap circular móvil por bloques de meses completos; cada réplica reestima el SpVARX con efectos fijos de mercado y tiempo. Intervalos percentiles punto a punto por horizonte, 2,5–97,5%.",
+        "irf_bootstrap_requested": IRF_BOOTSTRAP_REPS,
+        "irf_bootstrap_valid": irf_bootstrap_valid,
+        "irf_bootstrap_block_months": irf_bootstrap_block_months,
+        "irf_bootstrap_intervals_available": irf_bootstrap_available,
         "coordinate_note": "Las coordenadas se guardan en data/market_coordinates.csv. Las coordenadas de instalación documentadas y los fallback al centro urbano llevan fuente y precisión explícitas; el fallback municipal no equivale a la ubicación exacta del mercado y debe revisarse antes de interpretar relaciones espaciales.",
         "residual_note": "Los residuos del mapa son residuos de ajuste en muestra del SpVARX sobre las mismas observaciones usadas en la estimación. El sesgo medio se centra en cero; MAE y RMSE son no negativos y menor indica menor error descriptivo. No son métricas de predicción fuera de muestra. La respuesta está en unidades de Δlog(precio).",
         "backtest_note": "Validación temporal de un paso con origen móvil. Cada corte reestima una ecuación predictiva con efectos fijos de mercado y sin efectos fijos de tiempo, porque el efecto del mes futuro no se conoce al pronosticar. El clima contemporáneo futuro se fija en anomalía cero (escenario normal) y el clima rezagado usa el último mes observado. Es una proyección condicional a clima normal; no es un pronóstico meteorológico ni una prueba causal. La pareja de productos se seleccionó por cobertura en el periodo completo y se mantiene fija, por lo que el backtest evalúa esa pareja ya definida.",
