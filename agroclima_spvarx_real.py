@@ -1075,6 +1075,133 @@ def compute_irfs(
     return point
 
 
+def _panel_with_spatial_lags(
+    panel: pd.DataFrame, products: Sequence[str], markets: Sequence[str], W_dense: np.ndarray
+) -> pd.DataFrame:
+    """Recalcula W·y(t−1) sin alterar resultados, clima ni muestra temporal."""
+    products = list(products)
+    markets = list(markets)
+    if W_dense.shape != (len(markets), len(markets)):
+        raise ValueError("La matriz de pesos no coincide con el orden de mercados del panel.")
+    out = panel.copy()
+    y_lag_cols = [f"L1__y{j}" for j in range(len(products))]
+    spatial_cols = [f"WL1__y{j}" for j in range(len(products))]
+    for _, group in out.groupby("fecha", sort=True):
+        ordered = group.set_index("mercado_key").reindex(markets)
+        lag_values = ordered[y_lag_cols].to_numpy(dtype=float)
+        if lag_values.shape[0] != len(markets) or not np.isfinite(lag_values).all():
+            raise ValueError("Faltan rezagos de precios para reconstruir los rezagos espaciales.")
+        spatial_values = W_dense @ lag_values
+        for j, col in enumerate(spatial_cols):
+            mapping = dict(zip(markets, spatial_values[:, j]))
+            out.loc[group.index, col] = group["mercado_key"].map(mapping).to_numpy(dtype=float)
+    return out
+
+
+def spatial_weights_sensitivity(
+    panel: pd.DataFrame,
+    coords: pd.DataFrame,
+    products: Sequence[str],
+    k_values: Sequence[int] = (3, 4, 5),
+    base_k: int = 4,
+    base_weights: Optional[np.ndarray] = None,
+    base_results: Optional[Dict[str, Any]] = None,
+    base_coefficients: Optional[pd.DataFrame] = None,
+    base_irfs: Optional[pd.DataFrame] = None,
+    horizon: int = 12,
+    bootstrap_repetitions: int = 0,
+    bootstrap_seed: int = 20261025,
+) -> Dict[str, pd.DataFrame]:
+    """Compara la misma muestra SpVARX bajo distintas matrices KNN simétricas.
+
+    Si se pasan los resultados de la especificación base, esa estimación se reutiliza.
+    Cada alternativa reconstruye solo W·y(t−1), reestima los mismos productos y
+    efectos fijos, y calcula IRF con la misma longitud y bootstrap que la base.
+    """
+    k_values = list(dict.fromkeys(int(k) for k in k_values))
+    if not k_values or any(k < 1 for k in k_values):
+        raise ValueError("k_values debe contener enteros positivos.")
+    if base_k not in k_values:
+        raise ValueError("La comparación debe incluir la matriz KNN base.")
+
+    summary_rows, coefficient_frames, irf_frames = [], [], []
+    for k in k_values:
+        requested_k = int(k)
+        try:
+            _, candidate_W, markets, _, weight_meta = build_knn_weights(coords, k=requested_k)
+            use_base = requested_k == int(base_k) and base_results is not None and base_coefficients is not None and base_irfs is not None
+            if use_base:
+                if base_weights is not None and not np.allclose(candidate_W, base_weights, atol=1e-12, rtol=0):
+                    raise ValueError("La matriz reconstruida para k base no coincide con la matriz estimada originalmente.")
+                if base_weights is not None:
+                    candidate_W = np.asarray(base_weights, dtype=float)
+                candidate_panel = panel
+                candidate_results = base_results
+                candidate_coefficients = base_coefficients
+                candidate_irfs = base_irfs
+            else:
+                candidate_panel = _panel_with_spatial_lags(panel, products, markets, candidate_W)
+                bandwidth = min(4, max(1, candidate_panel["fecha"].nunique() - 1))
+                candidate_results, candidate_coefficients, _ = estimate_spvarx(candidate_panel, products, bandwidth=bandwidth)
+                candidate_irfs = compute_irfs(
+                    candidate_results, products, candidate_W, horizon=horizon,
+                    panel=candidate_panel, bootstrap_repetitions=bootstrap_repetitions,
+                    bootstrap_seed=bootstrap_seed,
+                )
+
+            stability = model_stability(candidate_results, products, candidate_W)
+            spatial_coefs = candidate_coefficients[
+                candidate_coefficients["termino"].astype(str).str.startswith("WL1__y")
+            ].copy()
+            spatial_coefs["k_vecinos"] = requested_k
+            spatial_coefs["k_efectivo"] = int(weight_meta["k"])
+            spatial_coefs["especificacion_base"] = requested_k == int(base_k)
+            coefficient_frames.append(spatial_coefs)
+
+            irf_data = candidate_irfs.copy()
+            irf_data["k_vecinos"] = requested_k
+            irf_data["k_efectivo"] = int(weight_meta["k"])
+            irf_data["especificacion_base"] = requested_k == int(base_k)
+            irf_frames.append(irf_data)
+            valid_replicates = (
+                int(irf_data["n_bootstrap_valid"].max())
+                if "n_bootstrap_valid" in irf_data and not irf_data.empty else 0
+            )
+            intervals_available = (
+                bool(irf_data["bootstrap_interval_available"].all())
+                if "bootstrap_interval_available" in irf_data and not irf_data.empty else False
+            )
+            summary_rows.append({
+                "k_vecinos": requested_k,
+                "k_efectivo": int(weight_meta["k"]),
+                "especificacion_base": requested_k == int(base_k),
+                "n_mercados": int(weight_meta["n"]),
+                "radio_espectral_W": float(weight_meta["spectral_radius_W"]),
+                "radio_espectral_transicion": float(stability["spectral_radius"]),
+                "sistema_estable": bool(stability["stable"]),
+                "replicas_bootstrap_validas": valid_replicates,
+                "intervalos_irf_disponibles": intervals_available,
+                "estado": "Estimación disponible",
+                "error": None,
+            })
+        except Exception as exc:
+            summary_rows.append({
+                "k_vecinos": requested_k, "k_efectivo": None,
+                "especificacion_base": requested_k == int(base_k),
+                "n_mercados": int(panel["mercado_key"].nunique()),
+                "radio_espectral_W": None, "radio_espectral_transicion": None,
+                "sistema_estable": None, "replicas_bootstrap_validas": 0,
+                "intervalos_irf_disponibles": False,
+                "estado": "No disponible", "error": str(exc),
+            })
+
+    return {
+        "summary": pd.DataFrame(summary_rows),
+        "coefficients": pd.concat(coefficient_frames, ignore_index=True) if coefficient_frames else pd.DataFrame(),
+        "irfs": pd.concat(irf_frames, ignore_index=True) if irf_frames else pd.DataFrame(),
+    }
+
+
 # ------------------------------ Diagnósticos ---------------------------------
 def stationarity_audit(panel: pd.DataFrame, products: Sequence[str]) -> pd.DataFrame:
     from statsmodels.tsa.stattools import adfuller

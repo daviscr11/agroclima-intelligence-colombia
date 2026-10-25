@@ -37,6 +37,7 @@ from agroclima_spvarx_real import (
     stationarity_audit,
     residual_moran,
     rolling_spvarx_backtest,
+    spatial_weights_sensitivity,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -99,6 +100,10 @@ MIN_MONTHS = int(os.getenv("AGROCLIMA_MIN_MONTHS", "36"))
 MAX_CANDIDATE_PRODUCTS = int(os.getenv("AGROCLIMA_MAX_CANDIDATE_PRODUCTS", "24"))
 MAX_MARKETS = int(os.getenv("AGROCLIMA_MAX_MARKETS", "12"))
 KNN_K = int(os.getenv("AGROCLIMA_KNN_K", "4"))
+KNN_SENSITIVITY_VALUES = tuple(dict.fromkeys(
+    [int(value.strip()) for value in os.getenv("AGROCLIMA_KNN_SENSITIVITY", "3,4,5").split(",") if value.strip()]
+    + [KNN_K]
+))
 IRF_HORIZON = int(os.getenv("AGROCLIMA_IRF_HORIZON", "18"))
 IRF_BOOTSTRAP_REPS = int(os.getenv("AGROCLIMA_IRF_BOOTSTRAP_REPS", "399"))
 IRF_BOOTSTRAP_SEED = int(os.getenv("AGROCLIMA_IRF_BOOTSTRAP_SEED", "20261025"))
@@ -596,6 +601,15 @@ def main() -> None:
     irf_bootstrap_available = bool(irfs["bootstrap_interval_available"].all()) if "bootstrap_interval_available" in irfs and not irfs.empty else False
     irf_bootstrap_block_months = int(irfs["bootstrap_block_months"].max()) if "bootstrap_block_months" in irfs and not irfs.empty else None
     print(f"[IRF bootstrap] Réplicas estimables: {irf_bootstrap_valid}/{IRF_BOOTSTRAP_REPS}; bandas disponibles: {irf_bootstrap_available}.")
+    print(f"[Robustez espacial] Reestimando con k={','.join(map(str, KNN_SENSITIVITY_VALUES))} y la misma muestra...")
+    spatial_robustness = spatial_weights_sensitivity(
+        panel, coords_sorted, product_names, k_values=KNN_SENSITIVITY_VALUES,
+        base_k=KNN_K, base_weights=W_dense, base_results=fits,
+        base_coefficients=coef_df, base_irfs=irfs, horizon=IRF_HORIZON,
+        bootstrap_repetitions=IRF_BOOTSTRAP_REPS, bootstrap_seed=IRF_BOOTSTRAP_SEED,
+    )
+    available_specs = int((spatial_robustness["summary"].get("estado", pd.Series(dtype=str)) == "Estimación disponible").sum())
+    print(f"[Robustez espacial] Especificaciones disponibles: {available_specs}/{len(KNN_SENSITIVITY_VALUES)}.")
     adf = stationarity_audit(panel, product_names)
     try:
         moran = residual_moran(fits, w, markets_keys)
@@ -682,6 +696,8 @@ def main() -> None:
         "irf_bootstrap_valid": irf_bootstrap_valid,
         "irf_bootstrap_block_months": irf_bootstrap_block_months,
         "irf_bootstrap_intervals_available": irf_bootstrap_available,
+        "spatial_weights_note": f"Análisis de sensibilidad del SpVARX con k={', '.join(map(str, KNN_SENSITIVITY_VALUES))}, usando la misma muestra de meses, mercados y productos. La matriz kNN se simetriza y estandariza por filas; por ello el grado final puede exceder k. Cada alternativa reestima los coeficientes y respuestas impulso, con intervalos bootstrap puntuales cuando hay réplicas suficientes. Los intervalos de cada alternativa son condicionales a su propia W; no son una prueba formal de igualdad entre matrices ni una selección automática del mejor k.",
+        "spatial_weights_k_values": list(KNN_SENSITIVITY_VALUES),
         "coordinate_note": "Las coordenadas se guardan en data/market_coordinates.csv. Las coordenadas de instalación documentadas y los fallback al centro urbano llevan fuente y precisión explícitas; el fallback municipal no equivale a la ubicación exacta del mercado y debe revisarse antes de interpretar relaciones espaciales.",
         "residual_note": "Los residuos del mapa son residuos de ajuste en muestra del SpVARX sobre las mismas observaciones usadas en la estimación. El sesgo medio se centra en cero; MAE y RMSE son no negativos y menor indica menor error descriptivo. No son métricas de predicción fuera de muestra. La respuesta está en unidades de Δlog(precio).",
         "backtest_note": "Validación temporal de un paso con origen móvil. Cada corte reestima una ecuación predictiva con efectos fijos de mercado y sin efectos fijos de tiempo, porque el efecto del mes futuro no se conoce al pronosticar. El clima contemporáneo futuro se fija en anomalía cero (escenario normal) y el clima rezagado usa el último mes observado. Es una proyección condicional a clima normal; no es un pronóstico meteorológico ni una prueba causal. La pareja de productos se seleccionó por cobertura en el periodo completo y se mantiene fija, por lo que el backtest evalúa esa pareja ya definida.",
@@ -704,6 +720,11 @@ def main() -> None:
         "rolling_backtest": records(backtest),
         "coefficients": records(coef_df),
         "irfs": records(irfs),
+        "spatial_robustness": {
+            "summary": records(spatial_robustness["summary"]),
+            "coefficients": records(spatial_robustness["coefficients"]),
+            "irfs": records(spatial_robustness["irfs"]),
+        },
         "diagnostics": {"adf": records(adf), "moran": records(moran)},
     }
     # Strict JSON and atomic replacement: a failed pipeline never corrupts the last publication.
