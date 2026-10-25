@@ -22,6 +22,7 @@
 .choropleth-label{font-weight:700;color:#c6d9df}
 .interpretation-list{padding-left:19px;margin:8px 0;color:var(--muted);font-size:13px}
 .interpretation-list li{margin:8px 0}
+.conclusion-lead{font-size:15px;line-height:1.7;color:#d9ece8;margin:12px 0}
 @media(max-width:850px){.product-summary-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -55,6 +56,12 @@
     </section>
 
     <section id="page-model-reading" class="page">
+      <article class="panel" style="margin-bottom:16px;border-color:#37655c">
+        <div class="panel-head"><div><h2>Conclusión automática del modelo VAR espacial</h2><p class="desc">Síntesis generada desde los coeficientes, estabilidad, respuestas climáticas, validación y diagnósticos publicados.</p></div><span class="tag">Resultados observados · lectura condicionada</span></div>
+        <p id="spvarx-conclusion" class="conclusion-lead">La conclusión se generará cuando se carguen los resultados.</p>
+        <ul id="spvarx-conclusion-details" class="interpretation-list"></ul>
+        <p id="spvarx-conclusion-caveat" class="note"></p>
+      </article>
       <article class="panel">
         <div class="panel-head"><div><h2>¿Qué está diciendo el VAR espacial?</h2><p class="desc">Lectura automática y transparente de los rezagos espaciales estimados para cada producto.</p></div><span class="tag">Asociaciones condicionales · no causalidad</span></div>
         <div id="model-reading-frame" class="note">El modelo usa Δlog(precio) por mercado y mes.</div>
@@ -349,6 +356,7 @@
   }
   function drawModelInterpretation() {
     if(!DATA||DATA.status!=="ready")return;
+    drawModelConclusion();
     const rows=(DATA.coefficients||[]).filter(r=>num(r.coeficiente)!==null);
     if(!rows.length){$("model-spatial-equations").innerHTML='<div class="empty">No hay coeficientes publicados para interpretar.</div>';return;}
     const spatialRows=rows.filter(r=>/^WL1__y\d+$/.test(String(r.termino)));
@@ -518,6 +526,100 @@
     $("backtest-comparison-note").textContent=nMonths<6
       ?`Solo hay ${nMonths} meses de prueba: no se calcula un intervalo temporal confiable. La diferencia porcentual es descriptiva.`
       :`Cada origen mensual conserva juntos todos sus mercados; el intervalo remuestrea bloques circulares de ${blockLength} meses para reflejar dependencia temporal. Hay ${nMonths} meses de prueba y el intervalo es exploratorio; si incluye 0, no se observa una diferencia clara. No es una prueba causal ni sustituye una evaluación con más periodos.`;
+  }
+  function drawModelConclusion() {
+    const products=productNames(), stability=DATA.metadata.stability||{};
+    const radius=num(stability.spectral_radius_transition);
+    const stabilityText=stability.stable===true
+      ?`La transición temporal-espacial estimada es estable${radius===null?"":` (radio espectral ${fmt(radius,4)})`}.`
+      :stability.stable===false
+        ?`La transición estimada no cumple el criterio de estabilidad${radius===null?"":` (radio espectral ${fmt(radius,4)})`}; interpreta sus respuestas dinámicas con cautela.`
+        :"La estabilidad de la transición no está disponible en los resultados cargados.";
+
+    const spatialRows=(DATA.coefficients||[]).filter(r=>/^WL1__y\d+$/.test(String(r.termino))&&num(r.coeficiente)!==null);
+    const significantSpatial=spatialRows.filter(coefficientIsSignificant);
+    let spatialText;
+    if(!spatialRows.length)spatialText="No se publicaron coeficientes de rezago espacial para evaluar la dependencia entre mercados.";
+    else if(!significantSpatial.length)spatialText=`Ninguno de los ${spatialRows.length} coeficientes W·y(t−1) se distingue de cero al 5% nominal; esta estimación no aporta evidencia concluyente de esos rezagos espaciales.`;
+    else{
+      const directions=significantSpatial.map(row=>{
+        const match=String(row.termino).match(/^WL1__y(\d+)$/),source=products[Number(match?.[1])]||"otro producto";
+        return `${row.producto_dependiente} ← ${source} (${num(row.coeficiente)>0?"positiva":"negativa"}, β=${fmt(row.coeficiente,3)})`;
+      });
+      spatialText=`${significantSpatial.length} de ${spatialRows.length} coeficientes W·y(t−1) se distinguen de cero al 5% nominal: ${directions.join("; ")}. Son asociaciones condicionales entre cambios de precio, no efectos causales.`;
+    }
+
+    const h1Irfs=(DATA.irfs||[]).filter(r=>Number(r.horizonte)===1&&num(r.spillover_medio_receptores)!==null);
+    const h1WithIntervals=h1Irfs.filter(r=>num(r.spillover_medio_receptores_ic95_inf)!==null&&num(r.spillover_medio_receptores_ic95_sup)!==null);
+    const h1Distinct=h1WithIntervals.filter(r=>num(r.spillover_medio_receptores_ic95_inf)>0||num(r.spillover_medio_receptores_ic95_sup)<0);
+    let climateText;
+    if(!h1Irfs.length)climateText="No hay respuestas de spillover climático a un mes (h=1) para resumir.";
+    else if(!h1WithIntervals.length)climateText="Hay respuestas puntuales de spillover climático a h=1, pero no intervalos disponibles para valorar su incertidumbre.";
+    else if(!h1Distinct.length)climateText=`Los intervalos del 95% incluyen cero en las ${h1WithIntervals.length} respuestas medias de spillover climático con bandas disponibles a h=1; no se distingue una propagación media de cero en esas combinaciones.`;
+    else{
+      const labels=h1Distinct.map(row=>`${row.producto_respuesta} ante ${row.choque==="temp_anom"?"temperatura":"precipitación"} (${num(row.spillover_medio_receptores)>0?"positiva":"negativa"})`);
+      climateText=`${h1Distinct.length} de ${h1WithIntervals.length} intervalos de spillover climático a h=1 excluyen cero: ${labels.join("; ")}. Las respuestas resumen la dinámica implicada por el modelo y no identifican causalidad.`;
+    }
+
+    const specs=(DATA.spatial_robustness?.summary||[]).filter(s=>s.estado==="Estimación disponible");
+    let robustnessText;
+    if(!specs.length)robustnessText="La sensibilidad de la matriz espacial no está incluida en este archivo de resultados.";
+    else{
+      const stableSpecs=specs.filter(s=>s.sistema_estable===true).length;
+      const neighbors=specs.map(s=>`k=${s.k_vecinos}`).join(", ");
+      robustnessText=`Con ${neighbors}, la transición se estima estable en ${stableSpecs} de ${specs.length} especificaciones disponibles. Esto resume estabilidad al cambiar W; no selecciona automáticamente una matriz ni garantiza que todos los coeficientes sean invariantes.`;
+    }
+
+    const forecastResults=[];
+    for(const product of products){
+      const rows=(DATA.rolling_backtest||[]).filter(r=>r.producto===product&&num(r.observado)!==null);
+      for(const baseline of [{key:"prediccion_sin_cambio",label:"sin cambio"},{key:"prediccion_persistencia",label:"persistencia"}]){
+        const months=monthlyForecastLosses(rows,baseline.key);
+        for(const metric of ["mae","rmse"]){
+          const interval=forecastImprovementInterval(months,metric,`${product}|${baseline.key}|${metric}`);
+          forecastResults.push({product,baseline:baseline.label,metric,interval});
+        }
+      }
+    }
+    const forecastWins=forecastResults.filter(r=>r.interval.low!==null&&r.interval.low>0).length;
+    const forecastLosses=forecastResults.filter(r=>r.interval.high!==null&&r.interval.high<0).length;
+    const forecastUnclear=forecastResults.filter(r=>r.interval.low!==null&&r.interval.low<=0&&r.interval.high>=0).length;
+    const forecastAvailable=forecastWins+forecastLosses+forecastUnclear;
+    const monthCounts=forecastResults.map(r=>r.interval.nMonths).filter(n=>n>0);
+    const forecastMonths=monthCounts.length?Math.min(...monthCounts):0;
+    const forecastText=!forecastAvailable
+      ?"No hay suficientes pronósticos fuera de muestra para concluir sobre desempeño predictivo."
+      :`Validación de un mes (${forecastMonths} meses de prueba por producto): ${forecastWins} de ${forecastAvailable} comparaciones producto–referencia–métrica muestran mejora del SpVARX con intervalo por encima de cero${forecastLosses?`; ${forecastLosses} favorecen a la referencia`:""}${forecastUnclear?`; ${forecastUnclear} no muestran una diferencia clara`:""}.`;
+
+    const moranRows=(DATA.diagnostics?.moran||[]).filter(r=>num(r.Moran_I_residuos)!==null&&num(r.p_sim)!==null);
+    const significantMoran=moranRows.filter(r=>num(r.p_sim)<.05);
+    let moranText;
+    if(!moranRows.length)moranText="No hay resultados de Moran residual disponibles para el último periodo.";
+    else if(!significantMoran.length)moranText="El diagnóstico de Moran del último periodo no distingue autocorrelación espacial residual global de cero al 5%; esto no demuestra que esté ausente en todos los mercados o meses.";
+    else{
+      const findings=significantMoran.map(r=>`${r.producto_dependiente}: I=${fmt(r.Moran_I_residuos,3)}, p=${fmt(r.p_sim,4)}${r.fecha_residuo?`, ${String(r.fecha_residuo).slice(0,7)}`:""}`).join("; ");
+      moranText=`Persiste autocorrelación espacial global en residuos en ${findings}; el modelo puede no capturar toda la estructura espacial de esos resultados.`;
+    }
+
+    const spatialSignal=significantSpatial.length>0||h1Distinct.length>0;
+    let lead=stability.stable===false
+      ?"La dinámica estimada requiere cautela porque la transición no satisface el criterio de estabilidad."
+      :stability.stable===true&&spatialSignal
+        ?"El SpVARX presenta una transición estable y señales de dependencia espacial o propagación climática en parte de los resultados."
+        :stability.stable===true
+          ?`El SpVARX presenta una transición estable, pero los resultados actuales no muestran evidencia concluyente de rezagos espaciales o spillovers climáticos medios distintos de cero${significantMoran.length?`; Moran residual aún detecta autocorrelación en ${significantMoran.map(r=>r.producto_dependiente).join(", ")}`:""}.`
+          :"Los resultados disponibles todavía no permiten una conclusión completa sobre la estabilidad del SpVARX.";
+    if(forecastAvailable){
+      const forecastClauses=[];
+      if(forecastWins)forecastClauses.push(`mejora clara en ${forecastWins} de ${forecastAvailable} comparaciones`);
+      if(forecastLosses)forecastClauses.push(`${forecastLosses} favorecen a la referencia`);
+      if(forecastUnclear)forecastClauses.push(`${forecastUnclear} sin diferencia clara`);
+      lead+=` En el backtest de un mes, ${forecastClauses.join("; ")}.`;
+    }
+    const details=[stabilityText,spatialText,climateText,robustnessText,forecastText,moranText];
+    $("spvarx-conclusion").textContent=lead;
+    $("spvarx-conclusion-details").innerHTML=details.map(text=>`<li>${esc(text)}</li>`).join("");
+    $("spvarx-conclusion-caveat").textContent="Alcance: los coeficientes y respuestas son asociaciones condicionadas a la especificación, no efectos causales. El backtest compara pronósticos de un mes con referencias simples —no con un VAR sin componente espacial— y supone clima contemporáneo normal; sus intervalos son exploratorios cuando hay pocos meses de prueba.";
   }
   const BACKTEST_METHODS=[
     {key:"prediccion_spvarx",label:"SpVARX predictivo",color:"#95d5a4"},
