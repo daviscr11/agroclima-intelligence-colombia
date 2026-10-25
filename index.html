@@ -58,6 +58,16 @@
 
     <section id="page-diagnostics" class="page">
       <div class="grid2"><article class="panel"><h2>Auditoría de estacionariedad</h2><p class="desc">ADF por mercado y variable dependiente en el panel de cambios logarítmicos. La prueba no sustituye el análisis de dependencia transversal.</p><div id="adf-table" class="tablewrap"><div class="empty">Sin diagnósticos publicados.</div></div></article><article class="panel"><h2>Autocorrelación espacial de residuos</h2><p class="desc">Moran global aplicado a residuos por ecuación en el último periodo disponible.</p><div id="moran-table" class="tablewrap"><div class="empty">Sin diagnósticos publicados.</div></div><div id="diag-notes" class="note"></div></article></div>
+      <article class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h2>Evolución temporal del índice de Moran</h2><p class="desc">Auditoría temporal de autocorrelación espacial residual. Se muestran ambos productos y una línea de referencia en I = 0.</p></div><span class="tag">CSV de auditoría · 4.999 permutaciones configuradas</span></div>
+        <div id="moran-temporal-status" class="note">Cargando data/residual_moran_panel_audit.csv…</div>
+        <div class="chartbox"><canvas id="moran-temporal-chart" aria-label="Evolución temporal del índice de Moran para ambos productos"></canvas></div>
+        <div id="moran-temporal-summary" class="metrics" style="grid-template-columns:repeat(4,minmax(0,1fr));"></div>
+        <div class="controls"><div><label for="moran-p-product">Producto para p-valores</label><select id="moran-p-product"><option value="Tomate de árbol">Tomate de árbol</option><option value="Pimentón">Pimentón</option></select></div></div>
+        <div class="chartbox"><canvas id="moran-p-chart" aria-label="P-valores de Moran antes y después de ajustes múltiples"></canvas></div>
+        <p class="note">La significancia se evalúa con umbral 0,05. BH controla la tasa de falsos descubrimientos; BY es más conservador bajo dependencia general. El índice de Moran positivo indica agrupamiento espacial de residuos similares y el negativo, dispersión, respecto de la matriz espacial utilizada. Estos resultados son diagnósticos, no evidencia causal.</p>
+        <div id="moran-audit-table" class="tablewrap" style="margin-top:16px"><div class="empty">Esperando el archivo de auditoría.</div></div>
+      </article>
     </section>
 
     <section id="page-method" class="page">
@@ -86,6 +96,7 @@
     if (name === "spatial") drawMap();
     if (name === "coefficients") drawCoefficients();
     if (name === "irf") drawIRF();
+    if (name === "diagnostics") drawMoranTemporal();
   }
   document.querySelectorAll(".nav button").forEach(b => b.addEventListener("click", () => showPage(b.dataset.page)));
   function fillSelect(id, values, labeler=(x)=>x) {
@@ -153,6 +164,62 @@
   }
   function blend(a,b,t){const pa=hex(a),pb=hex(b);return `rgb(${pa.map((v,i)=>Math.round(v*(1-t)+pb[i]*t)).join(",")})`;}
   function hex(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+  let MORAN_ROWS = [];
+  function parseCSV(text) {
+    const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(line => line.trim().length);
+    if (!lines.length) return [];
+    const parseLine = line => {
+      const out=[]; let cur="", quoted=false;
+      for(let i=0;i<line.length;i++){
+        const ch=line[i];
+        if(ch==='"' && quoted && line[i+1]==='"'){cur+='"';i++;}
+        else if(ch==='"') quoted=!quoted;
+        else if(ch===',' && !quoted){out.push(cur);cur="";}
+        else cur+=ch;
+      }
+      out.push(cur); return out;
+    };
+    const headers=parseLine(lines[0]).map(x=>x.trim());
+    return lines.slice(1).map(line=>{
+      const cells=parseLine(line), row={};
+      headers.forEach((h,i)=>row[h]=(cells[i]??"").trim());
+      ["Moran_I_residuos","p_sim","p_ajustado_BH","p_ajustado_BY","n","n_esperado","permutaciones"].forEach(k=>row[k]=row[k]===""?null:Number(row[k]));
+      ["significativo_5pct_sin_ajuste","significativo_5pct_BH","significativo_5pct_BY"].forEach(k=>row[k]=String(row[k]).toLowerCase()==="true");
+      return row;
+    });
+  }
+  function drawMoranTemporal() {
+    if(!MORAN_ROWS.length) return;
+    const products=[...new Set(MORAN_ROWS.map(r=>r.producto_dependiente))];
+    const palette=["#95d5a4","#75b7e8","#f2cc75","#ff8f83"];
+    const labels=[...new Set(MORAN_ROWS.map(r=>String(r.fecha_residuo).slice(0,7)))].sort();
+    const datasets=products.map((product,i)=>{
+      const byDate=new Map(MORAN_ROWS.filter(r=>r.producto_dependiente===product).map(r=>[String(r.fecha_residuo).slice(0,7),num(r.Moran_I_residuos)]));
+      return {label:product,data:labels.map(label=>byDate.has(label)?byDate.get(label):null),borderColor:palette[i%palette.length],backgroundColor:palette[i%palette.length],pointRadius:2,borderWidth:2,tension:.15,spanGaps:false};
+    });
+    datasets.push({label:"Referencia I = 0",data:labels.map(()=>0),borderColor:"#9bb1bb",borderDash:[5,5],pointRadius:0,borderWidth:1});
+    makeChart("moran-temporal-chart","line",{labels,datasets},{scales:{x:{title:{display:true,text:"Mes",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{title:{display:true,text:"Índice global de Moran (I)",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
+    const selected=$("moran-p-product").value || products[0];
+    const rows=MORAN_ROWS.filter(r=>r.producto_dependiente===selected).sort((a,b)=>String(a.fecha_residuo).localeCompare(String(b.fecha_residuo)));
+    makeChart("moran-p-chart","line",{labels:rows.map(r=>String(r.fecha_residuo).slice(0,7)),datasets:[
+      {label:"p simulado sin ajuste",data:rows.map(r=>num(r.p_sim)),borderColor:"#f2cc75",pointRadius:1,borderWidth:1.5,tension:.1},
+      {label:"p ajustado BH",data:rows.map(r=>num(r.p_ajustado_BH)),borderColor:"#75b7e8",pointRadius:1,borderWidth:1.5,tension:.1},
+      {label:"p ajustado BY",data:rows.map(r=>num(r.p_ajustado_BY)),borderColor:"#ff8f83",pointRadius:1,borderWidth:1.5,tension:.1},
+      {label:"Umbral 0,05",data:rows.map(()=>0.05),borderColor:"#95d5a4",borderDash:[5,5],pointRadius:0,borderWidth:1}
+    ]},{scales:{x:{title:{display:true,text:"Mes",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{min:0,max:1,title:{display:true,text:"p-valor",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
+    const n=rows.length, raw=rows.filter(r=>r.significativo_5pct_sin_ajuste).length, bh=rows.filter(r=>r.significativo_5pct_BH).length, by=rows.filter(r=>r.significativo_5pct_BY).length;
+    const vals=rows.map(r=>r.Moran_I_residuos).filter(Number.isFinite);
+    const max=vals.length?Math.max(...vals):null, min=vals.length?Math.min(...vals):null;
+    $("moran-temporal-summary").innerHTML=[
+      ["Observaciones",n],["Significativos sin ajuste",raw],["Significativos BH",bh],["Significativos BY",by]
+    ].map(([label,value])=>`<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>Umbral p &lt; 0,05</small></div>`).join("");
+    $("moran-temporal-status").textContent=`Archivo cargado: ${MORAN_ROWS.length} registros; ${products.join(" y ")}. Rango de Moran I para ${selected}: mínimo ${fmt(min,4)} · máximo ${fmt(max,4)}.`;
+    $("moran-audit-table").innerHTML=buildTable(rows,[{key:"fecha_residuo",label:"Fecha"},{key:"Moran_I_residuos",label:"Moran I",render:v=>fmt(v,4)},{key:"p_sim",label:"p sin ajuste",render:v=>fmt(v,4)},{key:"p_ajustado_BH",label:"p BH",render:v=>fmt(v,4)},{key:"p_ajustado_BY",label:"p BY",render:v=>fmt(v,4)},{key:"significativo_5pct_sin_ajuste",label:"Signif. original",render:v=>v?"Sí":"No"},{key:"significativo_5pct_BH",label:"Signif. BH",render:v=>v?"Sí":"No"},{key:"significativo_5pct_BY",label:"Signif. BY",render:v=>v?"Sí":"No"},{key:"n",label:"N"}]);
+  }
+  fetch(`./data/residual_moran_panel_audit.csv?v=${Date.now()}`,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text();})
+    .then(text=>{MORAN_ROWS=parseCSV(text).filter(r=>r.estado==="OK" && Number.isFinite(r.Moran_I_residuos));if(!MORAN_ROWS.length)throw new Error("El CSV no contiene filas válidas.");const products=[...new Set(MORAN_ROWS.map(r=>r.producto_dependiente))];const sel=$("moran-p-product");sel.innerHTML=products.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("");sel.addEventListener("change",drawMoranTemporal);drawMoranTemporal();})
+    .catch(err=>{$("moran-temporal-status").textContent=`No se pudo cargar la auditoría de Moran (${err.message}). Verifica la ruta data/residual_moran_panel_audit.csv.`;$("moran-audit-table").innerHTML='<div class="empty">No se pudo cargar el archivo CSV.</div>';});
   function initialise(data) {
     DATA=data;
     if (!data || data.status !== "ready" || !data.metadata) {
@@ -193,3 +260,4 @@
 </script>
 </body>
 </html>
+
