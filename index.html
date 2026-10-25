@@ -100,13 +100,17 @@
         <div id="backtest-summary" class="product-summary-grid"></div>
         <div class="chartbox"><canvas id="backtest-chart" aria-label="Comparación mensual de RMSE del modelo y referencias"></canvas></div>
         <div id="backtest-table" class="tablewrap"></div>
+        <h3 style="margin:20px 0 6px">¿La mejora frente a las referencias es clara?</h3>
+        <p class="desc">Mejora = 100 × (1 − error SpVARX / error de referencia); un valor positivo favorece al SpVARX. Intervalos bootstrap del cambio porcentual en MAE y RMSE, calculados por meses de prueba.</p>
+        <div id="backtest-comparison" class="tablewrap"></div>
+        <p id="backtest-comparison-note" class="note"></p>
         <p id="backtest-note" class="note"></p>
       </article>
       <article class="panel" style="margin-top:16px">
-        <div class="panel-head"><div><h2>¿Dónde mejora frente a una referencia?</h2><p class="desc">Mejora porcentual del error fuera de muestra, agregada por departamento durante todo el periodo de validación.</p></div></div>
-        <div class="controls"><div><label for="backtest-baseline">Comparar con</label><select id="backtest-baseline"><option value="sin_cambio">Sin cambio mensual (Δlog P = 0)</option><option value="persistencia">Persistencia (último cambio)</option></select></div><div><label for="backtest-metric">Métrica</label><select id="backtest-metric"><option value="rmse">RMSE</option><option value="mae">MAE</option></select></div></div>
+        <div class="panel-head"><div><h2>Error de pronóstico por departamento</h2><p class="desc">Resume los pronósticos fuera de muestra del SpVARX o su mejora frente a una referencia durante todo el periodo de validación.</p></div></div>
+        <div class="controls"><div><label for="backtest-map-view">Vista del mapa</label><select id="backtest-map-view"><option value="mejora">Mejora frente a una referencia</option><option value="error">Error absoluto del SpVARX</option></select></div><div id="backtest-baseline-control"><label for="backtest-baseline">Comparar con</label><select id="backtest-baseline"><option value="sin_cambio">Sin cambio mensual (Δlog P = 0)</option><option value="persistencia">Persistencia (último cambio)</option></select></div><div><label for="backtest-metric">Métrica</label><select id="backtest-metric"><option value="rmse">RMSE</option><option value="mae">MAE</option></select></div></div>
         <div id="backtest-mapbox" class="mapbox"><div class="empty">Esperando los pronósticos de validación.</div></div><div id="backtest-map-legend" class="legend"></div><p id="backtest-map-status" class="tiny"></p>
-        <p class="note">La mejora se calcula como 100 × (1 − error SpVARX / error de referencia). Verde indica que el SpVARX reduce el error; rojo, que lo aumenta. El gris incluye departamentos sin cobertura o con menos de 12 predicciones mercado-mes. El pronóstico supone anomalía climática contemporánea igual a cero (clima normal) y usa el clima rezagado ya observado; por tanto, no incorpora un pronóstico meteorológico.</p>
+        <p class="note">En la vista de error absoluto, verde indica menor MAE/RMSE y rojo mayor error; valores más cercanos a cero son mejores. En la vista de mejora, verde indica menor error del SpVARX y rojo menor error de la referencia. El gris incluye departamentos sin cobertura o con menos de 12 predicciones mercado-mes. El pronóstico supone anomalía climática contemporánea igual a cero (clima normal) y usa el clima rezagado ya observado; por tanto, no incorpora un pronóstico meteorológico.</p>
       </article>
     </section>
 
@@ -438,6 +442,83 @@
     if(!errors.length)return{n:0,mae:null,rmse:null};
     return{n:errors.length,mae:errors.reduce((a,e)=>a+Math.abs(e),0)/errors.length,rmse:Math.sqrt(errors.reduce((a,e)=>a+e*e,0)/errors.length)};
   }
+  function monthlyForecastLosses(rows,baselineKey) {
+    const months=new Map();
+    for(const row of rows){
+      const observed=num(row.observado),model=num(row.prediccion_spvarx),baseline=num(row[baselineKey]);
+      if(observed===null||model===null||baseline===null)continue;
+      const month=String(row.fecha).slice(0,7);
+      if(!months.has(month))months.set(month,{fecha:month,n:0,modelAbs:0,modelSq:0,baseAbs:0,baseSq:0});
+      const s=months.get(month),modelError=observed-model,baseError=observed-baseline;
+      s.n++;s.modelAbs+=Math.abs(modelError);s.modelSq+=modelError*modelError;s.baseAbs+=Math.abs(baseError);s.baseSq+=baseError*baseError;
+    }
+    return [...months.values()].filter(s=>s.n>0).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  }
+  function lossImprovement(months,metric,indexes=null) {
+    let n=0,modelAbs=0,modelSq=0,baseAbs=0,baseSq=0;
+    const selected=indexes?indexes.map(i=>months[i]):months;
+    for(const s of selected){if(!s)continue;n+=s.n;modelAbs+=s.modelAbs;modelSq+=s.modelSq;baseAbs+=s.baseAbs;baseSq+=s.baseSq;}
+    if(!n)return null;
+    const modelError=metric==="mae"?modelAbs/n:Math.sqrt(modelSq/n);
+    const baselineError=metric==="mae"?baseAbs/n:Math.sqrt(baseSq/n);
+    return baselineError>0?100*(1-modelError/baselineError):null;
+  }
+  function seededRandom(seedText) {
+    let seed=2166136261;
+    for(const char of String(seedText))seed=Math.imul(seed^char.charCodeAt(0),16777619);
+    return ()=>{seed=(seed+0x6D2B79F5)>>>0;let t=seed;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};
+  }
+  function forecastImprovementInterval(months,metric,seedText) {
+    const estimate=lossImprovement(months,metric),nMonths=months.length;
+    if(nMonths<6||estimate===null)return{estimate,low:null,high:null,nMonths,blockLength:null};
+    const blockLength=Math.max(2,Math.round(nMonths**(1/3))),replications=1999,random=seededRandom(seedText),draws=[];
+    for(let b=0;b<replications;b++){
+      const indexes=[];
+      while(indexes.length<nMonths){
+        const start=Math.floor(random()*nMonths);
+        for(let j=0;j<blockLength&&indexes.length<nMonths;j++)indexes.push((start+j)%nMonths);
+      }
+      const value=lossImprovement(months,metric,indexes);
+      if(value!==null&&Number.isFinite(value))draws.push(value);
+    }
+    draws.sort((a,b)=>a-b);
+    const quantile=q=>draws.length?draws[Math.floor(q*(draws.length-1))]:null;
+    return{estimate,low:quantile(.025),high:quantile(.975),nMonths,blockLength};
+  }
+  function improvementReading(low,high) {
+    if(low===null||high===null)return"Intervalo no disponible";
+    if(low>0)return"Mejora del SpVARX en el intervalo";
+    if(high<0)return"La referencia tiene menor error";
+    return"Sin diferencia clara frente a cero";
+  }
+  function drawBacktestComparison(rows,product) {
+    const comparisons=[
+      {key:"prediccion_sin_cambio",label:"Sin cambio"},
+      {key:"prediccion_persistencia",label:"Persistencia"}
+    ];
+    const results=[];
+    for(const baseline of comparisons){
+      const months=monthlyForecastLosses(rows,baseline.key);
+      for(const metric of ["mae","rmse"]){
+        const interval=forecastImprovementInterval(months,metric,`${product}|${baseline.key}|${metric}`);
+        results.push({baseline:baseline.label,metric:metric.toUpperCase(),interval});
+      }
+    }
+    if(!results.length){$("backtest-comparison").innerHTML='<div class="empty">No hay meses suficientes para comparar los pronósticos.</div>';$("backtest-comparison-note").textContent="";return;}
+    const columns=[
+      {key:"baseline",label:"Referencia"},
+      {key:"metric",label:"Métrica"},
+      {key:"estimate",label:"Mejora SpVARX (%)",render:(_,r)=>fmt(r.interval.estimate,1)},
+      {key:"interval",label:"Intervalo bootstrap 95%",render:(_,r)=>r.interval.low===null?"No disponible":`[${fmt(r.interval.low,1)}%, ${fmt(r.interval.high,1)}%]`},
+      {key:"reading",label:"Lectura",render:(_,r)=>improvementReading(r.interval.low,r.interval.high)}
+    ];
+    $("backtest-comparison").innerHTML=buildTable(results,columns);
+    const nMonths=Math.min(...results.map(r=>r.interval.nMonths));
+    const blockLength=results.find(r=>r.interval.blockLength!==null)?.interval.blockLength;
+    $("backtest-comparison-note").textContent=nMonths<6
+      ?`Solo hay ${nMonths} meses de prueba: no se calcula un intervalo temporal confiable. La diferencia porcentual es descriptiva.`
+      :`Cada origen mensual conserva juntos todos sus mercados; el intervalo remuestrea bloques circulares de ${blockLength} meses para reflejar dependencia temporal. Hay ${nMonths} meses de prueba y el intervalo es exploratorio; si incluye 0, no se observa una diferencia clara. No es una prueba causal ni sustituye una evaluación con más periodos.`;
+  }
   const BACKTEST_METHODS=[
     {key:"prediccion_spvarx",label:"SpVARX predictivo",color:"#95d5a4"},
     {key:"prediccion_sin_cambio",label:"Sin cambio",color:"#75b7e8"},
@@ -452,6 +533,8 @@
       const reason=DATA.metadata.backtest_error?`La validación no se completó: ${esc(DATA.metadata.backtest_error)}`:`Aún no hay predicciones retenidas. Se requieren más de ${esc(DATA.metadata.backtest_min_train_months??36)} meses para iniciar los cortes.`;
       $("backtest-summary").innerHTML=`<div class="empty">${reason}</div>`;
       $("backtest-table").innerHTML='<div class="empty">El flujo de actualización debe generar rolling_backtest.</div>';
+      $("backtest-comparison").innerHTML='<div class="empty">Sin comparación de pronósticos disponible.</div>';
+      $("backtest-comparison-note").textContent="";
       if(charts["backtest-chart"]){charts["backtest-chart"].destroy();delete charts["backtest-chart"];}
       return;
     }
@@ -463,6 +546,7 @@
     const first=dates[0],last=dates[dates.length-1];
     $("backtest-summary").innerHTML=`<section class="product-summary"><h3>${esc(product)}</h3><div class="product-metrics">${summaryCard("Periodo evaluado",`${first} → ${last}`,`${dates.length} meses de prueba`)}${summaryCard("Mejora de RMSE vs. sin cambio",delta===null?"—":`${fmt(delta,1)}%`,"Positivo favorece SpVARX; negativo favorece referencia")}</div><p class="note">${esc(note)}</p></section>`;
     $("backtest-table").innerHTML=buildTable(summaries,[{key:"label",label:"Método"},{key:"n",label:"Pronósticos",render:v=>Number(v).toLocaleString("es-CO")},{key:"mae",label:"MAE (Δlog P)",render:v=>fmt(v,5)},{key:"rmse",label:"RMSE (Δlog P)",render:v=>fmt(v,5)}]);
+    drawBacktestComparison(rows,product);
     const metricByMonth=(month,key)=>forecastErrorSummary(rows.filter(r=>String(r.fecha).slice(0,7)===month),key).rmse;
     makeChart("backtest-chart","line",{labels:dates,datasets:BACKTEST_METHODS.map(m=>({label:`RMSE · ${m.label}`,data:dates.map(d=>metricByMonth(d,m.key)),borderColor:m.color,backgroundColor:m.color,pointRadius:2,tension:.18,spanGaps:true}))},{scales:{x:{title:{display:true,text:"Mes de prueba",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{title:{display:true,text:"RMSE del cambio mensual de log-precio",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
   }
@@ -472,9 +556,11 @@
     const product=$("backtest-product").value||productNames()[0];
     const baselineKey=$("backtest-baseline").value||"sin_cambio";
     const metric=$("backtest-metric").value||"rmse";
+    const mapView=$("backtest-map-view").value||"mejora";
+    $("backtest-baseline-control").classList.toggle("hide",mapView==="error");
     const baseColumn=baselineKey==="persistencia"?"prediccion_persistencia":"prediccion_sin_cambio";
     const baselineLabel=baselineKey==="persistencia"?"persistencia":"sin cambio";
-    const rows=(DATA.rolling_backtest||[]).filter(r=>r.producto===product&&num(r.observado)!==null&&num(r.prediccion_spvarx)!==null&&num(r[baseColumn])!==null);
+    const rows=(DATA.rolling_backtest||[]).filter(r=>r.producto===product&&num(r.observado)!==null&&num(r.prediccion_spvarx)!==null&&(mapView==="error"||num(r[baseColumn])!==null));
     if(!features){$("backtest-mapbox").innerHTML='<div class="empty">No se cargaron los polígonos departamentales.</div>';return;}
     if(!rows.length){$("backtest-mapbox").innerHTML='<div class="empty">El flujo debe publicar predicciones de validación para dibujar este mapa.</div>';return;}
     const stats=new Map(features.map(f=>[featureCode(f),{n:0,spAbs:0,spSq:0,baseAbs:0,baseSq:0}]));
@@ -485,7 +571,8 @@
       if(!feature){unassigned++;continue;}
       const s=stats.get(featureCode(feature));if(!s)continue;
       const errorSp=Number(row.observado)-Number(row.prediccion_spvarx),errorBase=Number(row.observado)-Number(row[baseColumn]);
-      s.n++;s.spAbs+=Math.abs(errorSp);s.spSq+=errorSp*errorSp;s.baseAbs+=Math.abs(errorBase);s.baseSq+=errorBase*errorBase;
+      s.n++;s.spAbs+=Math.abs(errorSp);s.spSq+=errorSp*errorSp;
+      if(Number.isFinite(errorBase)){s.baseAbs+=Math.abs(errorBase);s.baseSq+=errorBase*errorBase;}
     }
     const minimumForecasts=12;
     const metricValue=(sumAbs,sumSq,n)=>metric==="mae"?sumAbs/n:Math.sqrt(sumSq/n);
@@ -494,22 +581,36 @@
       const modelError=metricValue(s.spAbs,s.spSq,s.n),baseError=metricValue(s.baseAbs,s.baseSq,s.n);
       return baseError>0?100*(1-modelError/baseError):null;
     };
+    const getModelError=s=>!s||s.n<minimumForecasts?null:metricValue(s.spAbs,s.spSq,s.n);
+    const modelErrorValues=[...stats.values()].map(getModelError).filter(v=>v!==null&&Number.isFinite(v));
+    const maxModelError=Math.max(1e-12,...modelErrorValues);
     const coords=features.flatMap(f=>collectPairs(f.geometry?.coordinates));
     const minLon=Math.min(...coords.map(c=>Number(c[0]))),maxLon=Math.max(...coords.map(c=>Number(c[0]))),minLat=Math.min(...coords.map(c=>Number(c[1]))),maxLat=Math.max(...coords.map(c=>Number(c[1])));
     const lonSpan=Math.max(.1,maxLon-minLon),latSpan=Math.max(.1,maxLat-minLat),W=760,H=470,padX=35,padY=35;
     const scale=Math.min((W-2*padX)/lonSpan,(H-2*padY)/latSpan),offsetX=(W-lonSpan*scale)/2,offsetY=(H-latSpan*scale)/2;
     const x=lon=>offsetX+(Number(lon)-minLon)*scale,y=lat=>offsetY+(maxLat-Number(lat))*scale;
-    const fillFor=s=>{const v=getImprovement(s);if(v===null)return"#263b45";const q=Math.min(1,Math.abs(v)/100);return v>=0?blend("#eef2ed","#44b787",q):blend("#eef2ed","#df6e5c",q);};
+    const fillFor=s=>{
+      if(mapView==="error"){const v=getModelError(s);return v===null?"#263b45":blend("#71c28c","#e66e5a",Math.min(1,Math.max(0,v)/maxModelError));}
+      const v=getImprovement(s);if(v===null)return"#263b45";const q=Math.min(1,Math.abs(v)/100);return v>=0?blend("#eef2ed","#44b787",q):blend("#eef2ed","#df6e5a",q);
+    };
     const paths=features.map(feature=>{
       const s=stats.get(featureCode(feature));
       const d=geometryPolygons(feature.geometry).map(polygon=>polygon.map(ring=>ring.map((c,i)=>`${i?"L":"M"}${x(c[0]).toFixed(1)} ${y(c[1]).toFixed(1)}`).join(" ")+" Z").join(" ")).join(" ");
       const improvement=getImprovement(s),modelError=s.n?metricValue(s.spAbs,s.spSq,s.n):null,baseError=s.n?metricValue(s.baseAbs,s.baseSq,s.n):null;
-      return `<path d="${d}" fill="${fillFor(s)}" stroke="#9bb9bc" stroke-width=".8" fill-rule="evenodd"><title>${esc(featureName(feature))} · mejora SpVARX vs. ${baselineLabel}: ${improvement===null?"sin datos suficientes":`${fmt(improvement,1)}%`} · ${metric.toUpperCase()} SpVARX: ${fmt(modelError,5)} · ${metric.toUpperCase()} ${baselineLabel}: ${fmt(baseError,5)} · pronósticos: ${s.n}</title></path>`;
+      const description=mapView==="error"?`${metric.toUpperCase()} SpVARX: ${s.n<minimumForecasts?"sin datos suficientes":fmt(modelError,5)}`:`mejora SpVARX vs. ${baselineLabel}: ${improvement===null?"sin datos suficientes":`${fmt(improvement,1)}%`} · ${metric.toUpperCase()} SpVARX: ${fmt(modelError,5)} · ${metric.toUpperCase()} ${baselineLabel}: ${fmt(baseError,5)}`;
+      return `<path d="${d}" fill="${fillFor(s)}" stroke="#9bb9bc" stroke-width=".8" fill-rule="evenodd"><title>${esc(featureName(feature))} · ${description} · pronósticos: ${s?.n||0}</title></path>`;
     }).join("");
-    $("backtest-mapbox").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mejora porcentual de error del SpVARX frente a ${esc(baselineLabel)} para ${esc(product)}"><text x="${W/2}" y="22" fill="#b8d1d4" font-size="12" text-anchor="middle">Mejora de ${metric.toUpperCase()} · ${esc(product)} · SpVARX vs. ${esc(baselineLabel)}</text>${paths}</svg>`;
-    $("backtest-map-legend").innerHTML=`<span class="choropleth-label">Mejora del SpVARX</span><div class="choropleth-bar" style="background:linear-gradient(90deg,#df6e5c,#eef2ed,#44b787)"></div><span>−100% peor</span><span>0% igual</span><span>+100% mejor</span><span><i class="dot" style="background:#263b45"></i>Sin cobertura suficiente</span>`;
+    const mapTitle=mapView==="error"?`${metric.toUpperCase()} de pronóstico SpVARX · ${product}`:`Mejora de ${metric.toUpperCase()} · ${product} · SpVARX vs. ${baselineLabel}`;
+    $("backtest-mapbox").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(mapTitle)}"><text x="${W/2}" y="22" fill="#b8d1d4" font-size="12" text-anchor="middle">${esc(mapTitle)}</text>${paths}</svg>`;
+    if(mapView==="error"){
+      $("backtest-map-legend").innerHTML=`<span class="choropleth-label">${metric.toUpperCase()} SpVARX</span><div class="choropleth-bar" style="background:linear-gradient(90deg,#71c28c,#e66e5a)"></div><span>0 · menor error</span><span>${fmt(maxModelError,5)} · mayor error</span><span><i class="dot" style="background:#263b45"></i>Sin cobertura suficiente</span>`;
+    }else{
+      $("backtest-map-legend").innerHTML=`<span class="choropleth-label">Mejora del SpVARX</span><div class="choropleth-bar" style="background:linear-gradient(90deg,#df6e5c,#eef2ed,#44b787)"></div><span>−100% peor</span><span>0% igual</span><span>+100% mejor</span><span><i class="dot" style="background:#263b45"></i>Sin cobertura suficiente</span>`;
+    }
     const covered=[...stats.values()].filter(s=>s.n>=minimumForecasts).length,improved=[...stats.values()].filter(s=>(getImprovement(s)??-Infinity)>0).length;
-    $("backtest-map-status").textContent=`${covered} de ${features.length} departamentos cumplen el mínimo de ${minimumForecasts} pronósticos; ${improved} muestran menor error del SpVARX; ${unassigned} predicciones sin ubicación asignada. Pasa el cursor por un departamento para ver valores y N.`;
+    $("backtest-map-status").textContent=mapView==="error"
+      ?`${covered} de ${features.length} departamentos cumplen el mínimo de ${minimumForecasts} pronósticos; el color compara el error absoluto SpVARX entre departamentos. ${unassigned} predicciones sin ubicación asignada. Pasa el cursor para ver error y N.`
+      :`${covered} de ${features.length} departamentos cumplen el mínimo de ${minimumForecasts} pronósticos; ${improved} muestran menor error del SpVARX; ${unassigned} predicciones sin ubicación asignada. Pasa el cursor por un departamento para ver valores y N.`;
   }
   let COLOMBIA_GEOMETRY = null;
   let COLOMBIA_OUTLINE_SOURCE = "";
@@ -700,7 +801,7 @@
     ["price-product","map-product","coef-product","irf-product"].forEach(id=>$(id).addEventListener("change",()=>({"price-product":drawPrices,"map-product":drawMap,"coef-product":drawCoefficients,"irf-product":drawIRF}[id])()));
     ["residual-map-product","residual-map-date","residual-map-metric"].forEach(id=>$(id).addEventListener("change",drawDepartmentChoropleth));
     $("backtest-product").addEventListener("change",()=>{drawBacktest();drawBacktestMap();});
-    ["backtest-baseline","backtest-metric"].forEach(id=>$(id).addEventListener("change",drawBacktestMap));
+    ["backtest-baseline","backtest-metric","backtest-map-view"].forEach(id=>$(id).addEventListener("change",drawBacktestMap));
     $("irf-shock").disabled=false; $("irf-shock").addEventListener("change",drawIRF);
     $("robustness-irf-shock").disabled=false; $("robustness-irf-shock").addEventListener("change",drawSpatialRobustness);
     ["robustness-coef-product","robustness-irf-product"].forEach(id=>$(id).addEventListener("change",drawSpatialRobustness));
