@@ -11,6 +11,16 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#133544 0%,var(--bg) 48%);color:var(--text);font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}a{color:#8fd2ef;text-decoration:none}a:hover{text-decoration:underline}.wrap{max-width:1280px;margin:auto;padding:28px 22px 56px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}.brand{display:flex;align-items:center;gap:13px}.mark{width:48px;height:48px;border:1px solid #3a766e;border-radius:15px;background:linear-gradient(135deg,#174f4e,#173347);display:grid;place-items:center;font-size:25px;box-shadow:var(--shadow)}.eyebrow{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--green);font-weight:800}.title{font-size:clamp(26px,4.2vw,43px);line-height:1.1;margin:5px 0 9px;letter-spacing:-.035em}.subtitle{color:var(--muted);max-width:800px;margin:0}.source-pill{font-size:12px;color:#bcd2da;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#0d1e27}.banner{display:flex;gap:13px;align-items:flex-start;border:1px solid #475b48;background:#18271f;border-radius:15px;padding:16px 17px;margin:22px 0;color:#d9eddb}.banner.error{border-color:#765643;background:#2b211a;color:#ffdfbb}.banner strong{display:block;margin-bottom:3px}.banner p{margin:0;color:#c0d0c8}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:17px 0 20px}.metric,.panel{background:linear-gradient(150deg,rgba(17,39,51,.96),rgba(11,28,38,.96));border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow)}.metric{padding:16px 18px}.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:25px;margin:5px 0 1px;letter-spacing:-.03em}.metric small{color:#89aaa9}.nav{display:flex;gap:8px;flex-wrap:wrap;padding:5px;background:#0a1b24;border:1px solid var(--line);border-radius:13px;margin:24px 0 16px}.nav button,.btn{border:1px solid transparent;background:transparent;color:var(--muted);padding:10px 14px;border-radius:9px;cursor:pointer;font:inherit;font-weight:650}.nav button.active{background:#1d3a47;color:var(--text);border-color:#315665}.btn{background:#9bd9a6;color:#0b2119}.btn.secondary{background:#162e3a;border-color:#2b4b59;color:#d5e6eb}.btn:disabled{opacity:.4;cursor:not-allowed}.page{display:none}.page.active{display:block}.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px}.panel{padding:19px;min-width:0}.panel h2{font-size:18px;margin:0 0 4px;letter-spacing:-.02em}.panel .desc{font-size:13px;color:var(--muted);margin:0 0 18px}.panel-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:12px 0 18px}label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}select{background:#0b1c25;color:var(--text);border:1px solid #31505e;border-radius:9px;padding:9px 11px;min-width:180px;font:inherit}.chartbox{height:340px;position:relative}canvas{max-width:100%}.tablewrap{overflow:auto;max-width:100%}table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #203c49}th{color:#a9c9d3;font-size:11px;text-transform:uppercase;letter-spacing:.07em}td{color:#d8e5e9}tr:hover td{background:rgba(117,183,232,.045)}.tag{display:inline-block;border:1px solid #315565;border-radius:7px;padding:3px 7px;color:#a9d9e8;font-size:11px}.note{font-size:12px;color:var(--muted);margin-top:13px}.empty{border:1px dashed #365360;border-radius:12px;padding:28px 20px;color:var(--muted);text-align:center}.empty strong{display:block;color:var(--text);margin-bottom:5px}.mapbox{width:100%;overflow:hidden;border-radius:12px;background:radial-gradient(ellipse at center,#122d3a,#0a1b25);border:1px solid #234653}.mapbox svg{display:block;width:100%;height:auto;min-height:300px}.legend{display:flex;gap:11px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:28px;padding-top:17px;color:#77919b;font-size:12px}.hide{display:none!important}.warntext{color:#f1d090}.oktext{color:#a6e0b5}.error-text{color:#ffaaa0}.tiny{font-size:11px;color:var(--muted)}
 @media(max-width:850px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}.chartbox{height:300px}}
 @media(max-width:480px){.wrap{padding:19px 12px 38px}.metric strong{font-size:21px}.panel{padding:14px}.metrics{gap:8px}.metric{padding:12px}.nav button{padding:8px 10px}}
+.product-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.product-summary{border:1px solid var(--line);border-radius:14px;padding:13px;background:rgba(8,24,33,.45)}
+.product-summary h3{margin:0;color:var(--text);font-size:15px}
+.product-summary .product-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:11px 0 0}
+.product-metrics .metric{padding:11px}
+.product-metrics .metric strong{font-size:20px}
+.map-fallback{color:#f1d090}
+.choropleth-bar{height:10px;min-width:150px;flex:1;border:1px solid #6e8791;border-radius:999px}
+.choropleth-label{font-weight:700;color:#c6d9df}
+@media(max-width:850px){.product-summary-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -39,13 +49,21 @@
         <article class="panel"><div class="panel-head"><div><h2>Evolución de precios mayoristas</h2><p class="desc">Promedio mensual entre mercados seleccionados; precio nominal en la unidad reportada por SIPSA.</p></div></div><div class="controls"><div><label for="price-product">Producto</label><select id="price-product" disabled></select></div></div><div class="chartbox"><canvas id="price-chart" aria-label="Serie mensual de precios"></canvas></div><p class="note">No comparar niveles entre productos sin revisar unidad, presentación y variedad. Las series provienen de los registros públicos SIPSA-P procesados en la actualización más reciente.</p></article>
         <article class="panel"><h2>Especificación seleccionada</h2><p class="desc">Resumen del sistema calculado por el proceso de actualización.</p><div id="model-summary" class="empty"><strong>Sin estimación publicada</strong>Ejecuta el flujo de actualización de datos para procesar las fuentes reales.</div><div class="tablewrap"><table id="products-table" class="hide"><thead><tr><th>Variable endógena</th><th>Unidad SIPSA</th><th>Variedad</th></tr></thead><tbody></tbody></table></div><p id="source-info" class="note">Fuentes: DANE SIPSA-P y NASA POWER.</p></article>
       </div>
+      <article class="panel" style="margin-top:16px"><h2>Comparación de la evolución temporal</h2><p class="desc">Índice de precio nominal con base 100 en el primer mes disponible de cada producto. Permite comparar variaciones relativas sin confundir diferencias de nivel o unidad.</p><div class="chartbox"><canvas id="price-index-chart" aria-label="Comparación indexada de precios de los productos"></canvas></div><div id="price-summary" class="product-summary-grid"></div><p class="note">Los precios son nominales y no están deflactados. La referencia 100 corresponde al primer dato de cada serie.</p></article>
     </section>
 
     <section id="page-spatial" class="page">
       <div class="grid2">
-        <article class="panel"><h2>Distribución espacial de los mercados</h2><p class="desc">Puntos geocodificados. El color indica el cambio mensual del logaritmo del precio del producto seleccionado en el último periodo estimado.</p><div class="controls"><div><label for="map-product">Producto</label><select id="map-product" disabled></select></div></div><div id="mapbox" class="mapbox"><div class="empty">Aún no se han publicado coordenadas y cambios observados.</div></div><div id="map-legend" class="legend"></div><p class="note">Este gráfico representa puntos de mercados, no límites administrativos ni polígonos oficiales. La geocodificación automática debe revisarse cuando el nombre del mercado sea ambiguo.</p></article>
+        <article class="panel"><h2>Mercados mayoristas en Colombia</h2><p class="desc">Cada punto es un mercado SIPSA. Su color muestra el cambio mensual de Δlog(precio) del último periodo; pasa el cursor para ver el nombre y el valor.</p><div class="controls"><div><label for="map-product">Producto</label><select id="map-product" disabled></select></div></div><div id="mapbox" class="mapbox"><div class="empty">Aún no se han publicado coordenadas y cambios observados.</div></div><div id="map-legend" class="legend"></div><p id="map-status" class="tiny"></p><p class="note">Los símbolos son mercados georreferenciados; no representan precios de cada municipio ni una superficie interpolada. La silueta nacional es generalizada por Natural Earth. Revise la precisión de cada coordenada antes de interpretar patrones espaciales.</p></article>
         <article class="panel"><h2>Cobertura territorial</h2><p class="desc">Coordenadas, fecha del último dato y variación mensual aproximada de Δlog(precio).</p><div id="market-table" class="tablewrap"><div class="empty">Sin datos publicados.</div></div></article>
       </div>
+      <article class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h2>Error del modelo por departamento</h2><p class="desc">Mapa coroplético de los residuos del SpVARX resumidos por mercado y departamento.</p></div><span class="tag">Ajuste en muestra · no pronóstico</span></div>
+        <div class="controls"><div><label for="residual-map-product">Producto</label><select id="residual-map-product" disabled></select></div><div><label for="residual-map-date">Mes</label><select id="residual-map-date" disabled></select></div><div><label for="residual-map-metric">Medida del residuo</label><select id="residual-map-metric"><option value="sesgo">Sesgo medio (con signo)</option><option value="mae">MAE (magnitud absoluta)</option><option value="rmse">RMSE (magnitud cuadrática)</option></select></div></div>
+        <div id="residual-mapbox" class="mapbox"><div class="empty">Aún no se han publicado los residuos y límites departamentales.</div></div><div id="residual-map-legend" class="legend"></div><p id="residual-map-status" class="tiny"></p>
+        <p class="note">El sesgo medio usa una escala divergente: azul = negativo, blanco = cercano a cero y rojo = positivo. MAE y RMSE no permiten que signos opuestos se cancelen: verde = menor error y rojo = mayor error. Valores cercanos a cero indican menor error descriptivo. La escala se mantiene fija entre meses dentro de cada producto; cambia al cambiar de producto. Los residuos son de ajuste en muestra, calculados con las mismas observaciones usadas para estimar el modelo; no equivalen a validación predictiva fuera de muestra. Se expresan en unidades de Δlog(precio), una variación mensual logarítmica aproximada.</p>
+        <p class="note">Cartografía: <a href="https://geoportal.dane.gov.co/servicios/descarga-y-metadatos/datos-geoestadisticos/?cod=111" target="_blank" rel="noopener">DANE, MGN 2025</a>; geometría simplificada por <a href="https://github.com/ytolosa/mapas-colombia" target="_blank" rel="noopener">mapas-colombia</a>, licencia CC BY 4.0.</p>
+      </article>
     </section>
 
     <section id="page-coefficients" class="page">
@@ -62,7 +80,7 @@
         <div class="panel-head"><div><h2>Evolución temporal del índice de Moran</h2><p class="desc">Auditoría temporal de autocorrelación espacial residual. Se muestran ambos productos y una línea de referencia en I = 0.</p></div><span class="tag">CSV de auditoría · 4.999 permutaciones configuradas</span></div>
         <div id="moran-temporal-status" class="note">Cargando data/residual_moran_panel_audit.csv…</div>
         <div class="chartbox"><canvas id="moran-temporal-chart" aria-label="Evolución temporal del índice de Moran para ambos productos"></canvas></div>
-        <div id="moran-temporal-summary" class="metrics" style="grid-template-columns:repeat(4,minmax(0,1fr));"></div>
+        <div id="moran-temporal-summary" class="product-summary-grid"></div>
         <div class="controls"><div><label for="moran-p-product">Producto para p-valores</label><select id="moran-p-product"><option value="Tomate de árbol">Tomate de árbol</option><option value="Pimentón">Pimentón</option></select></div></div>
         <div class="chartbox"><canvas id="moran-p-chart" aria-label="P-valores de Moran antes y después de ajustes múltiples"></canvas></div>
         <p class="note">La significancia se evalúa con umbral 0,05. BH controla la tasa de falsos descubrimientos; BY es más conservador bajo dependencia general. El índice de Moran positivo indica agrupamiento espacial de residuos similares y el negativo, dispersión, respecto de la matriz espacial utilizada. Estos resultados son diagnósticos, no evidencia causal.</p>
@@ -92,8 +110,8 @@
   function showPage(name) {
     document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.page === name));
     document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === `page-${name}`));
-    if (name === "overview") drawPrices();
-    if (name === "spatial") drawMap();
+    if (name === "overview") { drawPrices(); drawPriceIndex(); }
+    if (name === "spatial") { drawMap(); drawDepartmentChoropleth(); }
     if (name === "coefficients") drawCoefficients();
     if (name === "irf") drawIRF();
     if (name === "diagnostics") drawMoranTemporal();
@@ -108,6 +126,7 @@
     if (!rows || !rows.length) return `<div class="empty">${esc(emptyText)}</div>`;
     return `<table><thead><tr>${columns.map(c=>`<th>${esc(c.label)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${columns.map(c=>`<td>${esc(c.render ? c.render(r[c.key],r) : (r[c.key] ?? "—"))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   }
+  function summaryCard(label,value,note) { return `<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`; }
   function makeChart(id, type, data, options) {
     if (typeof Chart === "undefined") {
       const canvas = $(id); if (canvas) canvas.parentElement.innerHTML = '<div class="empty"><strong>Gráfico no disponible</strong>No se pudo cargar la biblioteca de gráficos. Las tablas de datos siguen disponibles.</div>';
@@ -123,24 +142,201 @@
     const rows = DATA.price_series.filter(r => r.producto === product).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
     makeChart("price-chart", "line", {labels:rows.map(r=>String(r.fecha).slice(0,7)), datasets:[{label:product, data:rows.map(r=>num(r.precio_promedio_mercados)), borderColor:"#95d5a4", backgroundColor:"rgba(149,213,164,.12)", borderWidth:2, pointRadius:2, tension:.18, fill:true}]}, {scales:{x:{title:{display:true,text:"Mes",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{title:{display:true,text:"Precio nominal (unidad SIPSA)",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
   }
-  function productChange(market, product) { return num(market?.cambios_log_precio?.[product]); }
-  function drawMap() {
+  function drawPriceIndex() {
     if (!DATA || DATA.status !== "ready") return;
-    const product = $("map-product").value || productNames()[0], rows = DATA.markets || [];
-    if (!rows.length) { $("mapbox").innerHTML = '<div class="empty">No hay coordenadas disponibles.</div>'; return; }
-    const lons=rows.map(r=>Number(r.longitud)).filter(Number.isFinite), lats=rows.map(r=>Number(r.latitud)).filter(Number.isFinite);
-    if (!lons.length || !lats.length) { $("mapbox").innerHTML='<div class="empty">Coordenadas no válidas.</div>'; return; }
-    let minLon=Math.min(...lons), maxLon=Math.max(...lons), minLat=Math.min(...lats), maxLat=Math.max(...lats);
-    if (maxLon-minLon < .05) { minLon-=.025; maxLon+=.025; } if (maxLat-minLat < .05) { minLat-=.025; maxLat+=.025; }
-    const W=760,H=380,pad=42; const x=lon=>pad+(lon-minLon)/(maxLon-minLon)*(W-2*pad); const y=lat=>H-pad-(lat-minLat)/(maxLat-minLat)*(H-2*pad);
-    const vals=rows.map(r=>productChange(r,product)).filter(v=>v!==null); const maxAbs=Math.max(.001,...vals.map(Math.abs));
-    const circles=rows.map(r=>{const v=productChange(r,product);const color=v===null?"#6e8791":(v<0?blend("#4c98d8","#e5f1ec",Math.min(1,Math.abs(v)/maxAbs)):blend("#e5f1ec","#e97962",Math.min(1,v/maxAbs)));return `<g><circle cx="${x(Number(r.longitud))}" cy="${y(Number(r.latitud))}" r="7" fill="${color}" stroke="#07131b" stroke-width="2"><title>${esc(r.mercado)} · Δlog precio: ${fmt(v,4)}</title></circle><text x="${x(Number(r.longitud))+9}" y="${y(Number(r.latitud))-8}" fill="#c7dbe0" font-size="10">${esc(r.mercado)}</text></g>`;}).join("");
-    const grid=Array.from({length:5},(_,i)=>`<line x1="${pad+i*(W-2*pad)/4}" y1="${pad}" x2="${pad+i*(W-2*pad)/4}" y2="${H-pad}" stroke="#244552" stroke-dasharray="3 5"/><line x1="${pad}" y1="${pad+i*(H-2*pad)/4}" x2="${W-pad}" y2="${pad+i*(H-2*pad)/4}" stroke="#244552" stroke-dasharray="3 5"/>`).join("");
-    $("mapbox").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Dispersión geográfica de mercados"><text x="${W/2}" y="22" fill="#9bb1bb" font-size="12" text-anchor="middle">Mercados SIPSA · coordenadas geográficas</text>${grid}${circles}<text x="${W/2}" y="${H-7}" fill="#7896a1" font-size="10" text-anchor="middle">Longitud</text><text x="15" y="${H/2}" fill="#7896a1" font-size="10" text-anchor="middle" transform="rotate(-90 15 ${H/2})">Latitud</text></svg>`;
-    $("map-legend").innerHTML=`<span><i class="dot" style="background:#4c98d8"></i> Cambio negativo</span><span><i class="dot" style="background:#e5f1ec"></i> Cercano a cero</span><span><i class="dot" style="background:#e97962"></i> Cambio positivo</span><span>Color escalado a máximo absoluto del producto seleccionado</span>`;
-    const latest = DATA.metadata.end_date;
-    $("market-table").innerHTML=buildTable(rows.map(r=>({mercado:r.mercado,lat:fmt(r.latitud,4),lon:fmt(r.longitud,4),cambio:fmt(productChange(r,product),5),periodo:latest})),[
-      {key:"mercado",label:"Mercado"},{key:"lat",label:"Latitud"},{key:"lon",label:"Longitud"},{key:"cambio",label:"Δ log P"},{key:"periodo",label:"Periodo"}
+    const products=productNames(), palette=["#95d5a4","#75b7e8","#f2cc75","#ff8f83"];
+    const series=products.map(product=>DATA.price_series.filter(r=>r.producto===product).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))));
+    const labels=[...new Set(series.flat().map(r=>String(r.fecha).slice(0,7)))].sort();
+    const datasets=series.map((rows,i)=>{
+      const byDate=new Map(rows.map(r=>[String(r.fecha).slice(0,7),num(r.precio_promedio_mercados)]));
+      const base=rows.map(r=>num(r.precio_promedio_mercados)).find(v=>v!==null&&v>0);
+      return {label:products[i],data:labels.map(label=>{const v=byDate.get(label);return v===null||v===undefined||base===undefined?null:v/base*100;}),borderColor:palette[i%palette.length],backgroundColor:palette[i%palette.length],borderWidth:2,pointRadius:1.5,tension:.16,spanGaps:false};
+    });
+    datasets.push({label:"Referencia = 100",data:labels.map(()=>100),borderColor:"#9bb1bb",borderDash:[5,5],pointRadius:0,borderWidth:1});
+    makeChart("price-index-chart","line",{labels,datasets},{scales:{x:{title:{display:true,text:"Mes",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{title:{display:true,text:"Índice de precio nominal (base = 100)",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
+    const metadataProducts=DATA.metadata.products||[];
+    const percent=value=>value===null?"—":`${value>=0?"+":""}${fmt(value,1)}%`;
+    $("price-summary").innerHTML=products.map((product,i)=>{
+      const valid=series[i].filter(r=>num(r.precio_promedio_mercados)!==null);
+      const first=valid[0], latest=valid[valid.length-1], previous=valid[valid.length-2];
+      const latestValue=latest?num(latest.precio_promedio_mercados):null;
+      const monthly=latest&&latestValue!==null&&previous&&num(previous.precio_promedio_mercados)>0?(latestValue/num(previous.precio_promedio_mercados)-1)*100:null;
+      const period=first&&latest&&latestValue!==null&&num(first.precio_promedio_mercados)>0?(latestValue/num(first.precio_promedio_mercados)-1)*100:null;
+      const productMeta=metadataProducts.find(p=>p.name===product);
+      return `<section class="product-summary"><h3>${esc(product)}</h3><div class="product-metrics">${summaryCard("Precio promedio final",fmt(latestValue,0),`Unidad SIPSA: ${productMeta?.unit||"No especificada"}`)}${summaryCard("Cambio mensual",percent(monthly),"Último mes frente al anterior")}${summaryCard("Cambio desde inicio",percent(period),first&&latest?`${String(first.fecha).slice(0,7)} → ${String(latest.fecha).slice(0,7)}`:"Periodo no disponible")}</div></section>`;
+    }).join("");
+  }
+  function productChange(market, product) { return num(market?.cambios_log_precio?.[product]); }
+  let DEPARTMENT_FEATURES = null;
+  let DEPARTMENT_BOUNDARIES_PROMISE = null;
+  function loadDepartmentBoundaries() {
+    if (DEPARTMENT_BOUNDARIES_PROMISE) return DEPARTMENT_BOUNDARIES_PROMISE;
+    DEPARTMENT_BOUNDARIES_PROMISE = fetch("./data/colombia_departments.geojson", {cache:"force-cache"})
+      .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json();})
+      .then(payload=>{
+        const features=payload.type==="FeatureCollection"?payload.features:[];
+        if (!features?.length) throw new Error("El GeoJSON no contiene departamentos.");
+        DEPARTMENT_FEATURES=features;
+        return features;
+      })
+      .catch(err=>{console.warn("No se pudo cargar la cartografía departamental:",err);return null;});
+    return DEPARTMENT_BOUNDARIES_PROMISE;
+  }
+  function featureCode(feature) { return String(feature.properties?.divipola_dep ?? ""); }
+  function featureName(feature) { return String(feature.properties?.dpto_nombre ?? "Departamento"); }
+  function geometryPolygons(geometry) {
+    if (!geometry) return [];
+    if (geometry.type==="Polygon") return [geometry.coordinates||[]];
+    if (geometry.type==="MultiPolygon") return geometry.coordinates||[];
+    return [];
+  }
+  function collectPairs(value, pairs=[]) {
+    if (!Array.isArray(value)) return pairs;
+    if (value.length>=2 && Number.isFinite(Number(value[0])) && Number.isFinite(Number(value[1]))) pairs.push(value);
+    else value.forEach(child=>collectPairs(child,pairs));
+    return pairs;
+  }
+  function pointOnSegment(x,y,a,b) {
+    const cross=(x-a[0])*(b[1]-a[1])-(y-a[1])*(b[0]-a[0]);
+    if (Math.abs(cross)>1e-8) return false;
+    return x>=Math.min(a[0],b[0])-1e-8&&x<=Math.max(a[0],b[0])+1e-8&&y>=Math.min(a[1],b[1])-1e-8&&y<=Math.max(a[1],b[1])+1e-8;
+  }
+  function pointInRing(lon,lat,ring) {
+    let inside=false;
+    for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+      const a=ring[j],b=ring[i];
+      if(pointOnSegment(lon,lat,a,b))return true;
+      const crosses=(b[1]>lat)!==(a[1]>lat);
+      if(crosses&&lon<(a[0]-b[0])*(lat-b[1])/(a[1]-b[1])+b[0])inside=!inside;
+    }
+    return inside;
+  }
+  function pointInPolygon(lon,lat,rings) {
+    if(!rings?.length||!pointInRing(lon,lat,rings[0]))return false;
+    return !rings.slice(1).some(hole=>pointInRing(lon,lat,hole));
+  }
+  function departmentForPoint(lon,lat) {
+    return (DEPARTMENT_FEATURES||[]).find(feature=>geometryPolygons(feature.geometry).some(polygon=>pointInPolygon(lon,lat,polygon)))||null;
+  }
+  async function drawDepartmentChoropleth() {
+    if (!DATA || DATA.status!=="ready") return;
+    const features=await loadDepartmentBoundaries();
+    if (!features) {
+      $("residual-mapbox").innerHTML='<div class="empty"><strong>No se cargaron los límites departamentales</strong>Ejecuta la actualización para publicar data/colombia_departments.geojson.</div>';
+      $("residual-map-status").textContent="Fuente cartográfica: DANE MGN 2025, con geometría simplificada.";
+      return;
+    }
+    const product=$("residual-map-product").value||productNames()[0];
+    const period=$("residual-map-date").value;
+    const metric=$("residual-map-metric").value||"sesgo";
+    const rows=(DATA.residual_panel||[]).filter(r=>r.producto===product&&String(r.fecha_residuo).slice(0,7)===period&&num(r.residuo)!==null);
+    if(!rows.length){$("residual-mapbox").innerHTML='<div class="empty">No hay residuos para el producto y mes seleccionados.</div>';return;}
+    const stats=new Map(features.map(f=>[featureCode(f),{feature:f,sum:0,abs:0,sq:0,n:0}]));
+    const marketDepartmentCache=new Map(); let unassigned=0;
+    for(const row of rows){
+      const cacheKey=`${Number(row.longitud).toFixed(5)},${Number(row.latitud).toFixed(5)}`;
+      let feature=marketDepartmentCache.get(cacheKey);
+      if(feature===undefined){feature=departmentForPoint(Number(row.longitud),Number(row.latitud));marketDepartmentCache.set(cacheKey,feature||null);}
+      if(!feature){unassigned++;continue;}
+      const s=stats.get(featureCode(feature)); if(!s)continue;
+      const e=Number(row.residuo); s.sum+=e; s.abs+=Math.abs(e); s.sq+=e*e; s.n++;
+    }
+    const values=[...stats.values()].filter(s=>s.n).map(s=>metric==="mae"?s.abs/s.n:(metric==="rmse"?Math.sqrt(s.sq/s.n):s.sum/s.n));
+    if(!values.length){$("residual-mapbox").innerHTML='<div class="empty">Ningún mercado cayó dentro de los polígonos departamentales.</div>';return;}
+    const allProductResiduals=(DATA.residual_panel||[]).filter(r=>r.producto===product).map(r=>Math.abs(num(r.residuo)??0));
+    const commonScale=Math.max(1e-8,...allProductResiduals);
+    const maxAbs=commonScale;
+    const maxValue=commonScale;
+    const coords=features.flatMap(f=>collectPairs(f.geometry?.coordinates));
+    const minLon=Math.min(...coords.map(c=>Number(c[0]))),maxLon=Math.max(...coords.map(c=>Number(c[0]))),minLat=Math.min(...coords.map(c=>Number(c[1]))),maxLat=Math.max(...coords.map(c=>Number(c[1])));
+    const lonSpan=Math.max(.1,maxLon-minLon),latSpan=Math.max(.1,maxLat-minLat),W=760,H=470,padX=35,padY=35;
+    const scale=Math.min((W-2*padX)/lonSpan,(H-2*padY)/latSpan),offsetX=(W-lonSpan*scale)/2,offsetY=(H-latSpan*scale)/2;
+    const x=lon=>offsetX+(Number(lon)-minLon)*scale,y=lat=>offsetY+(maxLat-Number(lat))*scale;
+    const metricValue=s=>metric==="mae"?s.abs/s.n:(metric==="rmse"?Math.sqrt(s.sq/s.n):s.sum/s.n);
+    const fillFor=s=>{
+      if(!s?.n)return"#263b45";
+      const v=metricValue(s);
+      if(metric==="sesgo")return v<0?blend("#4389c2","#edf2ee",Math.min(1,Math.abs(v)/maxAbs)):blend("#edf2ee","#e66e5a",Math.min(1,v/maxAbs));
+      return blend("#71c28c","#e66e5a",Math.min(1,Math.max(0,v)/maxValue));
+    };
+    const paths=features.map(feature=>{
+      const s=stats.get(featureCode(feature));
+      const d=geometryPolygons(feature.geometry).map(polygon=>polygon.map(ring=>ring.map((c,i)=>`${i?"L":"M"}${x(c[0]).toFixed(1)} ${y(c[1]).toFixed(1)}`).join(" ")+" Z").join(" ")).join(" ");
+      const val=s?.n?metricValue(s):null;
+      const unit=metric==="sesgo"?"media de residuo":"error";
+      return `<path d="${d}" fill="${fillFor(s)}" stroke="#9bb9bc" stroke-width=".8" fill-rule="evenodd"><title>${esc(featureName(feature))} · ${unit}: ${fmt(val,5)} · mercados observados: ${s?.n||0}</title></path>`;
+    }).join("");
+    const metricLabel=metric==="sesgo"?"Sesgo medio residual":metric.toUpperCase();
+    $("residual-mapbox").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa coroplético de ${esc(metricLabel)} del modelo para ${esc(product)} en ${esc(period)}"><text x="${W/2}" y="22" fill="#b8d1d4" font-size="12" text-anchor="middle">${esc(metricLabel)} · ${esc(product)} · ${esc(period||"—")}</text>${paths}</svg>`;
+    const low=metric==="sesgo"?-maxAbs:0,high=metric==="sesgo"?maxAbs:maxValue;
+    const gradient=metric==="sesgo"?"linear-gradient(90deg,#4389c2,#edf2ee,#e66e5a)":"linear-gradient(90deg,#71c28c,#e66e5a)";
+    $("residual-map-legend").innerHTML=`<span class="choropleth-label">${metric==="sesgo"?"Sesgo":metricLabel}</span><div class="choropleth-bar" style="background:${gradient}"></div><span>${fmt(low,5)}</span>${metric==="sesgo"?"<span>0</span>":""}<span>${fmt(high,5)}</span><span><i class="dot" style="background:#263b45"></i>Sin datos</span>`;
+    const covered=[...stats.values()].filter(s=>s.n).length;
+    $("residual-map-status").textContent=`${covered} de ${features.length} entidades con observaciones; ${rows.length-unassigned} mercados asignados · ${unassigned} sin asignar.`;
+  }
+  let COLOMBIA_GEOMETRY = null;
+  let COLOMBIA_OUTLINE_SOURCE = "";
+  let COLOMBIA_OUTLINE_PROMISE = null;
+  function loadColombiaOutline() {
+    if (COLOMBIA_OUTLINE_PROMISE) return COLOMBIA_OUTLINE_PROMISE;
+    COLOMBIA_OUTLINE_PROMISE = fetch("./data/colombia_outline.geojson", {cache:"force-cache"})
+      .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json();})
+      .then(payload=>{
+        const feature=payload.type==="FeatureCollection"?payload.features?.[0]:payload;
+        if(!feature?.geometry?.coordinates)throw new Error("El GeoJSON no contiene un polígono de Colombia.");
+        COLOMBIA_GEOMETRY=feature.geometry;
+        COLOMBIA_OUTLINE_SOURCE=payload.source||"Natural Earth 1:110m";
+        return COLOMBIA_GEOMETRY;
+      })
+      .catch(err=>{console.warn("No se pudo cargar el contorno de Colombia:",err);return null;});
+    return COLOMBIA_OUTLINE_PROMISE;
+  }
+  function geometryRings(geometry) {
+    if (!geometry) return [];
+    if (geometry.type==="Polygon") return geometry.coordinates||[];
+    if (geometry.type==="MultiPolygon") return (geometry.coordinates||[]).flat();
+    return [];
+  }
+  async function drawMap() {
+    if (!DATA || DATA.status !== "ready") return;
+    await loadColombiaOutline();
+    const product=$("map-product").value||productNames()[0];
+    const rows=[...(DATA.markets||[])].filter(r=>r.latitud!==null&&r.latitud!==""&&r.longitud!==null&&r.longitud!==""&&Number.isFinite(Number(r.latitud))&&Number.isFinite(Number(r.longitud))).sort((a,b)=>String(a.mercado).localeCompare(String(b.mercado),"es"));
+    if (!rows.length) { $("mapbox").innerHTML='<div class="empty">No hay coordenadas válidas publicadas.</div>'; return; }
+    const rings=geometryRings(COLOMBIA_GEOMETRY);
+    const outlineCoords=rings.flat().filter(c=>Array.isArray(c)&&Number.isFinite(Number(c[0]))&&Number.isFinite(Number(c[1])));
+    const marketCoords=rows.map(r=>[Number(r.longitud),Number(r.latitud)]);
+    const coords=outlineCoords.length?outlineCoords:marketCoords;
+    const minLon=Math.min(...coords.map(c=>Number(c[0]))), maxLon=Math.max(...coords.map(c=>Number(c[0])));
+    const minLat=Math.min(...coords.map(c=>Number(c[1]))), maxLat=Math.max(...coords.map(c=>Number(c[1])));
+    const lonSpan=Math.max(.1,maxLon-minLon), latSpan=Math.max(.1,maxLat-minLat);
+    const W=760,H=440,padX=38,padY=42;
+    const scale=Math.min((W-2*padX)/lonSpan,(H-2*padY)/latSpan);
+    const offsetX=(W-lonSpan*scale)/2, offsetY=(H-latSpan*scale)/2;
+    const x=lon=>offsetX+(Number(lon)-minLon)*scale;
+    const y=lat=>offsetY+(maxLat-Number(lat))*scale;
+    const outlinePath=outlineCoords.length?rings.map(ring=>ring.map((c,i)=>`${i?"L":"M"}${x(c[0]).toFixed(1)} ${y(c[1]).toFixed(1)}`).join(" ")+" Z").join(" "):"";
+    const outline=outlinePath?`<path d="${outlinePath}" fill="#17313a" stroke="#73a79c" stroke-width="1.8" fill-rule="evenodd"/>`:"";
+    const vals=rows.map(r=>productChange(r,product)).filter(v=>v!==null);
+    const maxAbs=Math.max(.001,...vals.map(Math.abs));
+    const occupied=[];
+    const markers=rows.map((r,i)=>{
+      const v=productChange(r,product), color=v===null?"#6e8791":(v<0?blend("#4c98d8","#e5f1ec",Math.min(1,Math.abs(v)/maxAbs)):blend("#e5f1ec","#e97962",Math.min(1,v/maxAbs)));
+      const trueX=x(r.longitud), trueY=y(r.latitud);
+      const conflict=occupied.some(p=>Math.hypot(trueX-p.x,trueY-p.y)<17);
+      const shift=conflict?{dx:(i%2?12:-12),dy:(i%3===0?13:-13)}:{dx:0,dy:0};
+      const cx=trueX+shift.dx, cy=trueY+shift.dy; occupied.push({x:cx,y:cy});
+      const id=String(i+1).padStart(2,"0");
+      const leader=conflict?`<line x1="${trueX.toFixed(1)}" y1="${trueY.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="#c7dbe0" stroke-opacity=".7" stroke-width="1"/>`:"";
+      return `<g>${leader}<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="10" fill="${color}" stroke="#07131b" stroke-width="2"><title>${esc(r.mercado)} · Δlog precio: ${fmt(v,4)} · ${fmt(r.latitud,4)}, ${fmt(r.longitud,4)}</title></circle><text x="${cx.toFixed(1)}" y="${(cy+3).toFixed(1)}" fill="#07131b" font-size="7" font-weight="800" text-anchor="middle">${Number(id)}</text></g>`;
+    }).join("");
+    $("mapbox").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de Colombia con mercados SIPSA coloreados por cambio mensual de precio"><text x="${W/2}" y="23" fill="#b8d1d4" font-size="12" text-anchor="middle">Mercados mayoristas · ${esc(product)}</text>${outline}${markers}</svg>`;
+    $("map-legend").innerHTML=`<span><i class="dot" style="background:#4c98d8"></i> Cambio negativo</span><span><i class="dot" style="background:#e5f1ec"></i> Cercano a cero</span><span><i class="dot" style="background:#e97962"></i> Cambio positivo</span><span>Número del punto = ID de la tabla</span>`;
+    $("map-status").textContent=COLOMBIA_GEOMETRY?`Contorno generalizado: ${COLOMBIA_OUTLINE_SOURCE}. ${rows.length} mercados; el color se escala al máximo absoluto del producto.`:"No se cargó el contorno nacional. Se muestran las ubicaciones sobre una escala geográfica; comprueba que el Space publique data/colombia_outline.geojson.";
+    $("map-status").classList.toggle("map-fallback",!COLOMBIA_GEOMETRY);
+    const latest=DATA.metadata.end_date;
+    $("market-table").innerHTML=buildTable(rows.map((r,i)=>({id:String(i+1).padStart(2,"0"),mercado:r.mercado,lat:fmt(r.latitud,4),lon:fmt(r.longitud,4),cambio:fmt(productChange(r,product),5),periodo:latest,precision:r.precision_geografica||"Verificar"})),[
+      {key:"id",label:"ID"},{key:"mercado",label:"Mercado"},{key:"lat",label:"Latitud"},{key:"lon",label:"Longitud"},{key:"cambio",label:"Δ log P"},{key:"periodo",label:"Periodo"},{key:"precision",label:"Precisión geográfica"}
     ]);
   }
   function drawCoefficients() {
@@ -198,7 +394,7 @@
       return {label:product,data:labels.map(label=>byDate.has(label)?byDate.get(label):null),borderColor:palette[i%palette.length],backgroundColor:palette[i%palette.length],pointRadius:2,borderWidth:2,tension:.15,spanGaps:false};
     });
     datasets.push({label:"Referencia I = 0",data:labels.map(()=>0),borderColor:"#9bb1bb",borderDash:[5,5],pointRadius:0,borderWidth:1});
-    makeChart("moran-temporal-chart","line",{labels,datasets},{scales:{x:{title:{display:true,text:"Mes",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{title:{display:true,text:"Índice global de Moran (I)",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
+    makeChart("moran-temporal-chart","line",{labels,datasets},{scales:{x:{title:{display:true,text:"Mes",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{min:-1,max:1,title:{display:true,text:"Índice global de Moran (I)",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
     const selected=$("moran-p-product").value || products[0];
     const rows=MORAN_ROWS.filter(r=>r.producto_dependiente===selected).sort((a,b)=>String(a.fecha_residuo).localeCompare(String(b.fecha_residuo)));
     makeChart("moran-p-chart","line",{labels:rows.map(r=>String(r.fecha_residuo).slice(0,7)),datasets:[
@@ -207,13 +403,19 @@
       {label:"p ajustado BY",data:rows.map(r=>num(r.p_ajustado_BY)),borderColor:"#ff8f83",pointRadius:1,borderWidth:1.5,tension:.1},
       {label:"Umbral 0,05",data:rows.map(()=>0.05),borderColor:"#95d5a4",borderDash:[5,5],pointRadius:0,borderWidth:1}
     ]},{scales:{x:{title:{display:true,text:"Mes",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{min:0,max:1,title:{display:true,text:"p-valor",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
-    const n=rows.length, raw=rows.filter(r=>r.significativo_5pct_sin_ajuste).length, bh=rows.filter(r=>r.significativo_5pct_BH).length, by=rows.filter(r=>r.significativo_5pct_BY).length;
     const vals=rows.map(r=>r.Moran_I_residuos).filter(Number.isFinite);
     const max=vals.length?Math.max(...vals):null, min=vals.length?Math.min(...vals):null;
-    $("moran-temporal-summary").innerHTML=[
-      ["Observaciones",n],["Significativos sin ajuste",raw],["Significativos BH",bh],["Significativos BY",by]
-    ].map(([label,value])=>`<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>Umbral p &lt; 0,05</small></div>`).join("");
-    $("moran-temporal-status").textContent=`Archivo cargado: ${MORAN_ROWS.length} registros; ${products.join(" y ")}. Rango de Moran I para ${selected}: mínimo ${fmt(min,4)} · máximo ${fmt(max,4)}.`;
+    $("moran-temporal-summary").innerHTML=products.map(product=>{
+      const productRows=MORAN_ROWS.filter(r=>r.producto_dependiente===product);
+      const productValues=productRows.map(r=>r.Moran_I_residuos).filter(v=>v!==null&&Number.isFinite(v));
+      const mean=productValues.length?productValues.reduce((sum,v)=>sum+v,0)/productValues.length:null;
+      const range=productValues.length?`${fmt(Math.min(...productValues),4)} a ${fmt(Math.max(...productValues),4)}`:"—";
+      const raw=productRows.filter(r=>r.significativo_5pct_sin_ajuste).length;
+      const bh=productRows.filter(r=>r.significativo_5pct_BH).length;
+      const by=productRows.filter(r=>r.significativo_5pct_BY).length;
+      return `<section class="product-summary"><h3>${esc(product)}</h3><div class="product-metrics">${summaryCard("Moran I promedio",fmt(mean,4),`${productValues.length} meses válidos`)}${summaryCard("Rango de Moran I",range,"Mínimo a máximo")}${summaryCard("p < 0,05 sin ajuste",raw,"Número de meses")}${summaryCard("BH / BY significativos",`${bh} / ${by}`,"Meses con ajuste múltiple")}</div></section>`;
+    }).join("");
+    $("moran-temporal-status").textContent=`Auditoría cargada: ${MORAN_ROWS.length} registros válidos; comparación de ${products.join(" y ")}. Rango de Moran I para ${selected}: mínimo ${fmt(min,4)} · máximo ${fmt(max,4)}.`;
     $("moran-audit-table").innerHTML=buildTable(rows,[{key:"fecha_residuo",label:"Fecha"},{key:"Moran_I_residuos",label:"Moran I",render:v=>fmt(v,4)},{key:"p_sim",label:"p sin ajuste",render:v=>fmt(v,4)},{key:"p_ajustado_BH",label:"p BH",render:v=>fmt(v,4)},{key:"p_ajustado_BY",label:"p BY",render:v=>fmt(v,4)},{key:"significativo_5pct_sin_ajuste",label:"Signif. original",render:v=>v?"Sí":"No"},{key:"significativo_5pct_BH",label:"Signif. BH",render:v=>v?"Sí":"No"},{key:"significativo_5pct_BY",label:"Signif. BY",render:v=>v?"Sí":"No"},{key:"n",label:"N"}]);
   }
   fetch(`./data/residual_moran_panel_audit.csv?v=${Date.now()}`,{cache:"no-store"})
@@ -240,8 +442,11 @@
     const pt=$("products-table"); pt.classList.remove("hide"); pt.querySelector("tbody").innerHTML=products.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit||"—")}</td><td>${esc(p.variety||"No diferenciada")}</td></tr>`).join("");
     $("source-info").innerHTML=`Fuentes: <a href="${esc(m.sources?.prices||"https://microdatos.dane.gov.co/index.php/catalog/776/get-microdata")}" target="_blank" rel="noopener">DANE SIPSA-P</a> · <a href="${esc(m.sources?.climate||"https://power.larc.nasa.gov/docs/services/api/temporal/monthly/")}" target="_blank" rel="noopener">NASA POWER</a>.`;
     $("last-update").textContent=`Última actualización: ${m.generated_at ? new Date(m.generated_at).toLocaleString("es-CO") : "—"}`;
-    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product"].forEach(id=>fillSelect(id,names));
+    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product","residual-map-product"].forEach(id=>fillSelect(id,names));
+    const residualDates=[...new Set((data.residual_panel||[]).map(r=>String(r.fecha_residuo||"").slice(0,7)).filter(Boolean))].sort();
+    fillSelect("residual-map-date",residualDates); if(residualDates.length)$("residual-map-date").value=residualDates[residualDates.length-1];
     ["price-product","map-product","coef-product","irf-product"].forEach(id=>$(id).addEventListener("change",()=>({"price-product":drawPrices,"map-product":drawMap,"coef-product":drawCoefficients,"irf-product":drawIRF}[id])()));
+    ["residual-map-product","residual-map-date","residual-map-metric"].forEach(id=>$(id).addEventListener("change",drawDepartmentChoropleth));
     $("irf-shock").disabled=false; $("irf-shock").addEventListener("change",drawIRF);
     $("download-json").disabled=false; $("download-json").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(DATA,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="AgroClima_resultados_reales.json";a.click();URL.revokeObjectURL(url);});
     $("products-table").classList.remove("hide");
@@ -249,8 +454,8 @@
     $("adf-table").innerHTML=buildTable(data.diagnostics?.adf,[{key:"producto",label:"Producto"},{key:"mercado_key",label:"Mercado"},{key:"ADF_stat",label:"Estadístico ADF",render:v=>fmt(v,4)},{key:"ADF_pvalue",label:"p-valor",render:v=>fmt(v,4)},{key:"rechaza_raiz_unitaria_5pct",label:"Rechazo al 5%",render:v=>v===true?"Sí":"No"},{key:"n",label:"N",render:v=>v??"—"}]);
     $("moran-table").innerHTML=buildTable(data.diagnostics?.moran,[{key:"producto_dependiente",label:"Producto"},{key:"fecha_residuo",label:"Fecha"},{key:"Moran_I_residuos",label:"Moran I",render:v=>fmt(v,4)},{key:"p_sim",label:"p-valor simulado",render:v=>fmt(v,4)},{key:"n",label:"N",render:v=>v??"—"},{key:"advertencia",label:"Observación"}]);
     $("diag-notes").textContent=`Participación de pruebas ADF que rechazan raíz unitaria al 5%: ${fmt(m.diagnostic_summary?.adf_reject_share,3)}. Esto es solo un resumen de la prueba sobre las series incluidas; las variables modeladas son cambios de log-precios.`;
-    $("method-notes").innerHTML=`<p>${esc(m.method_note||"")}</p><p>${esc(m.irf_note||"")}</p><p>${esc(m.coordinate_note||"")}</p><p class="tiny">Regla de selección automática: ${esc(m.selection_rule||"")}</p>`;
-    drawPrices(); drawMap(); drawCoefficients(); drawIRF();
+    $("method-notes").innerHTML=`<p>${esc(m.method_note||"")}</p><p>${esc(m.irf_note||"")}</p><p>${esc(m.coordinate_note||"")}</p><p>${esc(m.residual_note||"")}</p><p class="tiny">Regla de selección automática: ${esc(m.selection_rule||"")}</p>`;
+    drawPrices(); drawPriceIndex(); drawMap(); drawCoefficients(); drawIRF();
   }
   fetch(`./data/observatorio.json?v=${Date.now()}`, {cache:"no-store"})
     .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}: no se pudo leer data/observatorio.json`);return r.json();})

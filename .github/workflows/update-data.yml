@@ -76,14 +76,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/observatorio.json data/market_coordinates.csv data/coordinate_validation_report.csv data/coordinate_validation_cache.json data/sipsa_audit_files.csv data/sipsa_audit_year_product.csv data/sipsa_audit_summary.json data/residual_moran_panel_audit.csv
+          if [ -f data/colombia_departments.geojson ]; then git add data/colombia_departments.geojson; fi
           if git diff --cached --quiet; then
             echo "No hay cambios para confirmar."
           else
-            git commit -m "Actualizar resultados oficiales y auditoría Moran"
+            git commit -m "Actualizar resultados oficiales, residuos y cartografía"
             git push
           fi
 
-      - name: Publicar resultados en Hugging Face
+      - name: Publicar interfaz, datos y auditorías en Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
