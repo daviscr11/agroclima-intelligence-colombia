@@ -42,7 +42,7 @@
   </section>
 
   <nav class="nav" aria-label="Secciones del observatorio">
-    <button class="active" data-page="overview">Panorama</button><button data-page="model-reading">Modelo espacial</button><button data-page="spatial">Mercados</button><button data-page="validation">Validación</button><button data-page="coefficients">Coeficientes</button><button data-page="irf">Impulso-respuesta</button><button data-page="diagnostics">Diagnósticos</button><button data-page="method">Metodología</button>
+    <button class="active" data-page="overview">Panorama</button><button data-page="model-reading">Modelo espacial</button><button data-page="robustness">Robustez espacial</button><button data-page="spatial">Mercados</button><button data-page="validation">Validación</button><button data-page="coefficients">Coeficientes</button><button data-page="irf">Impulso-respuesta</button><button data-page="diagnostics">Diagnósticos</button><button data-page="method">Metodología</button>
   </nav>
 
   <main>
@@ -63,6 +63,19 @@
         <h3 style="margin:22px 0 6px">Propagación dinámica de los choques climáticos</h3><p class="desc">Respuesta a un choque climático de una desviación estándar, promediada entre mercados de origen. En h=1, el spillover resume la respuesta media en los demás mercados.</p>
         <div id="spatial-irf-summary" class="tablewrap"></div><p id="spatial-irf-note" class="note">Las respuestas IRF resumen la propagación implicada por la especificación y no identifican un efecto causal.</p>
         <p class="note">Los coeficientes son asociaciones parciales, manteniendo constantes los demás regresores y efectos fijos. Un rezago espacial describe la asociación con el cambio previo ponderado de otros mercados; no es un efecto contemporáneo. Para ver propagación dinámica, consulta Impulso-respuesta. El radio espectral resume la estabilidad del bloque de rezagos; no mide por sí solo la calidad predictiva. Los p-valores son nominales y no se ajustan por el conjunto de coeficientes examinados.</p>
+      </article>
+    </section>
+
+    <section id="page-robustness" class="page">
+      <article class="panel">
+        <div class="panel-head"><div><h2>¿Cambian los resultados al redefinir los vecinos?</h2><p class="desc">Compara el SpVARX con k = 3, 4 y 5 usando los mismos productos, mercados y meses. Solo cambia la matriz espacial.</p></div><span class="tag">Sensibilidad de W · no selección automática</span></div>
+        <div id="spatial-robustness-status" class="note">Cargando las especificaciones alternativas…</div>
+        <div id="spatial-robustness-summary" class="tablewrap"></div>
+        <p id="spatial-robustness-note" class="note"></p>
+        <div class="grid2" style="margin-top:18px">
+          <article class="panel"><h3 style="margin:0 0 8px">Rezagos espaciales por especificación</h3><p class="desc">Coeficientes estimados de W·y(t−1), con intervalos aproximados del 95% y p-valores nominales.</p><div class="controls"><div><label for="robustness-coef-product">Producto de la ecuación</label><select id="robustness-coef-product" disabled></select></div></div><div id="spatial-robustness-coefs" class="tablewrap"></div></article>
+          <article class="panel"><h3 style="margin:0 0 8px">Propagación climática según W</h3><p class="desc">Compara el spillover medio del choque en los otros mercados; las franjas son intervalos bootstrap por horizonte.</p><div class="controls"><div><label for="robustness-irf-shock">Choque climático</label><select id="robustness-irf-shock"><option value="temp_anom">Anomalía de temperatura</option><option value="precip_anom">Anomalía de precipitación</option></select></div><div><label for="robustness-irf-product">Producto que responde</label><select id="robustness-irf-product" disabled></select></div></div><div class="chartbox"><canvas id="spatial-robustness-irf-chart" aria-label="Comparación de respuestas impulso para distintas matrices espaciales"></canvas></div><p id="spatial-robustness-interpretation" class="note"></p></article>
+        </div>
       </article>
     </section>
 
@@ -143,6 +156,7 @@
     document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === `page-${name}`));
     if (name === "overview") { drawPrices(); drawPriceIndex(); }
     if (name === "model-reading") drawModelInterpretation();
+    if (name === "robustness") drawSpatialRobustness();
     if (name === "spatial") { drawMap(); drawDepartmentChoropleth(); }
     if (name === "validation") { drawBacktest(); drawBacktestMap(); }
     if (name === "coefficients") drawCoefficients();
@@ -361,6 +375,63 @@
     $("spatial-irf-summary").innerHTML=buildTable(irfSummary,[{key:"producto",label:"Producto que responde"},{key:"choque",label:"Choque +1 DE"},{key:"directo_h0",label:"Directo, h=0 [IC 95%]",render:(v,r)=>irfCell(v,r.directo_h0_inf,r.directo_h0_sup)},{key:"spillover_h1",label:"Spillover medio, h=1 [IC 95%]",render:(v,r)=>irfCell(v,r.spillover_h1_inf,r.spillover_h1_sup)},{key:"media_red_h1",label:"Media de red, h=1 [IC 95%]",render:(v,r)=>irfCell(v,r.media_red_h1_inf,r.media_red_h1_sup)}],"No hay respuestas impulso publicadas.");
     const irfRepInfo=DATA.metadata.irf_bootstrap_valid!==undefined?` Réplicas válidas: ${DATA.metadata.irf_bootstrap_valid}/${DATA.metadata.irf_bootstrap_requested}; bloques de ${DATA.metadata.irf_bootstrap_block_months??"—"} meses.`:"";
     $("spatial-irf-note").textContent=(DATA.metadata.irf_note||"Las respuestas describen la propagación implicada por la especificación y no identifican causalidad.")+irfRepInfo;
+  }
+  function drawSpatialRobustness() {
+    if(!DATA||DATA.status!=="ready")return;
+    const robustness=DATA.spatial_robustness||{}, specs=robustness.summary||[], coefs=robustness.coefficients||[], allIrfs=robustness.irfs||[];
+    $("spatial-robustness-note").textContent=DATA.metadata.spatial_weights_note||"La comparación conserva los productos, mercados y meses; interpreta las diferencias como sensibilidad a W.";
+    if(!specs.length){
+      $("spatial-robustness-status").textContent="El archivo publicado aún no contiene la comparación de matrices espaciales. Ejecuta la actualización de resultados después de publicar estos cambios.";
+      $("spatial-robustness-summary").innerHTML="";
+      $("spatial-robustness-coefs").innerHTML='<div class="empty">Sin coeficientes de sensibilidad publicados.</div>';
+      return;
+    }
+    const available=specs.filter(s=>s.estado==="Estimación disponible").length;
+    $("spatial-robustness-status").textContent=`${available} de ${specs.length} especificaciones pudieron estimarse con la misma muestra.`;
+    $("spatial-robustness-summary").innerHTML=buildTable(specs,[
+      {key:"k_vecinos",label:"k solicitado"},{key:"k_efectivo",label:"k aplicado antes de simetrizar"},
+      {key:"especificacion_base",label:"Base",render:v=>v===true?"Sí":"No"},
+      {key:"radio_espectral_W",label:"Radio espectral W",render:v=>fmt(v,4)},
+      {key:"radio_espectral_transicion",label:"Radio de transición",render:v=>fmt(v,4)},
+      {key:"sistema_estable",label:"Transición < 1",render:v=>v===true?"Sí":(v===false?"No":"—")},
+      {key:"replicas_bootstrap_validas",label:"Réplicas IRF",render:v=>v??"—"},
+      {key:"estado",label:"Estado"},{key:"error",label:"Detalle"}
+    ],"Sin especificaciones de vecindad publicadas.");
+
+    const product=$("robustness-coef-product").value||productNames()[0];
+    const productCoefs=coefs.filter(r=>r.producto_dependiente===product).sort((a,b)=>Number(a.k_vecinos)-Number(b.k_vecinos)||String(a.termino).localeCompare(String(b.termino)));
+    $("spatial-robustness-coefs").innerHTML=buildTable(productCoefs,[
+      {key:"k_vecinos",label:"k"},
+      {key:"termino",label:"Término espacial",render:v=>{const m=String(v).match(/^WL1__y(\d+)$/);return m?`W · rezago de ${productNames()[Number(m[1])]||"otro producto"}`:v;}},
+      {key:"coeficiente",label:"Coeficiente",render:v=>fmt(v,5)},
+      {key:"ic95_inf",label:"IC 95% inf.",render:v=>fmt(v,5)},
+      {key:"ic95_sup",label:"IC 95% sup.",render:v=>fmt(v,5)},
+      {key:"p_value",label:"p nominal",render:v=>fmt(v,4)},
+      {key:"especificacion_base",label:"Base",render:v=>v===true?"Sí":"No"}
+    ],"No hay coeficientes espaciales disponibles para este producto.");
+
+    const shock=$("robustness-irf-shock").value||"temp_anom", irfProduct=$("robustness-irf-product").value||productNames()[0];
+    const selected=allIrfs.filter(r=>r.choque===shock&&r.producto_respuesta===irfProduct).sort((a,b)=>Number(a.horizonte)-Number(b.horizonte));
+    const horizons=[...new Set(selected.map(r=>Number(r.horizonte)))].sort((a,b)=>a-b);
+    const labels=horizons.map(h=>`h=${h}`), colors={3:{line:"#75b7e8",fill:"rgba(117,183,232,.14)"},4:{line:"#95d5a4",fill:"rgba(149,213,164,.14)"},5:{line:"#f2cc75",fill:"rgba(242,204,117,.14)"}}, datasets=[];
+    for(const spec of specs.filter(s=>s.estado==="Estimación disponible")){
+      const k=Number(spec.k_vecinos), rows=horizons.map(h=>selected.find(r=>Number(r.horizonte)===h&&Number(r.k_vecinos)===k)||{}), color=colors[k]||{line:"#b89be8",fill:"rgba(184,155,232,.14)"};
+      const low=rows.map(r=>num(r.spillover_medio_receptores_ic95_inf)), high=rows.map(r=>num(r.spillover_medio_receptores_ic95_sup));
+      if(low.some(Number.isFinite)&&high.some(Number.isFinite))datasets.push(
+        {label:`_k${k}_inf`,data:low,borderColor:"transparent",borderWidth:0,pointRadius:0,fill:false},
+        {label:`_k${k}_sup`,data:high,borderColor:"transparent",borderWidth:0,pointRadius:0,backgroundColor:color.fill,fill:"-1",tension:.16}
+      );
+      datasets.push({label:`k = ${k}${spec.especificacion_base?" · base":""}`,data:rows.map(r=>num(r.spillover_medio_receptores)),borderColor:color.line,pointRadius:2,tension:.16});
+    }
+    const h1Evidence=specs.filter(s=>s.estado==="Estimación disponible").map(spec=>{
+      const row=selected.find(r=>Number(r.k_vecinos)===Number(spec.k_vecinos)&&Number(r.horizonte)===1)||{};
+      const low=num(row.spillover_medio_receptores_ic95_inf), high=num(row.spillover_medio_receptores_ic95_sup);
+      return low===null||high===null?"sin-intervalo":(low>0?"positivo":(high<0?"negativo":"incluye-cero"));
+    });
+    const uniqueEvidence=[...new Set(h1Evidence)];
+    $("spatial-robustness-interpretation").textContent=!h1Evidence.length?"No hay suficientes respuestas h=1 para resumir la comparación.":uniqueEvidence.includes("sin-intervalo")?"Faltan intervalos bootstrap válidos para alguna matriz; compara las respuestas puntuales con cautela.":uniqueEvidence.length>1?"En h=1, la dirección o la incertidumbre cambia entre matrices. La respuesta es sensible a cómo se define la vecindad.":uniqueEvidence[0]==="positivo"?"En h=1, el spillover es positivo y su intervalo no incluye cero en todas las matrices disponibles; la dirección se mantiene al cambiar k.":uniqueEvidence[0]==="negativo"?"En h=1, el spillover es negativo y su intervalo no incluye cero en todas las matrices disponibles; la dirección se mantiene al cambiar k.":uniqueEvidence[0]==="incluye-cero"?"En h=1, todos los intervalos incluyen cero; ninguna matriz distingue ese spillover de cero al 95%.":"No se publicaron intervalos bootstrap suficientes para resumir la incertidumbre en h=1.";
+    datasets.push({label:"Referencia = 0",data:labels.map(()=>0),borderColor:"#9bb1bb",borderDash:[5,5],borderWidth:1,pointRadius:0,fill:false});
+    makeChart("spatial-robustness-irf-chart","line",{labels,datasets},{plugins:{legend:{labels:{color:"#c6d9df",filter:item=>!item.text.startsWith("_")}},tooltip:{mode:"index",intersect:false,filter:item=>!item.dataset.label.startsWith("_")}},scales:{x:{title:{display:true,text:"Horizonte mensual",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.12)"}},y:{title:{display:true,text:"Spillover medio en Δ log(precio)",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
   }
   function forecastErrorSummary(rows,predictionKey) {
     const errors=rows.map(r=>num(r.observado)-num(r[predictionKey])).filter(Number.isFinite);
@@ -623,7 +694,7 @@
     const pt=$("products-table"); pt.classList.remove("hide"); pt.querySelector("tbody").innerHTML=products.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit||"—")}</td><td>${esc(p.variety||"No diferenciada")}</td></tr>`).join("");
     $("source-info").innerHTML=`Fuentes: <a href="${esc(m.sources?.prices||"https://microdatos.dane.gov.co/index.php/catalog/776/get-microdata")}" target="_blank" rel="noopener">DANE SIPSA-P</a> · <a href="${esc(m.sources?.climate||"https://power.larc.nasa.gov/docs/services/api/temporal/monthly/")}" target="_blank" rel="noopener">NASA POWER</a>.`;
     $("last-update").textContent=`Última actualización: ${m.generated_at ? new Date(m.generated_at).toLocaleString("es-CO") : "—"}`;
-    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product","residual-map-product","backtest-product"].forEach(id=>fillSelect(id,names));
+    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product","residual-map-product","backtest-product","robustness-coef-product","robustness-irf-product"].forEach(id=>fillSelect(id,names));
     const residualDates=[...new Set((data.residual_panel||[]).map(r=>String(r.fecha_residuo||"").slice(0,7)).filter(Boolean))].sort();
     fillSelect("residual-map-date",residualDates); if(residualDates.length)$("residual-map-date").value=residualDates[residualDates.length-1];
     ["price-product","map-product","coef-product","irf-product"].forEach(id=>$(id).addEventListener("change",()=>({"price-product":drawPrices,"map-product":drawMap,"coef-product":drawCoefficients,"irf-product":drawIRF}[id])()));
@@ -631,13 +702,15 @@
     $("backtest-product").addEventListener("change",()=>{drawBacktest();drawBacktestMap();});
     ["backtest-baseline","backtest-metric"].forEach(id=>$(id).addEventListener("change",drawBacktestMap));
     $("irf-shock").disabled=false; $("irf-shock").addEventListener("change",drawIRF);
+    $("robustness-irf-shock").disabled=false; $("robustness-irf-shock").addEventListener("change",drawSpatialRobustness);
+    ["robustness-coef-product","robustness-irf-product"].forEach(id=>$(id).addEventListener("change",drawSpatialRobustness));
     $("download-json").disabled=false; $("download-json").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(DATA,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="AgroClima_resultados_reales.json";a.click();URL.revokeObjectURL(url);});
     $("products-table").classList.remove("hide");
     $("coef-table").innerHTML=buildTable(data.coefficients,[{key:"producto_dependiente",label:"Ecuación"},{key:"termino",label:"Término"},{key:"coeficiente",label:"Coeficiente",render:v=>fmt(v,5)},{key:"p_value",label:"p-valor",render:v=>fmt(v,4)}]);
     $("adf-table").innerHTML=buildTable(data.diagnostics?.adf,[{key:"producto",label:"Producto"},{key:"mercado_key",label:"Mercado"},{key:"ADF_stat",label:"Estadístico ADF",render:v=>fmt(v,4)},{key:"ADF_pvalue",label:"p-valor",render:v=>fmt(v,4)},{key:"rechaza_raiz_unitaria_5pct",label:"Rechazo al 5%",render:v=>v===true?"Sí":"No"},{key:"n",label:"N",render:v=>v??"—"}]);
     $("moran-table").innerHTML=buildTable(data.diagnostics?.moran,[{key:"producto_dependiente",label:"Producto"},{key:"fecha_residuo",label:"Fecha"},{key:"Moran_I_residuos",label:"Moran I",render:v=>fmt(v,4)},{key:"p_sim",label:"p-valor simulado",render:v=>fmt(v,4)},{key:"n",label:"N",render:v=>v??"—"},{key:"advertencia",label:"Observación"}]);
     $("diag-notes").textContent=`Participación de pruebas ADF que rechazan raíz unitaria al 5%: ${fmt(m.diagnostic_summary?.adf_reject_share,3)}. Esto es solo un resumen de la prueba sobre las series incluidas; las variables modeladas son cambios de log-precios.`;
-    $("method-notes").innerHTML=`<p>${esc(m.method_note||"")}</p><p>${esc(m.irf_note||"")}</p><p>${esc(m.coordinate_note||"")}</p><p>${esc(m.residual_note||"")}</p><p class="tiny">Regla de selección automática: ${esc(m.selection_rule||"")}</p>`;
+    $("method-notes").innerHTML=`<p>${esc(m.method_note||"")}</p><p>${esc(m.irf_note||"")}</p><p>${esc(m.spatial_weights_note||"")}</p><p>${esc(m.coordinate_note||"")}</p><p>${esc(m.residual_note||"")}</p><p class="tiny">Regla de selección automática: ${esc(m.selection_rule||"")}</p>`;
     drawPrices(); drawPriceIndex(); drawMap(); drawCoefficients(); drawIRF();
   }
   fetch(`./data/observatorio.json?v=${Date.now()}`, {cache:"no-store"})
