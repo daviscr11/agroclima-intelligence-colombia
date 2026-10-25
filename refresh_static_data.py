@@ -20,6 +20,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import requests
 
 from dane_auto import DANE_CATALOG_URL, download_sipsa_archives
 from sipsa_audit_report import SipsaAuditCollector, assert_selected_products_scale
@@ -44,6 +45,8 @@ RAW_DIR = RUNTIME_DIR / "sipsa_raw"
 CLIMATE_CACHE = RUNTIME_DIR / "nasa_power_monthly.csv"
 COORDS_FILE = DATA_DIR / "market_coordinates.csv"
 OUTPUT_JSON = DATA_DIR / "observatorio.json"
+DEPARTMENTS_GEOJSON = DATA_DIR / "colombia_departments.geojson"
+DEPARTMENTS_GEOJSON_URL = "https://raw.githubusercontent.com/ytolosa/mapas-colombia/main/output/geojson/col_departamentos_real_nacional.geojson"
 
 # Coordenadas verificadas para mercados cuyo nombre SIPSA no se resuelve bien
 # con geocodificación automática. Mercar corresponde a la Central Mayorista
@@ -430,6 +433,65 @@ def records(df: pd.DataFrame) -> list[dict[str, Any]]:
     return json_safe(clean.replace({np.nan: None}).to_dict(orient="records"))
 
 
+def download_department_boundaries() -> None:
+    """Guarda los límites departamentales MGN 2025 usados por el mapa coroplético."""
+    def validate(payload: Any) -> list[dict[str, Any]]:
+        if not isinstance(payload, dict) or payload.get("type") != "FeatureCollection":
+            raise RuntimeError("La cartografía departamental no es una FeatureCollection GeoJSON.")
+        features = payload.get("features", [])
+        if len(features) != 33:
+            raise RuntimeError("La cartografía departamental no contiene las 33 entidades MGN esperadas.")
+        for feature in features:
+            props = feature.get("properties", {})
+            if not feature.get("geometry") or not props.get("divipola_dep") or not props.get("dpto_nombre"):
+                raise RuntimeError("La cartografía departamental no contiene geometrías y campos DIVIPOLA esperados.")
+        return features
+
+    try:
+        response = requests.get(DEPARTMENTS_GEOJSON_URL, timeout=(15, 90))
+        response.raise_for_status()
+        payload = response.json()
+        features = validate(payload)
+    except (requests.RequestException, ValueError, RuntimeError) as exc:
+        if DEPARTMENTS_GEOJSON.is_file():
+            cached = json.loads(DEPARTMENTS_GEOJSON.read_text(encoding="utf-8"))
+            validate(cached)
+            print(f"Aviso: no se pudo actualizar la cartografía ({exc}); se conserva la copia MGN ya guardada.")
+            return
+        raise RuntimeError(f"No se pudo descargar la cartografía departamental MGN: {exc}") from exc
+    payload["source"] = "DANE, Marco Geoestadístico Nacional 2025; geometría simplificada del repositorio mapas-colombia (CC BY 4.0)."
+    temp = DEPARTMENTS_GEOJSON.with_suffix(".geojson.tmp")
+    temp.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    temp.replace(DEPARTMENTS_GEOJSON)
+    print(f"Cartografía departamental lista: {DEPARTMENTS_GEOJSON} ({DEPARTMENTS_GEOJSON.stat().st_size:,} bytes).")
+
+
+def build_residual_panel(results: dict[str, Any], coords: pd.DataFrame) -> pd.DataFrame:
+    """Expone residuos de ajuste por producto, mercado y mes para el mapa departamental."""
+    coordinate_rows = coords.copy()
+    coordinate_rows["mercado_key"] = coordinate_rows["mercado"].map(norm_text)
+    coordinate_rows = coordinate_rows[["mercado_key", "latitud", "longitud"]].drop_duplicates("mercado_key")
+    output = []
+    for product, fit in results.items():
+        temp = fit.resids.rename("residuo").reset_index()
+        if temp.shape[1] < 3:
+            raise ValueError(f"No se pudieron identificar mercado y fecha en los residuos de {product!r}.")
+        temp = temp.rename(columns={temp.columns[0]: "mercado_key", temp.columns[1]: "fecha_residuo"})
+        temp["mercado_key"] = temp["mercado_key"].map(norm_text)
+        temp["fecha_residuo"] = pd.to_datetime(temp["fecha_residuo"], errors="coerce")
+        temp["residuo"] = pd.to_numeric(temp["residuo"], errors="coerce")
+        temp = temp.dropna(subset=["fecha_residuo", "residuo"])
+        temp = temp.merge(coordinate_rows, on="mercado_key", how="left", validate="many_to_one")
+        if temp[["latitud", "longitud"]].isna().any().any():
+            missing = sorted(temp.loc[temp["latitud"].isna(), "mercado_key"].unique())
+            raise ValueError(f"Faltan coordenadas para residuos de los mercados: {missing}")
+        temp["producto"] = str(product)
+        output.append(temp[["producto", "mercado_key", "fecha_residuo", "residuo", "latitud", "longitud"]])
+    if not output:
+        return pd.DataFrame(columns=["producto", "mercado_key", "fecha_residuo", "residuo", "latitud", "longitud"])
+    return pd.concat(output, ignore_index=True).sort_values(["producto", "fecha_residuo", "mercado_key"]).reset_index(drop=True)
+
+
 def main() -> None:
     if START_YEAR < 2013 or END_YEAR > 2024 or START_YEAR > END_YEAR:
         raise ValueError("El catálogo enlazado actualmente cubre SIPSA-P 2013–2024; revise START_YEAR/END_YEAR.")
@@ -437,6 +499,7 @@ def main() -> None:
         raise ValueError("Por seguridad econométrica, use como mínimo 4 mercados y 24 meses.")
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    download_department_boundaries()
     force_refresh = os.getenv("AGROCLIMA_FORCE_REFRESH", "1").strip().lower() in {"1", "true", "yes", "si"}
     print(f"Descargando SIPSA-P real de {START_YEAR} a {END_YEAR} desde DANE (forzar actualización={force_refresh})...")
     if force_refresh and RAW_DIR.exists():
@@ -526,6 +589,8 @@ def main() -> None:
     except Exception as exc:
         moran = pd.DataFrame([{"advertencia": f"No fue posible calcular Moran de residuos: {exc}"}])
 
+    residual_panel = build_residual_panel(fits, coords_sorted)
+
     # Price series shown in the frontend are actual DANE market observations, summarized by month/product.
     price_series = (balanced_prices.groupby(["fecha", "producto"], as_index=False)
                     .agg(precio_promedio_mercados=("precio", "mean"), n_mercados=("mercado_key", "nunique")))
@@ -577,6 +642,8 @@ def main() -> None:
         "method_note": "Panel SpVARX(1) reducido estimado ecuación por ecuación con efectos de mercado y tiempo. Incluye W*y[t-1], no W*y[t]. La inferencia con efectos fijos y rezagos endógenos requiere contrastes adicionales.",
         "irf_note": "IRF puntuales de un choque exógeno +1 DE; no incluyen bandas de confianza ni identificación estructural. No interpretar causalmente.",
         "coordinate_note": "Las coordenadas se guardan en data/market_coordinates.csv. Las coordenadas de instalación documentadas y los fallback al centro urbano llevan fuente y precisión explícitas; el fallback municipal no equivale a la ubicación exacta del mercado y debe revisarse antes de interpretar relaciones espaciales.",
+        "residual_note": "Los residuos del mapa son residuos de ajuste en muestra del SpVARX sobre las mismas observaciones usadas en la estimación. El sesgo medio se centra en cero; MAE y RMSE son no negativos y menor indica menor error descriptivo. No son métricas de predicción fuera de muestra. La respuesta está en unidades de Δlog(precio).",
+        "department_boundaries_source": "DANE MGN 2025; geometría simplificada: https://github.com/ytolosa/mapas-colombia (CC BY 4.0).",
         "diagnostic_summary": {
             "adf_reject_share": float(adf["rechaza_raiz_unitaria_5pct"].mean()) if "rechaza_raiz_unitaria_5pct" in adf.columns and len(adf) else None,
             "moran_residuals": records(moran),
@@ -589,6 +656,7 @@ def main() -> None:
         "metadata": meta,
         "price_series": records(price_series),
         "markets": json_safe(market_payload),
+        "residual_panel": records(residual_panel),
         "coefficients": records(coef_df),
         "irfs": records(irfs),
         "diagnostics": {"adf": records(adf), "moran": records(moran)},

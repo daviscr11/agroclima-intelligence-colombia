@@ -1,24 +1,36 @@
-"""Publica solo el artefacto JSON generado en un Space estático de Hugging Face."""
+"""Publica la interfaz estática y los artefactos que consume en Hugging Face."""
 import os
 from pathlib import Path
 from huggingface_hub import HfApi
 
 root = Path(__file__).resolve().parent
-file_path = root / "data" / "observatorio.json"
 token = os.getenv("HF_TOKEN", "").strip()
 repo_id = os.getenv("HF_SPACE_ID", "").strip()
 if not token:
     raise SystemExit("Falta el secreto HF_TOKEN en GitHub Actions.")
 if not repo_id or "/" not in repo_id:
     raise SystemExit("Define HF_SPACE_ID con formato usuario/nombre-del-space.")
-if not file_path.exists():
-    raise SystemExit(f"No existe el JSON producido: {file_path}")
+
+# La página del Space carga todos estos archivos en el navegador. Publicarlos en
+# una sola operación evita dejar el HTML apuntando a datos que aún no existen.
+files = [
+    "README.md",
+    "index.html",
+    "data/observatorio.json",
+    "data/residual_moran_panel_audit.csv",
+    "data/colombia_outline.geojson",
+    "data/colombia_departments.geojson",
+]
+missing = [name for name in files if not (root / name).is_file()]
+if missing:
+    raise SystemExit("Faltan archivos requeridos para el Space: " + ", ".join(missing))
+
 api = HfApi(token=token)
-api.upload_file(
-    path_or_fileobj=str(file_path),
-    path_in_repo="data/observatorio.json",
+api.upload_folder(
+    folder_path=str(root),
     repo_id=repo_id,
     repo_type="space",
-    commit_message="Actualizar panel con fuentes reales DANE SIPSA-P y NASA POWER",
+    allow_patterns=files,
+    commit_message="Actualizar interfaz, residuos y mapas del observatorio",
 )
-print(f"Publicado data/observatorio.json en {repo_id}")
+print(f"Publicados {len(files)} archivos del observatorio en {repo_id}")
