@@ -20,6 +20,8 @@
 .map-fallback{color:#f1d090}
 .choropleth-bar{height:10px;min-width:150px;flex:1;border:1px solid #6e8791;border-radius:999px}
 .choropleth-label{font-weight:700;color:#c6d9df}
+.interpretation-list{padding-left:19px;margin:8px 0;color:var(--muted);font-size:13px}
+.interpretation-list li{margin:8px 0}
 @media(max-width:850px){.product-summary-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -40,7 +42,7 @@
   </section>
 
   <nav class="nav" aria-label="Secciones del observatorio">
-    <button class="active" data-page="overview">Panorama</button><button data-page="spatial">Mercados</button><button data-page="coefficients">Coeficientes</button><button data-page="irf">Impulso-respuesta</button><button data-page="diagnostics">Diagnósticos</button><button data-page="method">Metodología</button>
+    <button class="active" data-page="overview">Panorama</button><button data-page="model-reading">Modelo espacial</button><button data-page="spatial">Mercados</button><button data-page="validation">Validación</button><button data-page="coefficients">Coeficientes</button><button data-page="irf">Impulso-respuesta</button><button data-page="diagnostics">Diagnósticos</button><button data-page="method">Metodología</button>
   </nav>
 
   <main>
@@ -50,6 +52,18 @@
         <article class="panel"><h2>Especificación seleccionada</h2><p class="desc">Resumen del sistema calculado por el proceso de actualización.</p><div id="model-summary" class="empty"><strong>Sin estimación publicada</strong>Ejecuta el flujo de actualización de datos para procesar las fuentes reales.</div><div class="tablewrap"><table id="products-table" class="hide"><thead><tr><th>Variable endógena</th><th>Unidad SIPSA</th><th>Variedad</th></tr></thead><tbody></tbody></table></div><p id="source-info" class="note">Fuentes: DANE SIPSA-P y NASA POWER.</p></article>
       </div>
       <article class="panel" style="margin-top:16px"><h2>Comparación de la evolución temporal</h2><p class="desc">Índice de precio nominal con base 100 en el primer mes disponible de cada producto. Permite comparar variaciones relativas sin confundir diferencias de nivel o unidad.</p><div class="chartbox"><canvas id="price-index-chart" aria-label="Comparación indexada de precios de los productos"></canvas></div><div id="price-summary" class="product-summary-grid"></div><p class="note">Los precios son nominales y no están deflactados. La referencia 100 corresponde al primer dato de cada serie.</p></article>
+    </section>
+
+    <section id="page-model-reading" class="page">
+      <article class="panel">
+        <div class="panel-head"><div><h2>¿Qué está diciendo el VAR espacial?</h2><p class="desc">Lectura automática y transparente de los rezagos espaciales estimados para cada producto.</p></div><span class="tag">Asociaciones condicionales · no causalidad</span></div>
+        <div id="model-reading-frame" class="note">El modelo usa Δlog(precio) por mercado y mes.</div>
+        <div id="model-reading-summary" class="product-summary-grid"></div>
+        <div id="model-spatial-equations" class="grid2"></div>
+        <h3 style="margin:22px 0 6px">Propagación dinámica de los choques climáticos</h3><p class="desc">IRF puntual de un choque climático de una desviación estándar, promediada entre mercados de origen. En h=1, el spillover resume la respuesta media en los demás mercados.</p>
+        <div id="spatial-irf-summary" class="tablewrap"></div><p class="note">Las respuestas IRF están en Δlog(precio), no tienen bandas de confianza ni identificación estructural; describen la propagación implicada por la especificación, no un efecto causal.</p>
+        <p class="note">Los coeficientes son asociaciones parciales, manteniendo constantes los demás regresores y efectos fijos. Un rezago espacial describe la asociación con el cambio previo ponderado de otros mercados; no es un efecto contemporáneo. Para ver propagación dinámica, consulta Impulso-respuesta. El radio espectral resume la estabilidad del bloque de rezagos; no mide por sí solo la calidad predictiva. Los p-valores son nominales y no se ajustan por el conjunto de coeficientes examinados.</p>
+      </article>
     </section>
 
     <section id="page-spatial" class="page">
@@ -63,6 +77,23 @@
         <div id="residual-mapbox" class="mapbox"><div class="empty">Aún no se han publicado los residuos y límites departamentales.</div></div><div id="residual-map-legend" class="legend"></div><p id="residual-map-status" class="tiny"></p>
         <p class="note">El sesgo medio usa una escala divergente: azul = negativo, blanco = cercano a cero y rojo = positivo. MAE y RMSE no permiten que signos opuestos se cancelen: verde = menor error y rojo = mayor error. Valores cercanos a cero indican menor error descriptivo. La escala se mantiene fija entre meses dentro de cada producto; cambia al cambiar de producto. Los residuos son de ajuste en muestra, calculados con las mismas observaciones usadas para estimar el modelo; no equivalen a validación predictiva fuera de muestra. Se expresan en unidades de Δlog(precio), una variación mensual logarítmica aproximada.</p>
         <p class="note">Cartografía: <a href="https://geoportal.dane.gov.co/servicios/descarga-y-metadatos/datos-geoestadisticos/?cod=111" target="_blank" rel="noopener">DANE, MGN 2025</a>; geometría simplificada por <a href="https://github.com/ytolosa/mapas-colombia" target="_blank" rel="noopener">mapas-colombia</a>, licencia CC BY 4.0.</p>
+      </article>
+    </section>
+
+    <section id="page-validation" class="page">
+      <article class="panel">
+        <div class="panel-head"><div><h2>Validación temporal a un mes</h2><p class="desc">En cada corte el modelo se reestima con meses anteriores y predice el siguiente.</p></div><span class="tag">Origen móvil · fuera de muestra</span></div>
+        <div class="controls"><div><label for="backtest-product">Producto</label><select id="backtest-product" disabled></select></div></div>
+        <div id="backtest-summary" class="product-summary-grid"></div>
+        <div class="chartbox"><canvas id="backtest-chart" aria-label="Comparación mensual de RMSE del modelo y referencias"></canvas></div>
+        <div id="backtest-table" class="tablewrap"></div>
+        <p id="backtest-note" class="note"></p>
+      </article>
+      <article class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h2>¿Dónde mejora frente a una referencia?</h2><p class="desc">Mejora porcentual del error fuera de muestra, agregada por departamento durante todo el periodo de validación.</p></div></div>
+        <div class="controls"><div><label for="backtest-baseline">Comparar con</label><select id="backtest-baseline"><option value="sin_cambio">Sin cambio mensual (Δlog P = 0)</option><option value="persistencia">Persistencia (último cambio)</option></select></div><div><label for="backtest-metric">Métrica</label><select id="backtest-metric"><option value="rmse">RMSE</option><option value="mae">MAE</option></select></div></div>
+        <div id="backtest-mapbox" class="mapbox"><div class="empty">Esperando los pronósticos de validación.</div></div><div id="backtest-map-legend" class="legend"></div><p id="backtest-map-status" class="tiny"></p>
+        <p class="note">La mejora se calcula como 100 × (1 − error SpVARX / error de referencia). Verde indica que el SpVARX reduce el error; rojo, que lo aumenta. El gris incluye departamentos sin cobertura o con menos de 12 predicciones mercado-mes. El pronóstico supone anomalía climática contemporánea igual a cero (clima normal) y usa el clima rezagado ya observado; por tanto, no incorpora un pronóstico meteorológico.</p>
       </article>
     </section>
 
@@ -111,7 +142,9 @@
     document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.page === name));
     document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === `page-${name}`));
     if (name === "overview") { drawPrices(); drawPriceIndex(); }
+    if (name === "model-reading") drawModelInterpretation();
     if (name === "spatial") { drawMap(); drawDepartmentChoropleth(); }
+    if (name === "validation") { drawBacktest(); drawBacktestMap(); }
     if (name === "coefficients") drawCoefficients();
     if (name === "irf") drawIRF();
     if (name === "diagnostics") drawMoranTemporal();
@@ -273,6 +306,136 @@
     $("residual-map-legend").innerHTML=`<span class="choropleth-label">${metric==="sesgo"?"Sesgo":metricLabel}</span><div class="choropleth-bar" style="background:${gradient}"></div><span>${fmt(low,5)}</span>${metric==="sesgo"?"<span>0</span>":""}<span>${fmt(high,5)}</span><span><i class="dot" style="background:#263b45"></i>Sin datos</span>`;
     const covered=[...stats.values()].filter(s=>s.n).length;
     $("residual-map-status").textContent=`${covered} de ${features.length} entidades con observaciones; ${rows.length-unassigned} mercados asignados · ${unassigned} sin asignar.`;
+  }
+  function coefficientIsSignificant(row) {
+    const p=num(row.p_value), low=num(row.ic95_inf), high=num(row.ic95_sup);
+    if(p!==null)return p<.05;
+    return low!==null&&high!==null&&(low>0||high<0);
+  }
+  function modelTermLabel(term, target) {
+    const temporal=String(term).match(/^L1__y(\d+)$/), spatial=String(term).match(/^WL1__y(\d+)$/);
+    if(temporal){const source=productNames()[Number(temporal[1])]||"otro producto";return `Cambio de ${source} en el mismo mercado, mes anterior`+(source===target?" (rezago propio)":"");}
+    if(spatial){const source=productNames()[Number(spatial[1])]||"otro producto";return `Cambio previo ponderado de ${source} en mercados vecinos`+(source===target?"":" (otro producto)");}
+    const climate={"X0__temp_anom":"Anomalía de temperatura en el mercado, mismo mes","X0__precip_anom":"Anomalía de precipitación en el mercado, mismo mes","X1__temp_anom":"Anomalía de temperatura en el mercado, mes anterior","X1__precip_anom":"Anomalía de precipitación en el mercado, mes anterior"};
+    return climate[term]||String(term);
+  }
+  function coefficientNarrative(row, target) {
+    const beta=num(row.coeficiente), p=num(row.p_value), low=num(row.ic95_inf), high=num(row.ic95_sup);
+    const label=modelTermLabel(row.termino,target), significant=coefficientIsSignificant(row);
+    if(beta===null)return `${label}: el coeficiente no está disponible.`;
+    const direction=beta>0?"positiva":(beta<0?"negativa":"cercana a cero");
+    const evidence=significant?`Asociación condicional ${direction} estimada`:`No se distingue una asociación de cero al 5%`;
+    const interval=low!==null&&high!==null?` · IC 95% [${fmt(low,4)}, ${fmt(high,4)}]`:"";
+    const pText=p!==null?` · p=${fmt(p,4)}`:"";
+    return `${label}: ${evidence} (β=${fmt(beta,4)}${interval}${pText}).`;
+  }
+  function drawModelInterpretation() {
+    if(!DATA||DATA.status!=="ready")return;
+    const rows=(DATA.coefficients||[]).filter(r=>num(r.coeficiente)!==null);
+    if(!rows.length){$("model-spatial-equations").innerHTML='<div class="empty">No hay coeficientes publicados para interpretar.</div>';return;}
+    const spatialRows=rows.filter(r=>/^WL1__y\d+$/.test(String(r.termino)));
+    const significantSpatial=spatialRows.filter(coefficientIsSignificant).length;
+    const stability=DATA.metadata.stability||{};
+    $("model-reading-frame").textContent="El SpVARX explica cambios mensuales de log-precios (Δlog P) con rezagos del mismo mercado, rezagos espaciales W·y(t−1) de mercados vecinos, anomalías climáticas actuales y rezagadas, y efectos fijos de mercado y tiempo. X0 es clima del mes en curso; X1, del mes anterior. Las anomalías climáticas están estandarizadas.";
+    $("model-reading-summary").innerHTML=[
+      summaryCard("Radio espectral",fmt(stability.spectral_radius_transition,4),stability.stable===true?"Por debajo de 1: transición estimada estable":(stability.stable===false?"En 1 o más: revisar dinámica":"No calculado")),
+      summaryCard("Rezagos espaciales con p < 0,05",`${significantSpatial} / ${spatialRows.length}`,"Ecuaciones × productos de origen"),
+      summaryCard("Observaciones estimadas",fmt(rows[0]?.n_obs,0),`${productNames().length} productos en el sistema`)
+    ].join("");
+    const html=productNames().map(target=>{
+      const equationRows=spatialRows.filter(r=>r.producto_dependiente===target).sort((a,b)=>String(a.termino).localeCompare(String(b.termino)));
+      const significant=equationRows.filter(coefficientIsSignificant).length;
+      const total=equationRows.length;
+      const terms=equationRows.map(row=>`<li>${esc(coefficientNarrative(row,target))}</li>`).join("")||"<li>No hay coeficientes espaciales estimables en esta ecuación.</li>";
+      return `<section class="product-summary"><h3>Ecuación de ${esc(target)}</h3><p class="note">${significant} de ${total} asociaciones con rezagos espaciales se distinguen de cero al 5%. La ausencia de significancia no demuestra ausencia de relación.</p><ul class="interpretation-list">${terms}</ul></section>`;
+    }).join("");
+    $("model-spatial-equations").innerHTML=html;
+    const irfRows=(DATA.irfs||[]);
+    const shocks=[{key:"temp_anom",label:"Temperatura"},{key:"precip_anom",label:"Precipitación"}];
+    const irfSummary=productNames().flatMap(target=>shocks.map(shock=>{
+      const h0=irfRows.find(r=>r.producto_respuesta===target&&r.choque===shock.key&&Number(r.horizonte)===0)||{};
+      const h1=irfRows.find(r=>r.producto_respuesta===target&&r.choque===shock.key&&Number(r.horizonte)===1)||{};
+      return{producto:target,choque:shock.label,directo_h0:h0.directo,spillover_h1:h1.spillover_medio_receptores,media_red_h1:h1.media_red};
+    }));
+    $("spatial-irf-summary").innerHTML=buildTable(irfSummary,[{key:"producto",label:"Producto que responde"},{key:"choque",label:"Choque +1 DE"},{key:"directo_h0",label:"Directo, h=0",render:v=>fmt(v,5)},{key:"spillover_h1",label:"Spillover medio, h=1",render:v=>fmt(v,5)},{key:"media_red_h1",label:"Media de red, h=1",render:v=>fmt(v,5)}],"No hay respuestas impulso publicadas.");
+  }
+  function forecastErrorSummary(rows,predictionKey) {
+    const errors=rows.map(r=>num(r.observado)-num(r[predictionKey])).filter(Number.isFinite);
+    if(!errors.length)return{n:0,mae:null,rmse:null};
+    return{n:errors.length,mae:errors.reduce((a,e)=>a+Math.abs(e),0)/errors.length,rmse:Math.sqrt(errors.reduce((a,e)=>a+e*e,0)/errors.length)};
+  }
+  const BACKTEST_METHODS=[
+    {key:"prediccion_spvarx",label:"SpVARX predictivo",color:"#95d5a4"},
+    {key:"prediccion_sin_cambio",label:"Sin cambio",color:"#75b7e8"},
+    {key:"prediccion_persistencia",label:"Persistencia",color:"#f2cc75"}
+  ];
+  function drawBacktest() {
+    if(!DATA||DATA.status!=="ready")return;
+    const product=$("backtest-product").value||productNames()[0];
+    const rows=(DATA.rolling_backtest||[]).filter(r=>r.producto===product&&num(r.observado)!==null);
+    $("backtest-note").textContent=DATA.metadata.backtest_note||"";
+    if(!rows.length){
+      const reason=DATA.metadata.backtest_error?`La validación no se completó: ${esc(DATA.metadata.backtest_error)}`:`Aún no hay predicciones retenidas. Se requieren más de ${esc(DATA.metadata.backtest_min_train_months??36)} meses para iniciar los cortes.`;
+      $("backtest-summary").innerHTML=`<div class="empty">${reason}</div>`;
+      $("backtest-table").innerHTML='<div class="empty">El flujo de actualización debe generar rolling_backtest.</div>';
+      if(charts["backtest-chart"]){charts["backtest-chart"].destroy();delete charts["backtest-chart"];}
+      return;
+    }
+    const summaries=BACKTEST_METHODS.map(m=>({...m,...forecastErrorSummary(rows,m.key)}));
+    const model=summaries[0],baseline=forecastErrorSummary(rows,"prediccion_sin_cambio");
+    const delta=baseline.rmse>0?100*(1-model.rmse/baseline.rmse):null;
+    const dates=[...new Set(rows.map(r=>String(r.fecha).slice(0,7)))].sort();
+    const note=delta===null?"La referencia sin cambio tiene RMSE cero; no se puede calcular la mejora porcentual.":(delta>=0?`En ${model.n.toLocaleString("es-CO")} predicciones mercado-mes, el RMSE del SpVARX predictivo fue ${fmt(delta,1)}% menor que la referencia sin cambio.`:`En ${model.n.toLocaleString("es-CO")} predicciones mercado-mes, el RMSE del SpVARX predictivo fue ${fmt(Math.abs(delta),1)}% mayor que la referencia sin cambio.`);
+    const first=dates[0],last=dates[dates.length-1];
+    $("backtest-summary").innerHTML=`<section class="product-summary"><h3>${esc(product)}</h3><div class="product-metrics">${summaryCard("Periodo evaluado",`${first} → ${last}`,`${dates.length} meses de prueba`)}${summaryCard("Mejora de RMSE vs. sin cambio",delta===null?"—":`${fmt(delta,1)}%`,"Positivo favorece SpVARX; negativo favorece referencia")}</div><p class="note">${esc(note)}</p></section>`;
+    $("backtest-table").innerHTML=buildTable(summaries,[{key:"label",label:"Método"},{key:"n",label:"Pronósticos",render:v=>Number(v).toLocaleString("es-CO")},{key:"mae",label:"MAE (Δlog P)",render:v=>fmt(v,5)},{key:"rmse",label:"RMSE (Δlog P)",render:v=>fmt(v,5)}]);
+    const metricByMonth=(month,key)=>forecastErrorSummary(rows.filter(r=>String(r.fecha).slice(0,7)===month),key).rmse;
+    makeChart("backtest-chart","line",{labels:dates,datasets:BACKTEST_METHODS.map(m=>({label:`RMSE · ${m.label}`,data:dates.map(d=>metricByMonth(d,m.key)),borderColor:m.color,backgroundColor:m.color,pointRadius:2,tension:.18,spanGaps:true}))},{scales:{x:{title:{display:true,text:"Mes de prueba",color:"#9bb1bb"},ticks:{color:"#9bb1bb",maxRotation:0,autoSkip:true},grid:{color:"rgba(120,160,180,.12)"}},y:{title:{display:true,text:"RMSE del cambio mensual de log-precio",color:"#9bb1bb"},ticks:{color:"#9bb1bb"},grid:{color:"rgba(120,160,180,.15)"}}}});
+  }
+  async function drawBacktestMap() {
+    if(!DATA||DATA.status!=="ready")return;
+    const features=await loadDepartmentBoundaries();
+    const product=$("backtest-product").value||productNames()[0];
+    const baselineKey=$("backtest-baseline").value||"sin_cambio";
+    const metric=$("backtest-metric").value||"rmse";
+    const baseColumn=baselineKey==="persistencia"?"prediccion_persistencia":"prediccion_sin_cambio";
+    const baselineLabel=baselineKey==="persistencia"?"persistencia":"sin cambio";
+    const rows=(DATA.rolling_backtest||[]).filter(r=>r.producto===product&&num(r.observado)!==null&&num(r.prediccion_spvarx)!==null&&num(r[baseColumn])!==null);
+    if(!features){$("backtest-mapbox").innerHTML='<div class="empty">No se cargaron los polígonos departamentales.</div>';return;}
+    if(!rows.length){$("backtest-mapbox").innerHTML='<div class="empty">El flujo debe publicar predicciones de validación para dibujar este mapa.</div>';return;}
+    const stats=new Map(features.map(f=>[featureCode(f),{n:0,spAbs:0,spSq:0,baseAbs:0,baseSq:0}]));
+    const cache=new Map();let unassigned=0;
+    for(const row of rows){
+      const key=`${Number(row.longitud).toFixed(5)},${Number(row.latitud).toFixed(5)}`;
+      let feature=cache.get(key);if(feature===undefined){feature=departmentForPoint(Number(row.longitud),Number(row.latitud));cache.set(key,feature||null);}
+      if(!feature){unassigned++;continue;}
+      const s=stats.get(featureCode(feature));if(!s)continue;
+      const errorSp=Number(row.observado)-Number(row.prediccion_spvarx),errorBase=Number(row.observado)-Number(row[baseColumn]);
+      s.n++;s.spAbs+=Math.abs(errorSp);s.spSq+=errorSp*errorSp;s.baseAbs+=Math.abs(errorBase);s.baseSq+=errorBase*errorBase;
+    }
+    const minimumForecasts=12;
+    const metricValue=(sumAbs,sumSq,n)=>metric==="mae"?sumAbs/n:Math.sqrt(sumSq/n);
+    const getImprovement=s=>{
+      if(!s||s.n<minimumForecasts)return null;
+      const modelError=metricValue(s.spAbs,s.spSq,s.n),baseError=metricValue(s.baseAbs,s.baseSq,s.n);
+      return baseError>0?100*(1-modelError/baseError):null;
+    };
+    const coords=features.flatMap(f=>collectPairs(f.geometry?.coordinates));
+    const minLon=Math.min(...coords.map(c=>Number(c[0]))),maxLon=Math.max(...coords.map(c=>Number(c[0]))),minLat=Math.min(...coords.map(c=>Number(c[1]))),maxLat=Math.max(...coords.map(c=>Number(c[1])));
+    const lonSpan=Math.max(.1,maxLon-minLon),latSpan=Math.max(.1,maxLat-minLat),W=760,H=470,padX=35,padY=35;
+    const scale=Math.min((W-2*padX)/lonSpan,(H-2*padY)/latSpan),offsetX=(W-lonSpan*scale)/2,offsetY=(H-latSpan*scale)/2;
+    const x=lon=>offsetX+(Number(lon)-minLon)*scale,y=lat=>offsetY+(maxLat-Number(lat))*scale;
+    const fillFor=s=>{const v=getImprovement(s);if(v===null)return"#263b45";const q=Math.min(1,Math.abs(v)/100);return v>=0?blend("#eef2ed","#44b787",q):blend("#eef2ed","#df6e5c",q);};
+    const paths=features.map(feature=>{
+      const s=stats.get(featureCode(feature));
+      const d=geometryPolygons(feature.geometry).map(polygon=>polygon.map(ring=>ring.map((c,i)=>`${i?"L":"M"}${x(c[0]).toFixed(1)} ${y(c[1]).toFixed(1)}`).join(" ")+" Z").join(" ")).join(" ");
+      const improvement=getImprovement(s),modelError=s.n?metricValue(s.spAbs,s.spSq,s.n):null,baseError=s.n?metricValue(s.baseAbs,s.baseSq,s.n):null;
+      return `<path d="${d}" fill="${fillFor(s)}" stroke="#9bb9bc" stroke-width=".8" fill-rule="evenodd"><title>${esc(featureName(feature))} · mejora SpVARX vs. ${baselineLabel}: ${improvement===null?"sin datos suficientes":`${fmt(improvement,1)}%`} · ${metric.toUpperCase()} SpVARX: ${fmt(modelError,5)} · ${metric.toUpperCase()} ${baselineLabel}: ${fmt(baseError,5)} · pronósticos: ${s.n}</title></path>`;
+    }).join("");
+    $("backtest-mapbox").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mejora porcentual de error del SpVARX frente a ${esc(baselineLabel)} para ${esc(product)}"><text x="${W/2}" y="22" fill="#b8d1d4" font-size="12" text-anchor="middle">Mejora de ${metric.toUpperCase()} · ${esc(product)} · SpVARX vs. ${esc(baselineLabel)}</text>${paths}</svg>`;
+    $("backtest-map-legend").innerHTML=`<span class="choropleth-label">Mejora del SpVARX</span><div class="choropleth-bar" style="background:linear-gradient(90deg,#df6e5c,#eef2ed,#44b787)"></div><span>−100% peor</span><span>0% igual</span><span>+100% mejor</span><span><i class="dot" style="background:#263b45"></i>Sin cobertura suficiente</span>`;
+    const covered=[...stats.values()].filter(s=>s.n>=minimumForecasts).length,improved=[...stats.values()].filter(s=>(getImprovement(s)??-Infinity)>0).length;
+    $("backtest-map-status").textContent=`${covered} de ${features.length} departamentos cumplen el mínimo de ${minimumForecasts} pronósticos; ${improved} muestran menor error del SpVARX; ${unassigned} predicciones sin ubicación asignada. Pasa el cursor por un departamento para ver valores y N.`;
   }
   let COLOMBIA_GEOMETRY = null;
   let COLOMBIA_OUTLINE_SOURCE = "";
@@ -442,11 +605,13 @@
     const pt=$("products-table"); pt.classList.remove("hide"); pt.querySelector("tbody").innerHTML=products.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit||"—")}</td><td>${esc(p.variety||"No diferenciada")}</td></tr>`).join("");
     $("source-info").innerHTML=`Fuentes: <a href="${esc(m.sources?.prices||"https://microdatos.dane.gov.co/index.php/catalog/776/get-microdata")}" target="_blank" rel="noopener">DANE SIPSA-P</a> · <a href="${esc(m.sources?.climate||"https://power.larc.nasa.gov/docs/services/api/temporal/monthly/")}" target="_blank" rel="noopener">NASA POWER</a>.`;
     $("last-update").textContent=`Última actualización: ${m.generated_at ? new Date(m.generated_at).toLocaleString("es-CO") : "—"}`;
-    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product","residual-map-product"].forEach(id=>fillSelect(id,names));
+    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product","residual-map-product","backtest-product"].forEach(id=>fillSelect(id,names));
     const residualDates=[...new Set((data.residual_panel||[]).map(r=>String(r.fecha_residuo||"").slice(0,7)).filter(Boolean))].sort();
     fillSelect("residual-map-date",residualDates); if(residualDates.length)$("residual-map-date").value=residualDates[residualDates.length-1];
     ["price-product","map-product","coef-product","irf-product"].forEach(id=>$(id).addEventListener("change",()=>({"price-product":drawPrices,"map-product":drawMap,"coef-product":drawCoefficients,"irf-product":drawIRF}[id])()));
     ["residual-map-product","residual-map-date","residual-map-metric"].forEach(id=>$(id).addEventListener("change",drawDepartmentChoropleth));
+    $("backtest-product").addEventListener("change",()=>{drawBacktest();drawBacktestMap();});
+    ["backtest-baseline","backtest-metric"].forEach(id=>$(id).addEventListener("change",drawBacktestMap));
     $("irf-shock").disabled=false; $("irf-shock").addEventListener("change",drawIRF);
     $("download-json").disabled=false; $("download-json").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(DATA,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="AgroClima_resultados_reales.json";a.click();URL.revokeObjectURL(url);});
     $("products-table").classList.remove("hide");

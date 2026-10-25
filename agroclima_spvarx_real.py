@@ -777,6 +777,126 @@ def estimate_spvarx(panel: pd.DataFrame, products: Sequence[str], bandwidth: int
     return results, pd.DataFrame(coefs), "\n".join(summaries)
 
 
+def rolling_spvarx_backtest(
+    balanced_prices: pd.DataFrame,
+    climate: pd.DataFrame,
+    markets: Sequence[str],
+    dates: pd.DatetimeIndex,
+    products: Sequence[str],
+    W_dense: np.ndarray,
+    min_train_months: int = 36,
+) -> pd.DataFrame:
+    """Backtest condicional de un paso, reestimando solo con meses pasados.
+
+    La ecuación predictiva usa efectos fijos de mercado, pero omite efectos fijos de
+    tiempo porque el efecto del mes objetivo no se conoce al emitir un pronóstico.
+    La anomalía climática contemporánea se fija en cero (escenario de clima normal);
+    la anomalía rezagada sí usa el último mes observado. No es una proyección de clima.
+    """
+    try:
+        from linearmodels.panel import PanelOLS
+    except ImportError as exc:
+        raise ImportError("Instale linearmodels para ejecutar la validación temporal.") from exc
+
+    market_order = [norm_text(m) for m in markets]
+    product_order = list(products)
+    dates = pd.DatetimeIndex(pd.to_datetime(dates)).to_period("M").to_timestamp()
+    if min_train_months < 24:
+        raise ValueError("La validación temporal requiere al menos 24 meses iniciales de entrenamiento.")
+    empty_columns = [
+        "producto", "mercado_key", "fecha", "latitud", "longitud", "observado",
+        "prediccion_spvarx", "prediccion_sin_cambio", "prediccion_persistencia",
+        "meses_entrenamiento",
+    ]
+    if len(dates) <= min_train_months:
+        return pd.DataFrame(columns=empty_columns)
+
+    price_data = balanced_prices.copy()
+    price_data["mercado_key"] = price_data["mercado_key"].map(norm_text)
+    price_data["fecha"] = pd.to_datetime(price_data["fecha"]).dt.to_period("M").dt.to_timestamp()
+    coordinates = climate[["mercado_key", "latitud", "longitud"]].copy()
+    coordinates["mercado_key"] = coordinates["mercado_key"].map(norm_text)
+    coordinates = coordinates.drop_duplicates("mercado_key").set_index("mercado_key").reindex(market_order)
+    if coordinates[["latitud", "longitud"]].isna().any().any():
+        raise ValueError("Faltan coordenadas de clima para uno o más mercados del backtest.")
+
+    k = len(product_order)
+    ycols = [f"y{i}" for i in range(k)]
+    regressors = (
+        [f"L1__y{i}" for i in range(k)]
+        + [f"WL1__y{i}" for i in range(k)]
+        + ["X0__temp_anom", "X0__precip_anom", "X1__temp_anom", "X1__precip_anom"]
+    )
+
+    def price_matrix(dt: pd.Timestamp) -> pd.DataFrame:
+        block = price_data[price_data["fecha"] == dt]
+        return block.pivot(index="mercado_key", columns="producto", values="precio").reindex(index=market_order, columns=product_order)
+
+    predictions = []
+    for test_idx in range(int(min_train_months), len(dates)):
+        train_dates = dates[:test_idx]
+        test_date = dates[test_idx]
+        # Al pasar solo train_dates, medias estacionales y escalas climáticas se
+        # estiman dentro del corte y no usan información del mes de validación.
+        train_panel, _ = build_spvarx_panel(
+            price_data, climate, market_order, train_dates, product_order, W_dense
+        )
+        origin_date = train_dates[-1]
+        latest = train_panel[train_panel["fecha"] == origin_date].set_index("mercado_key").reindex(market_order)
+        if len(latest) != len(market_order) or latest[ycols].isna().any().any():
+            raise ValueError(f"No hay un vector rezagado completo para el origen {origin_date:%Y-%m}.")
+
+        lag_values = latest[ycols].to_numpy(dtype=float)
+        spatial_lag = W_dense @ lag_values
+        test_X = pd.DataFrame(index=pd.Index(market_order, name="mercado_key"))
+        for j in range(k):
+            test_X[f"L1__y{j}"] = lag_values[:, j]
+            test_X[f"WL1__y{j}"] = spatial_lag[:, j]
+        # Clima contemporáneo desconocido al pronosticar: anomalía esperada cero.
+        test_X["X0__temp_anom"] = 0.0
+        test_X["X0__precip_anom"] = 0.0
+        # El mes anterior ya se observó: su X0 en el panel pasa a ser X1 del test.
+        test_X["X1__temp_anom"] = latest["X0__temp_anom"].to_numpy(dtype=float)
+        test_X["X1__precip_anom"] = latest["X0__precip_anom"].to_numpy(dtype=float)
+
+        previous_prices = price_matrix(origin_date)
+        observed_prices = price_matrix(test_date)
+        if previous_prices.isna().any().any() or observed_prices.isna().any().any():
+            raise ValueError(f"Faltan precios completos para la validación de {test_date:%Y-%m}.")
+        observed_returns = np.log(observed_prices.to_numpy(dtype=float) / previous_prices.to_numpy(dtype=float))
+
+        train_indexed = train_panel.set_index(["mercado_key", "fecha"]).sort_index()
+        for target_idx, product in enumerate(product_order):
+            y = train_indexed[ycols[target_idx]]
+            X = train_indexed[regressors]
+            model = PanelOLS(
+                y, X, entity_effects=True, time_effects=False,
+                drop_absorbed=True, check_rank=True,
+            )
+            fit = model.fit(cov_type="unadjusted")
+            beta = fit.params
+            available_X = X.loc[:, beta.index]
+            entity_effects = (y - available_X.dot(beta)).groupby(level=0).mean().reindex(market_order)
+            prediction = test_X.loc[:, beta.index].dot(beta) + entity_effects.to_numpy(dtype=float)
+            for market_idx, market in enumerate(market_order):
+                predictions.append({
+                    "producto": product,
+                    "mercado_key": market,
+                    "fecha": test_date,
+                    "latitud": float(coordinates.loc[market, "latitud"]),
+                    "longitud": float(coordinates.loc[market, "longitud"]),
+                    "observado": float(observed_returns[market_idx, target_idx]),
+                    "prediccion_spvarx": float(prediction.iloc[market_idx]),
+                    "prediccion_sin_cambio": 0.0,
+                    "prediccion_persistencia": float(lag_values[market_idx, target_idx]),
+                    "meses_entrenamiento": int(len(train_dates)),
+                })
+    result = pd.DataFrame(predictions, columns=empty_columns)
+    if not result.empty:
+        result = result.sort_values(["producto", "fecha", "mercado_key"]).reset_index(drop=True)
+    return result
+
+
 def model_stability(results: Dict[str, Any], products: Sequence[str], W_dense: np.ndarray) -> Dict[str, Any]:
     """Radio espectral de la transición temporal-espacial del SpVARX(1)."""
     products = list(products)

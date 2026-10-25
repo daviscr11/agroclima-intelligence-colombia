@@ -52,6 +52,7 @@ jobs:
           AGROCLIMA_MAX_MARKETS: "12"
           AGROCLIMA_KNN_K: "4"
           AGROCLIMA_IRF_HORIZON: "18"
+          AGROCLIMA_BACKTEST_MIN_TRAIN_MONTHS: "36"
           AGROCLIMA_SIPSA_AUDIT_MIN_SCALE_RATIO: "0.1"
           AGROCLIMA_SIPSA_AUDIT_MAX_SCALE_RATIO: "10"
         run: python refresh_static_data.py
@@ -75,7 +76,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/observatorio.json data/market_coordinates.csv data/coordinate_validation_report.csv data/coordinate_validation_cache.json data/sipsa_audit_files.csv data/sipsa_audit_year_product.csv data/sipsa_audit_summary.json data/residual_moran_panel_audit.csv
+          git add data/observatorio.json data/market_coordinates.csv data/coordinate_validation_report.csv data/coordinate_validation_cache.json data/sipsa_audit_files.csv data/sipsa_audit_year_product.csv data/sipsa_audit_summary.json data/residual_moran_panel_audit.csv data/spvarx_rolling_backtest.csv
           if [ -f data/colombia_departments.geojson ]; then git add data/colombia_departments.geojson; fi
           if git diff --cached --quiet; then
             echo "No hay cambios para confirmar."

@@ -18,6 +18,7 @@ files = [
     "index.html",
     "data/observatorio.json",
     "data/residual_moran_panel_audit.csv",
+    "data/spvarx_rolling_backtest.csv",
     "data/colombia_outline.geojson",
     "data/colombia_departments.geojson",
 ]
@@ -31,6 +32,6 @@ api.upload_folder(
     repo_id=repo_id,
     repo_type="space",
     allow_patterns=files,
-    commit_message="Actualizar interfaz, residuos y mapas del observatorio",
+    commit_message="Actualizar interfaz, validación y mapas del observatorio",
 )
 print(f"Publicados {len(files)} archivos del observatorio en {repo_id}")
