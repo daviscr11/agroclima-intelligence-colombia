@@ -69,6 +69,12 @@
         <div id="model-spatial-equations" class="grid2"></div>
         <h3 style="margin:22px 0 6px">Propagación dinámica de los choques climáticos</h3><p class="desc">Respuesta a un choque climático de una desviación estándar, promediada entre mercados de origen. En h=1, el spillover resume la respuesta media en los demás mercados.</p>
         <div id="spatial-irf-summary" class="tablewrap"></div><p id="spatial-irf-note" class="note">Las respuestas IRF resumen la propagación implicada por la especificación y no identifican un efecto causal.</p>
+        <section class="panel" style="margin-top:18px;border-color:#315565">
+          <div class="panel-head"><div><h3 style="margin:0 0 5px">Comparación complementaria: SpVARX, SAR, SEM y SAC</h3><p class="desc">Los tres modelos clásicos se estiman por producto en el mismo panel y con los mismos efectos fijos. El SpVARX continúa como modelo principal.</p></div><span class="tag">Ajuste en muestra · AIC</span></div>
+          <div class="controls"><div><label for="model-family-product">Producto de la ecuación</label><select id="model-family-product" disabled></select></div></div>
+          <div id="model-family-comparison" class="tablewrap"><div class="empty">La comparación se mostrará cuando se publique la próxima actualización de resultados.</div></div>
+          <p id="model-family-note" class="note"></p>
+        </section>
         <p class="note">Los coeficientes son asociaciones parciales, manteniendo constantes los demás regresores y efectos fijos. Un rezago espacial describe la asociación con el cambio previo ponderado de otros mercados; no es un efecto contemporáneo. Para ver propagación dinámica, consulta Impulso-respuesta. El radio espectral resume la estabilidad del bloque de rezagos; no mide por sí solo la calidad predictiva. Los p-valores son nominales y no se ajustan por el conjunto de coeficientes examinados.</p>
       </article>
     </section>
@@ -387,6 +393,27 @@
     $("spatial-irf-summary").innerHTML=buildTable(irfSummary,[{key:"producto",label:"Producto que responde"},{key:"choque",label:"Choque +1 DE"},{key:"directo_h0",label:"Directo, h=0 [IC 95%]",render:(v,r)=>irfCell(v,r.directo_h0_inf,r.directo_h0_sup)},{key:"spillover_h1",label:"Spillover medio, h=1 [IC 95%]",render:(v,r)=>irfCell(v,r.spillover_h1_inf,r.spillover_h1_sup)},{key:"media_red_h1",label:"Media de red, h=1 [IC 95%]",render:(v,r)=>irfCell(v,r.media_red_h1_inf,r.media_red_h1_sup)}],"No hay respuestas impulso publicadas.");
     const irfRepInfo=DATA.metadata.irf_bootstrap_valid!==undefined?` Réplicas válidas: ${DATA.metadata.irf_bootstrap_valid}/${DATA.metadata.irf_bootstrap_requested}; bloques de ${DATA.metadata.irf_bootstrap_block_months??"—"} meses.`:"";
     $("spatial-irf-note").textContent=(DATA.metadata.irf_note||"Las respuestas describen la propagación implicada por la especificación y no identifican causalidad.")+irfRepInfo;
+    drawModelFamilyComparison();
+  }
+  function drawModelFamilyComparison() {
+    if(!DATA||DATA.status!=="ready")return;
+    const product=$("model-family-product")?.value||productNames()[0];
+    const allRows=(DATA.model_comparison||[]).filter(row=>row.producto===product);
+    const ready=allRows.filter(row=>row.aic!==null&&row.aic!==undefined&&Number.isFinite(Number(row.aic)));
+    const minDelta=ready.length?Math.min(...ready.map(row=>Number(row.delta_aic??Infinity))):null;
+    const labels={SpVARX:"SpVARX · principal",SAR:"SAR · rezago espacial contemporáneo",SEM:"SEM · error espacial",SAC:"SAC · rezago + error espacial"};
+    const ordered=["SpVARX","SAR","SEM","SAC"].map(name=>ready.find(row=>row.modelo===name)).filter(Boolean);
+    $("model-family-comparison").innerHTML=buildTable(ordered,[
+      {key:"modelo",label:"Modelo",render:(value,row)=>`${Number(row.delta_aic)===minDelta?"★ ":""}${labels[value]||value}`},
+      {key:"rho",label:"ρ · dependencia del resultado",render:v=>fmt(v,4)},
+      {key:"lambda",label:"λ · dependencia del error",render:v=>fmt(v,4)},
+      {key:"aic",label:"AIC",render:v=>fmt(v,2)},
+      {key:"delta_aic",label:"Δ AIC",render:v=>fmt(v,2)},
+      {key:"estado",label:"Estado"}
+    ],allRows.length?"Los modelos de esta ecuación no convergieron; revisa la nota metodológica.":"La comparación se mostrará cuando se publique la próxima actualización de resultados.");
+    const note=DATA.metadata.model_comparison_note||"AIC resume el ajuste relativo en muestra; no es una medida de pronóstico ni una prueba causal.";
+    const warnings=allRows.filter(row=>row.estado&&row.estado!=="Estimado").map(row=>`${row.modelo}: ${row.detalle||row.estado}`);
+    $("model-family-note").textContent=warnings.length?`${note} Observaciones de estimación: ${warnings.join(" ")}`:note;
   }
   function drawSpatialRobustness() {
     if(!DATA||DATA.status!=="ready")return;
@@ -897,7 +924,7 @@
     const pt=$("products-table"); pt.classList.remove("hide"); pt.querySelector("tbody").innerHTML=products.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit||"—")}</td><td>${esc(p.variety||"No diferenciada")}</td></tr>`).join("");
     $("source-info").innerHTML=`Fuentes: <a href="${esc(m.sources?.prices||"https://microdatos.dane.gov.co/index.php/catalog/776/get-microdata")}" target="_blank" rel="noopener">DANE SIPSA-P</a> · <a href="${esc(m.sources?.climate||"https://power.larc.nasa.gov/docs/services/api/temporal/monthly/")}" target="_blank" rel="noopener">NASA POWER</a>.`;
     $("last-update").textContent=`Última actualización: ${m.generated_at ? new Date(m.generated_at).toLocaleString("es-CO") : "—"}`;
-    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product","residual-map-product","backtest-product","robustness-coef-product","robustness-irf-product"].forEach(id=>fillSelect(id,names));
+    const names=products.map(p=>p.name); ["price-product","map-product","coef-product","irf-product","residual-map-product","backtest-product","robustness-coef-product","robustness-irf-product","model-family-product"].forEach(id=>fillSelect(id,names));
     const residualDates=[...new Set((data.residual_panel||[]).map(r=>String(r.fecha_residuo||"").slice(0,7)).filter(Boolean))].sort();
     fillSelect("residual-map-date",residualDates); if(residualDates.length)$("residual-map-date").value=residualDates[residualDates.length-1];
     ["price-product","map-product","coef-product","irf-product"].forEach(id=>$(id).addEventListener("change",()=>({"price-product":drawPrices,"map-product":drawMap,"coef-product":drawCoefficients,"irf-product":drawIRF}[id])()));
@@ -907,13 +934,14 @@
     $("irf-shock").disabled=false; $("irf-shock").addEventListener("change",drawIRF);
     $("robustness-irf-shock").disabled=false; $("robustness-irf-shock").addEventListener("change",drawSpatialRobustness);
     ["robustness-coef-product","robustness-irf-product"].forEach(id=>$(id).addEventListener("change",drawSpatialRobustness));
+    $("model-family-product").addEventListener("change",drawModelFamilyComparison);
     $("download-json").disabled=false; $("download-json").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(DATA,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="AgroClima_resultados_reales.json";a.click();URL.revokeObjectURL(url);});
     $("products-table").classList.remove("hide");
     $("coef-table").innerHTML=buildTable(data.coefficients,[{key:"producto_dependiente",label:"Ecuación"},{key:"termino",label:"Término"},{key:"coeficiente",label:"Coeficiente",render:v=>fmt(v,5)},{key:"p_value",label:"p-valor",render:v=>fmt(v,4)}]);
     $("adf-table").innerHTML=buildTable(data.diagnostics?.adf,[{key:"producto",label:"Producto"},{key:"mercado_key",label:"Mercado"},{key:"ADF_stat",label:"Estadístico ADF",render:v=>fmt(v,4)},{key:"ADF_pvalue",label:"p-valor",render:v=>fmt(v,4)},{key:"rechaza_raiz_unitaria_5pct",label:"Rechazo al 5%",render:v=>v===true?"Sí":"No"},{key:"n",label:"N",render:v=>v??"—"}]);
     $("moran-table").innerHTML=buildTable(data.diagnostics?.moran,[{key:"producto_dependiente",label:"Producto"},{key:"fecha_residuo",label:"Fecha"},{key:"Moran_I_residuos",label:"Moran I",render:v=>fmt(v,4)},{key:"p_sim",label:"p-valor simulado",render:v=>fmt(v,4)},{key:"n",label:"N",render:v=>v??"—"},{key:"advertencia",label:"Observación"}]);
     $("diag-notes").textContent=`Participación de pruebas ADF que rechazan raíz unitaria al 5%: ${fmt(m.diagnostic_summary?.adf_reject_share,3)}. Esto es solo un resumen de la prueba sobre las series incluidas; las variables modeladas son cambios de log-precios.`;
-    $("method-notes").innerHTML=`<p>${esc(m.method_note||"")}</p><p>${esc(m.irf_note||"")}</p><p>${esc(m.spatial_weights_note||"")}</p><p>${esc(m.coordinate_note||"")}</p><p>${esc(m.residual_note||"")}</p><p class="tiny">Regla de selección automática: ${esc(m.selection_rule||"")}</p>`;
+    $("method-notes").innerHTML=`<p>${esc(m.method_note||"")}</p><p>${esc(m.model_comparison_note||"")}</p><p>${esc(m.irf_note||"")}</p><p>${esc(m.spatial_weights_note||"")}</p><p>${esc(m.coordinate_note||"")}</p><p>${esc(m.residual_note||"")}</p><p class="tiny">Regla de selección automática: ${esc(m.selection_rule||"")}</p>`;
     drawPrices(); drawPriceIndex(); drawMap(); drawCoefficients(); drawIRF();
   }
   fetch(`./data/observatorio.json?v=${Date.now()}`, {cache:"no-store"})

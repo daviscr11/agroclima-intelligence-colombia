@@ -32,6 +32,7 @@ from agroclima_spvarx_real import (
     build_knn_weights,
     build_spvarx_panel,
     estimate_spvarx,
+    compare_spatial_model_families,
     model_stability,
     compute_irfs,
     stationarity_audit,
@@ -591,6 +592,18 @@ def main() -> None:
     climate = fetch_nasa_power(coords_sorted, str(dates.min().date()), str(dates.max().date()), CLIMATE_CACHE)
     panel, panel_meta = build_spvarx_panel(balanced_prices, climate, markets_keys, dates, product_names, W_dense)
     fits, coef_df, model_summary = estimate_spvarx(panel, product_names, bandwidth=min(4, max(1, panel["fecha"].nunique() - 1)))
+    try:
+        model_comparison = compare_spatial_model_families(
+            panel, product_names, markets_keys, W_dense, fits
+        )
+        available_comparators = sum(
+            row.get("estado", "").startswith("Estimado")
+            for row in model_comparison if row.get("modelo") != "SpVARX"
+        )
+        print(f"[Modelos espaciales auxiliares] Estimaciones disponibles: {available_comparators}/{3 * len(product_names)}.")
+    except Exception as exc:
+        model_comparison = []
+        print(f"[Modelos espaciales auxiliares] No se pudo completar la comparación: {exc}")
     stability = model_stability(fits, product_names, W_dense)
     print(f"[IRF bootstrap] Calculando bandas con {IRF_BOOTSTRAP_REPS} réplicas...")
     irfs = compute_irfs(
@@ -686,6 +699,7 @@ def main() -> None:
         "source_audit_tables_recognized": int((audit.get("filas_canonicas", pd.Series(dtype=float)).fillna(0) > 0).sum()) if not audit.empty else 0,
         "data_note": "Precios nominales mensuales observados de SIPSA-P. NASA POWER aporta variables meteorológicas derivadas de datos/modelos de NASA; no son mediciones directas de estación en cada mercado.",
         "method_note": "Panel SpVARX(1) reducido estimado ecuación por ecuación con efectos de mercado y tiempo. Incluye W*y[t-1], no W*y[t]. La inferencia con efectos fijos y rezagos endógenos requiere contrastes adicionales.",
+        "model_comparison_note": "Comparación complementaria por ecuación y producto entre el SpVARX principal y paneles gaussianos SAR, SEM y SAC estimados en la misma muestra y con efectos fijos de mercado y tiempo. El AIC menor indica mejor ajuste relativo en muestra bajo estos supuestos; no equivale a mejor pronóstico ni a evidencia causal. Las especificaciones auxiliares son univariadas y sus parámetros espaciales no son directamente equivalentes a los coeficientes dinámicos W*y[t-1] del SpVARX.",
         "irf_note": (
             "IRF de un choque climático de +1 DE con intervalos percentiles aproximados del 95% por horizonte, calculados mediante bootstrap circular de bloques temporales completos. Son intervalos punto a punto, no bandas simultáneas para toda la curva. Condicionan en la matriz W, mercados, productos y regresores observados; no corrigen el posible sesgo del panel dinámico ni identifican causalidad. Si un intervalo contiene cero, esa respuesta no se distingue de cero al nivel descriptivo del intervalo."
             if irf_bootstrap_available else
@@ -720,6 +734,7 @@ def main() -> None:
         "rolling_backtest": records(backtest),
         "coefficients": records(coef_df),
         "irfs": records(irfs),
+        "model_comparison": json_safe(model_comparison),
         "spatial_robustness": {
             "summary": records(spatial_robustness["summary"]),
             "coefficients": records(spatial_robustness["coefficients"]),
