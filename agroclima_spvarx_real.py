@@ -777,6 +777,206 @@ def estimate_spvarx(panel: pd.DataFrame, products: Sequence[str], bandwidth: int
     return results, pd.DataFrame(coefs), "\n".join(summaries)
 
 
+def compare_spatial_model_families(
+    panel: pd.DataFrame,
+    products: Sequence[str],
+    markets: Sequence[str],
+    W_dense: np.ndarray,
+    spvarx_results: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Compara SpVARX con SAR, SEM y SAC como referencias de panel por producto.
+
+    SAR añade dependencia espacial contemporánea en el precio/cambio de precio;
+    SEM la sitúa en el error; SAC incluye ambos parámetros. Estas especificaciones
+    son comparadores univariados por producto, con los rezagos locales de ambos
+    productos, clima y efectos fijos de mercado/tiempo. El SpVARX sigue siendo el
+    modelo principal y conserva sus rezagos espaciales dinámicos W*y[t-1].
+
+    Los comparadores se estiman por máxima verosimilitud gaussiana perfilada con
+    efectos fijos de dos vías. Se usa el mismo panel balanceado que el SpVARX.
+    El AIC se reporta para ajuste relativo en muestra; no es validación predictiva.
+    """
+    products = list(products)
+    markets = list(markets)
+    model_specs = [
+        ("SAR", True, False),
+        ("SEM", False, True),
+        ("SAC", True, True),
+    ]
+    rows: List[Dict[str, Any]] = []
+
+    def failure_row(product: str, model: str, reason: str) -> Dict[str, Any]:
+        return {
+            "producto": product, "modelo": model, "rho": None, "lambda": None,
+            "log_likelihood": None, "aic": None, "delta_aic": None,
+            "n_observaciones": None, "estado": "No estimado", "detalle": reason,
+        }
+
+    try:
+        from scipy.optimize import minimize, minimize_scalar
+    except ImportError as exc:
+        reason = f"SciPy no está disponible: {exc}"
+        return [failure_row(product, model, reason) for product in products for model, _, _ in model_specs]
+
+    n_markets = len(markets)
+    if W_dense.shape != (n_markets, n_markets):
+        reason = "La matriz W no coincide con el orden de mercados del panel."
+        return [failure_row(product, model, reason) for product in products for model, _, _ in model_specs]
+
+    def two_way_demean(values: np.ndarray) -> np.ndarray:
+        values = np.asarray(values, dtype=float)
+        if values.ndim == 2:
+            return values - values.mean(axis=0, keepdims=True) - values.mean(axis=1, keepdims=True) + values.mean()
+        return (
+            values - values.mean(axis=0, keepdims=True)
+            - values.mean(axis=1, keepdims=True) + values.mean(axis=(0, 1), keepdims=True)
+        )
+
+    def spatial_filter(values: np.ndarray, parameter: float) -> np.ndarray:
+        values = np.asarray(values, dtype=float)
+        if abs(parameter) < 1e-14:
+            return values
+        if values.ndim == 2:
+            return values - parameter * (values @ W_dense.T)
+        return values - parameter * np.einsum("ij,tjp->tip", W_dense, values, optimize=True)
+
+    def log_jacobian(parameter: float, n_periods: int) -> float:
+        if abs(parameter) < 1e-14:
+            return 0.0
+        sign, logdet = np.linalg.slogdet(np.eye(n_markets) - parameter * W_dense)
+        if sign <= 0 or not np.isfinite(logdet):
+            raise ValueError("El filtro espacial no tiene jacobiano positivo en este parámetro.")
+        return float(n_periods * logdet)
+
+    lag_columns = [f"L1__y{i}" for i in range(len(products))]
+    climate_columns = ["X0__temp_anom", "X0__precip_anom", "X1__temp_anom", "X1__precip_anom"]
+    x_columns = lag_columns + climate_columns
+    ordered = panel.copy()
+    ordered["fecha"] = pd.to_datetime(ordered["fecha"])
+    ordered["mercado_key"] = ordered["mercado_key"].astype(str)
+    ordered = ordered[ordered["mercado_key"].isin(markets)].copy()
+    ordered["_market_order"] = pd.Categorical(ordered["mercado_key"], categories=markets, ordered=True)
+    ordered = ordered.sort_values(["fecha", "_market_order"])
+    dates = sorted(ordered["fecha"].unique())
+    n_periods = len(dates)
+    n_obs = n_markets * n_periods
+    if n_periods < 3 or len(ordered) != n_obs or ordered.duplicated(["fecha", "mercado_key"]).any():
+        reason = "Se requiere un panel balanceado, sin duplicados, para ajustar la comparación."
+        return [failure_row(product, model, reason) for product in products for model, _, _ in model_specs]
+    if ordered.groupby("fecha")["mercado_key"].nunique().ne(n_markets).any():
+        reason = "No todos los mercados tienen observación en cada mes del panel de comparación."
+        return [failure_row(product, model, reason) for product in products for model, _, _ in model_specs]
+
+    x_raw = ordered[x_columns].to_numpy(dtype=float).reshape(n_periods, n_markets, len(x_columns))
+    x_within = two_way_demean(x_raw)
+    x_rank = int(np.linalg.matrix_rank(x_within.reshape(n_obs, len(x_columns))))
+    fe_parameters = n_markets + n_periods - 1
+
+    for product_idx, product in enumerate(products):
+        y_column = f"y{product_idx}"
+        y_raw = ordered[y_column].to_numpy(dtype=float).reshape(n_periods, n_markets)
+
+        # Para el SpVARX se usa su residuo de efectos fijos. DK cambia la inferencia,
+        # no los coeficientes ni los residuos estimados.
+        base_fit = spvarx_results.get(product)
+        try:
+            base_residual = np.asarray(base_fit.resids, dtype=float).reshape(-1)
+            if len(base_residual) != n_obs:
+                raise ValueError("El número de residuos SpVARX no coincide con la muestra común.")
+            base_sse = float(np.dot(base_residual, base_residual))
+            base_sigma2 = max(base_sse / n_obs, np.finfo(float).tiny)
+            base_ll = float(-0.5 * n_obs * (np.log(2.0 * np.pi) + 1.0 + np.log(base_sigma2)))
+            base_parameters = len(base_fit.params) + fe_parameters + 1
+            rows.append({
+                "producto": product, "modelo": "SpVARX", "rho": None, "lambda": None,
+                "log_likelihood": base_ll, "aic": float(-2.0 * base_ll + 2.0 * base_parameters),
+                "delta_aic": None, "n_observaciones": n_obs, "estado": "Estimado",
+                "detalle": "Modelo principal; rezagos espaciales dinámicos W*y(t−1).",
+            })
+        except Exception as exc:
+            rows.append(failure_row(product, "SpVARX", f"No se pudo resumir el ajuste principal: {exc}"))
+
+        def profile(rho: float, lam: float) -> Dict[str, Any]:
+            transformed_y = spatial_filter(spatial_filter(y_raw, rho), lam)
+            transformed_x = spatial_filter(x_raw, lam)
+            y_dm = two_way_demean(transformed_y).reshape(n_obs)
+            x_dm = two_way_demean(transformed_x).reshape(n_obs, len(x_columns))
+            beta, *_ = np.linalg.lstsq(x_dm, y_dm, rcond=None)
+            residual = y_dm - x_dm @ beta
+            sse = float(np.dot(residual, residual))
+            if not np.isfinite(sse) or sse <= 0:
+                raise ValueError("La suma de residuos no es positiva y finita.")
+            jacobian = log_jacobian(rho, n_periods) + log_jacobian(lam, n_periods)
+            log_likelihood = jacobian - 0.5 * n_obs * (
+                np.log(2.0 * np.pi) + 1.0 + np.log(sse / n_obs)
+            )
+            return {"log_likelihood": float(log_likelihood), "sse": sse}
+
+        for model_name, has_rho, has_lambda in model_specs:
+            try:
+                if has_rho and not has_lambda:
+                    optimum = minimize_scalar(
+                        lambda value: -profile(float(value), 0.0)["log_likelihood"],
+                        bounds=(-0.95, 0.95), method="bounded", options={"xatol": 1e-5},
+                    )
+                    rho_hat, lambda_hat = float(optimum.x), 0.0
+                    converged = bool(optimum.success)
+                elif has_lambda and not has_rho:
+                    optimum = minimize_scalar(
+                        lambda value: -profile(0.0, float(value))["log_likelihood"],
+                        bounds=(-0.95, 0.95), method="bounded", options={"xatol": 1e-5},
+                    )
+                    rho_hat, lambda_hat = 0.0, float(optimum.x)
+                    converged = bool(optimum.success)
+                else:
+                    candidates = []
+                    for start in ((0.0, 0.0), (0.25, 0.25), (-0.25, -0.25), (0.25, -0.25), (-0.25, 0.25)):
+                        candidate = minimize(
+                            lambda values: -profile(float(values[0]), float(values[1]))["log_likelihood"],
+                            x0=np.asarray(start, dtype=float), method="L-BFGS-B",
+                            bounds=((-0.95, 0.95), (-0.95, 0.95)),
+                            options={"maxiter": 250, "ftol": 1e-9},
+                        )
+                        if np.isfinite(candidate.fun):
+                            candidates.append(candidate)
+                    if not candidates:
+                        raise RuntimeError("No se encontró una solución finita para SAC.")
+                    optimum = min(candidates, key=lambda item: float(item.fun))
+                    rho_hat, lambda_hat = map(float, optimum.x)
+                    converged = bool(optimum.success)
+
+                result = profile(rho_hat, lambda_hat)
+                spatial_parameter_count = int(has_rho) + int(has_lambda)
+                parameter_count = x_rank + fe_parameters + spatial_parameter_count + 1
+                aic = float(-2.0 * result["log_likelihood"] + 2.0 * parameter_count)
+                near_boundary = (has_rho and abs(rho_hat) > 0.93) or (has_lambda and abs(lambda_hat) > 0.93)
+                status = (
+                    "Estimación disponible; convergencia no confirmada" if not converged
+                    else ("Estimado; revisar límite" if near_boundary else "Estimado")
+                )
+                detail = "Estimador de panel auxiliar, ecuación por producto; no reemplaza el SpVARX."
+                if near_boundary:
+                    detail += " Un parámetro quedó cerca del límite de búsqueda (±0,95); interpretar con cautela."
+                rows.append({
+                    "producto": product, "modelo": model_name,
+                    "rho": rho_hat if has_rho else None,
+                    "lambda": lambda_hat if has_lambda else None,
+                    "log_likelihood": result["log_likelihood"], "aic": aic,
+                    "delta_aic": None, "n_observaciones": n_obs,
+                    "estado": status, "detalle": detail,
+                })
+            except Exception as exc:
+                rows.append(failure_row(product, model_name, str(exc)))
+
+    for product in products:
+        eligible = [r for r in rows if r["producto"] == product and r["aic"] is not None]
+        if eligible:
+            minimum = min(float(r["aic"]) for r in eligible)
+            for row in eligible:
+                row["delta_aic"] = float(row["aic"] - minimum)
+    return rows
+
+
 def rolling_spvarx_backtest(
     balanced_prices: pd.DataFrame,
     climate: pd.DataFrame,
